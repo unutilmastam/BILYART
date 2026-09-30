@@ -6,6 +6,7 @@ import { useMe } from './auth/useMe';
 import { BranchDetailPage } from './pages/client/BranchDetailPage';
 import { BranchesPage } from './pages/client/BranchesPage';
 import { ClientHomePage } from './pages/client/ClientHomePage';
+import { DevicesPage } from './pages/client/DevicesPage';
 import { PricingPage } from './pages/client/PricingPage';
 import { ReportsPage } from './pages/client/ReportsPage';
 import { SessionDetailPage } from './pages/client/SessionDetailPage';
@@ -36,6 +37,7 @@ const clientNav: (NavItem & { permission?: string })[] = [
   { to: '/client', label: 'nav.dashboard', end: true },
   { to: '/client/sessions', label: 'nav.sessions', permission: 'sessions.view' },
   { to: '/client/reports', label: 'nav.reports', permission: 'reports.view' },
+  { to: '/client/devices', label: 'nav.devices', permission: 'tables.view' },
   { to: '/client/branches', label: 'nav.branches' },
   { to: '/client/tables', label: 'nav.tables', permission: 'tables.view' },
   { to: '/client/pricing', label: 'nav.pricing', permission: 'pricing.manage' },
@@ -81,6 +83,7 @@ export const routes = [
       { path: 'sessions', element: <SessionsPage /> },
       { path: 'sessions/:id', element: <SessionDetailPage /> },
       { path: 'reports', element: <ReportsPage /> },
+      { path: 'devices', element: <DevicesPage /> },
       { path: 'branches', element: <BranchesPage /> },
       { path: 'branches/:id', element: <BranchDetailPage /> },
       { path: 'tables', element: <TablesPage /> },

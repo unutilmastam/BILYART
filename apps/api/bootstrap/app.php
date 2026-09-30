@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\AssignRequestId;
+use App\Http\Middleware\AuthenticateDevice;
 use App\Http\Middleware\AuthenticateTablet;
 use App\Http\Middleware\EnsureActiveSubscription;
 use App\Http\Middleware\EnsureIdempotency;
@@ -14,6 +15,7 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Routing\Middleware\SubstituteBindings;
+use Illuminate\Support\Facades\Route;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -21,6 +23,9 @@ return Application::configure(basePath: dirname(__DIR__))
         api: __DIR__.'/../routes/api.php',
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
+        then: function (): void {
+            Route::middleware('api')->prefix('device/v1')->group(base_path('routes/device.php'));
+        },
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->prepend(AssignRequestId::class);
@@ -35,11 +40,13 @@ return Application::configure(basePath: dirname(__DIR__))
             'perm' => RequirePermission::class,
             'idempotency' => EnsureIdempotency::class,
             'auth.tablet' => AuthenticateTablet::class,
+            'auth.device' => AuthenticateDevice::class,
         ]);
 
         // Tenant context must exist before implicit route-model binding runs.
         $middleware->prependToPriorityList(SubstituteBindings::class, ResolveUserTenant::class);
         $middleware->prependToPriorityList(SubstituteBindings::class, AuthenticateTablet::class);
+        $middleware->prependToPriorityList(SubstituteBindings::class, AuthenticateDevice::class);
 
         // JSON API: never redirect guests to a login page.
         $middleware->redirectGuestsTo(fn () => null);

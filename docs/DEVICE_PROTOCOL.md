@@ -89,6 +89,13 @@ A `SENT` command without ACK is re-delivered on next poll after 6 s, max 3 attem
 ## 6. `/state` response
 `{ "serverTime": …, "session": { "sessionId", "startAt", "endAt", "status" } | null, "config": {…} }`
 
+## 6a. Implementation notes (server, Phase 10)
+- `registrationSecret` = `DEVICE_REGISTRATION_SECRET` (same value compiled into the firmware build via a GitHub secret).
+- Re-registering hardware that is still PAIRED → 409 `DEVICE_ALREADY_PAIRED` (unpair in admin first). An UNPAIRED device that re-registers gets a fresh code; old codes expire.
+- `/ack` requires an `Idempotency-Key` header (random per ACK batch). `/poll` is exempt: it is a heartbeat and re-delivered commands are de-duplicated by `commandId` on the device.
+- Heartbeat rows are stored on state change or every 60 s (not every poll) to keep the database small; `devices.last_seen_at` is updated on every poll.
+- Device endpoints keep working when the client's subscription is inactive.
+
 ## 7. Error codes
 401 `DEVICE_UNAUTHORIZED` / `REPAIR_REQUIRED`, 403 `DEVICE_REVOKED`, 429 rate limited (device backs off), 5xx → retry with backoff, keep local timer.
 
