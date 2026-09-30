@@ -54,6 +54,9 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->prependToPriorityList(SubstituteBindings::class, ResolveUserTenant::class);
         $middleware->prependToPriorityList(SubstituteBindings::class, AuthenticateTablet::class);
         $middleware->prependToPriorityList(SubstituteBindings::class, AuthenticateDevice::class);
+        // Role gates answer 403 before a foreign/unknown record could answer 404.
+        $middleware->prependToPriorityList(SubstituteBindings::class, EnsureTenantUser::class);
+        $middleware->prependToPriorityList(SubstituteBindings::class, EnsureSuperAdmin::class);
 
         // JSON API: never redirect guests to a login page.
         $middleware->redirectGuestsTo(fn () => null);

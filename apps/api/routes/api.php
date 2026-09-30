@@ -23,7 +23,7 @@ Route::middleware('web')->group(function (): void {
         Route::put('me/password', [AuthController::class, 'changePassword'])->middleware('throttle:login');
 
         // Client admin (tenant users only).
-        Route::prefix('admin')->middleware(['tenant.member', 'idempotency'])->group(function (): void {
+        Route::prefix('admin')->middleware(['tenant.member', 'throttle:admin', 'idempotency'])->group(function (): void {
             Route::get('subscription', Admin\SubscriptionController::class);
             // Always available, even when the subscription is inactive (spec §29).
             Route::get('notifications', [Admin\NotificationController::class, 'index']);
@@ -118,7 +118,7 @@ Route::middleware('web')->group(function (): void {
         });
 
         // Super Admin (platform) — Phase 5.
-        Route::prefix('super')->middleware(['super.admin', 'idempotency'])->group(function (): void {
+        Route::prefix('super')->middleware(['super.admin', 'throttle:admin', 'idempotency'])->group(function (): void {
             Route::get('dashboard', SuperAdmin\DashboardController::class)->middleware('perm:platform.tenants');
             Route::get('notifications', [Admin\NotificationController::class, 'index']);
             Route::post('notifications/read-all', [Admin\NotificationController::class, 'readAll']);

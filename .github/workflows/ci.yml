@@ -54,6 +54,7 @@ jobs:
           cache: npm
           cache-dependency-path: packages/protocol/package-lock.json
       - run: npm ci
+      - run: npm audit --omit=dev --audit-level=high
       - run: npm run check-generated
       - run: npm run typecheck
       - run: npm test
@@ -128,11 +129,15 @@ jobs:
           cache: npm
           cache-dependency-path: apps/web-admin/package-lock.json
       - run: npm ci
+      - run: npm audit --omit=dev --audit-level=high
       - run: npm run typecheck
       - run: npm test
       - run: npm run build
+      - name: Build contains the hardening .htaccess
+        run: test -f dist/.htaccess
       - uses: actions/upload-artifact@v4
         with:
           name: web-admin-dist
           path: apps/web-admin/dist/
+          include-hidden-files: true # dist/.htaccess (CSP + cache headers)
           retention-days: 14

@@ -9,10 +9,10 @@ final class SpaController extends Controller
 {
     public function admin(): Response
     {
-        return $this->shell(public_path('admin/index.html'));
+        return $this->shell(public_path('admin/index.html'), config('security.csp.admin'));
     }
 
-    private function shell(string $file): Response
+    private function shell(string $file, string $csp): Response
     {
         abort_unless(is_file($file), 404);
 
@@ -20,7 +20,7 @@ final class SpaController extends Controller
             'Content-Type' => 'text/html; charset=utf-8',
             // The shell must always be revalidated so a new release is picked up immediately.
             'Cache-Control' => 'no-cache, private',
-            'X-Frame-Options' => 'DENY',
+            'Content-Security-Policy' => $csp,
         ]);
     }
 }
