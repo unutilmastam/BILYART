@@ -2,6 +2,7 @@
 
 namespace App\Domain\Pricing\Models;
 
+use App\Domain\Branches\Models\Branch;
 use App\Domain\Pricing\Enums\PricingType;
 use App\Domain\Tenancy\Concerns\BelongsToTenant;
 use App\Support\Concerns\HasPublicId;
@@ -9,6 +10,7 @@ use Database\Factories\PricingPlanFactory;
 use Illuminate\Database\Eloquent\Attributes\UseFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /** Price configuration; `type` selects the PriceCalculator strategy (spec §6: extensible pricing). */
 #[UseFactory(PricingPlanFactory::class)]
@@ -34,5 +36,11 @@ class PricingPlan extends Model
             'rules' => 'array',
             'is_active' => 'boolean',
         ];
+    }
+
+    /** @return BelongsTo<Branch, $this> */
+    public function branch(): BelongsTo
+    {
+        return $this->belongsTo(Branch::class);
     }
 }
