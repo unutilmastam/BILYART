@@ -153,7 +153,7 @@ void pairDevice() {
   api::Response reg = api::request("POST", "/register", &body, "");
   noteServerTime(reg);
   if (!reg.ok()) {
-    setServerStatus(strcmp(reg.errorCode(), "DEVICE_ALREADY_PAIRED") == 0 ? "Admin panelda qurilmani o'chirib, qayta ulang" : "ro'yxatdan o'tmadi (" + String(reg.status) + ")");
+    setServerStatus(strcmp(reg.errorCode(), "DEVICE_ALREADY_PAIRED") == 0 ? "Admin panelda qurilmani uzib, qayta ulang" : "ro'yxatdan o'tmadi (" + String(reg.status) + ")");
     vTaskDelay(pdMS_TO_TICKS(10000));
     return;
   }

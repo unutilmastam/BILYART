@@ -57,34 +57,37 @@ Platform domain: **itcode.uz** (owner, 2026-09-30).
 | Outbound HTTPS to api.telegram.org | [VERIFY] | Telegram reports |
 | FTP account | [VERIFY] | FTPS fallback deploy |
 
-## 2. Server layout
+## 2. Server layout (implemented: `infrastructure/deploy/activate.sh`)
 ```
-/home/<user>/billiard/            ← release root (NOT web-accessible)
-   current -> releases/2026xxxx   (symlink if SSH available; otherwise single dir)
-   shared/.env
-   shared/storage/                (private photos, logs, backups)
-/home/<user>/billiard.<domain>/   ← subdomain document root → points to billiard/current/public
+/home/<user>/billiard/                   ← NOT web-accessible (chmod 700)
+   releases/<version>-<yyyymmddHHMMSS>/  ← one per release (newest 3 kept)
+      apps/api/.env      -> ../../../shared/.env
+      apps/api/storage   -> ../../../shared/storage
+   shared/.env                           ← created on the first run (chmod 600, APP_KEY/BACKUP_ENCRYPTION_KEY/HEALTH_TOKEN generated)
+   shared/storage/                       ← photos, backups, logs, sessions: survive every update
+   current -> releases/…                 ← switched atomically (ln + mv -T)
+Domain document root = billiard/current/apps/api/public
 ```
-If the document root cannot point outside `public_html`, use a subdomain whose root is set to `billiard/current/public` in cPanel → Domains (cPanel allows custom document roots for subdomains).
+`activate.sh` steps: PHP ≥ 8.3 + extension check → shared dirs → `.env` (first run: create and stop) → copy release, link shared files → `artisan about` → maintenance on (old release) → `migrate --force` → `config:cache route:cache event:cache` → switch `current` → maintenance off → prune old releases → `/health` probe. Any failure before the switch leaves the old release live. `rollback.sh` points `current` back to the previous release (migrations are not reverted; data problems → BACKUP.md).
+Owner guide (Uzbek, step by step): **[DEPLOY_UZ.md](DEPLOY_UZ.md)**.
 
 ## 3. CI/CD (GitHub Actions)
-- `ci.yml` (every PR): PHP tests (MySQL service container), web-admin/tablet tests + build, firmware native tests + build, gitleaks.
-- `build-apk.yml`: builds `android-kiosk` debug/release APK artifact (signing keystore in GitHub secrets).
-- `build-firmware.yml`: builds `.bin` artifact + sha256.
-- `deploy.yml` (manual trigger on `main`, `workflow_dispatch`):
-  1. `composer install --no-dev --optimize-autoloader`
-  2. build web-admin + tablet → copy into `apps/api/public/admin`, `public/tablet`
-  3. upload: **SSH/rsync** if available, else **FTPS (lftp mirror)**
-  4. run `php artisan migrate --force && php artisan optimize` via SSH; if no SSH, via a one-time signed deploy URL (`/_deploy/migrate?token=…`, token from secret, disabled when `DEPLOY_HOOK_ENABLED=false`).
-  5. hit `/health` and fail the job if not OK.
-
-GitHub secrets: `DEPLOY_HOST`, `DEPLOY_USER`, `DEPLOY_SSH_KEY` or `DEPLOY_FTP_PASSWORD`, `DEPLOY_PATH`, `DEPLOY_HOOK_TOKEN`, `ANDROID_KEYSTORE_*`, `FIRMWARE_REGISTRATION_SECRET`.
+- `ci.yml` (every PR / push to main): API tests on 3 engines, web-admin, tablet, protocol, firmware (host tests + `.bin`), hosting-check tests, gitleaks, **deploy-scripts** (builds the package and runs install → update → rollback against MySQL in a throw-away `$HOME`: `infrastructure/deploy/tests/run.sh`).
+- `release.yml` (manual, `version` input): `infrastructure/release/build.sh` → `bilyart-<version>.zip` + `.sha256` artifact. Contents: `apps/api` (no tests), `vendor` (`--no-dev --classmap-authoritative`, git histories stripped), admin + tablet PWA builds in `public/`, `activate.sh`, `rollback.sh`, `VERSION`, `COMMIT`. Never `.env`. Built on PHP 8.3 (lowest supported).
+- `deploy.yml` (manual, `version` + typed `DEPLOY`): guard (secrets present) → `release.yml` → checksum → `scp` + `ssh … activate.sh` → `/health` retry. Uses GitHub environment `production`.
+  - Secrets: `DEPLOY_HOST`, `DEPLOY_USER`, `DEPLOY_SSH_KEY`, `DEPLOY_KNOWN_HOSTS` (strict host key checking), optional `DEPLOY_PORT`. Variables: `DEPLOY_URL`, optional `DEPLOY_PHP_BIN`.
+  - The first install is manual (DEPLOY_UZ.md) because `.env` must be filled by the owner.
+- Firmware: the `firmware` job in `ci.yml` (`workflow_dispatch` input `firmware_version` for OTA releases), secret `DEVICE_REGISTRATION_SECRET`.
+- No FTP deploy and no web "deploy hook": cPanel Terminal/SSH are available (§1), so migrations always run from the CLI.
 
 ## 4. Cron (cPanel → Cron Jobs)
 ```
-* * * * *  /usr/local/bin/php /home/<user>/billiard/current/apps/api/artisan schedule:run >> /dev/null 2>&1
+* * * * *  <php path printed by activate.sh> /home/<user>/billiard/current/apps/api/artisan schedule:run >> /dev/null 2>&1
 ```
-(PHP binary path verified in Phase 1.) Scheduler handles: session finalization, reservation expiry, command retry/expiry, device online/offline notifications, subscription status + reminders (5/3/1 days), Telegram daily reports, photo retention, pruning, queue draining, backups.
+The schedule (routes/console.php): session finalization, device monitor, notifications, subscription checks, Telegram daily reports, photo retention, pruning, backups 03:00 Tashkent + weekly photo archive + daily verify, scheduler heartbeat (shown in `/health/messaging`). There is no queue worker: nothing is queued (`QUEUE_CONNECTION` is unused).
+
+## 4a. First Super Admin
+`php artisan admin:create-super <login>` asks for the password (hidden, twice, ≥ 12 chars) — nothing is written to `.env`. The older `db:seed --class=PlatformSeeder` path (SUPER_ADMIN_LOGIN/PASSWORD) still works, also with a cached config.
 
 ## 5. Backups (spec §44) — implemented as described in [BACKUP.md](BACKUP.md) (portable encrypted logical backups; the mysqldump plan below was replaced because exec() is often disabled on shared hosting)
 - Daily 03:00 (Asia/Tashkent): `mysqldump --single-transaction` → gzip → `shared/backups/db/` keep 14 daily + 8 weekly.
@@ -94,4 +97,4 @@ GitHub secrets: `DEPLOY_HOST`, `DEPLOY_USER`, `DEPLOY_SSH_KEY` or `DEPLOY_FTP_PA
 - Restore steps documented in `docs/BACKUP.md` (Phase 14).
 
 ## 6. Environment
-`.env.example` lists all keys: APP_*, DB_*, SUPER_ADMIN_LOGIN/PASSWORD (first seed only), DEVICE_REGISTRATION_SECRET, DEVICE_TRANSPORT=http, BACKUP_*, TELEGRAM_WEBHOOK_BASE_URL, PHOTO_RETENTION_DEFAULT_DAYS.
+`.env.example` lists all keys: APP_*, DB_*, DEVICE_REGISTRATION_SECRET (= the GitHub secret used for firmware builds), DEVICE_*, BACKUP_* (key generated by activate.sh), HEALTH_TOKEN (generated), TELEGRAM_WEBHOOK_BASE_URL, PHOTO_RETENTION_DEFAULT_DAYS, optional SUPER_ADMIN_LOGIN/PASSWORD (seeder path only).

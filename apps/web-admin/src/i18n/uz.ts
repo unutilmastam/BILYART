@@ -7,6 +7,7 @@ export const uz = {
   'common.back': 'Orqaga',
   'common.loading': 'Yuklanmoqda…',
   'common.retry': 'Qayta urinish',
+  'common.requestId': "So'rov ID",
   'common.search': 'Qidirish',
   'common.all': 'Hammasi',
   'common.empty': "Ma'lumot yo'q",
@@ -150,7 +151,6 @@ export const uz = {
   'client.subscriptionTitle': 'Obuna holati',
   'client.inactive': "Obuna faol emas. Ish vaqtincha to'xtatilgan, ma'lumotlaringiz saqlanadi.",
   'client.contact': "Bog'lanish",
-  'client.comingSoon': "Filiallar, stollar va sessiyalar bo'limlari keyingi bosqichda qo'shiladi.",
 
   'error.notFound': 'Sahifa topilmadi',
 

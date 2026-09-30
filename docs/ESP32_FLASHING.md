@@ -45,7 +45,7 @@ HARDWARE.md §5 dagi 5 ta sinovni bajaring (yoqish, 5 daqiqa ogohlantirish, tuga
 
 ## 5. Keyinchalik: Wi-Fi o'zgarsa yoki qurilmani boshqa joyga ko'chirish
 - **BOOT tugmasini 3 soniya** bosib turing → sozlash Wi-Fi'si 10 daqiqaga yoqiladi → yangi Wi-Fi'ni kiriting.
-- **10 soniya** bosib turing → zavod holatiga qaytadi (Wi-Fi va ulanish o'chadi; yorliqdagi sozlash paroli o'zgarmaydi). Boshqa stol/mijozga ulashdan oldin admin panelda eski ulanishni **O'chirish** kerak.
+- **10 soniya** bosib turing → zavod holatiga qaytadi (Wi-Fi va ulanish o'chadi; yorliqdagi sozlash paroli o'zgarmaydi). Boshqa stol/mijozga ulashdan oldin admin panelda eski ulanishni **Uzish** kerak (Qurilmalar → qurilma → Uzish).
 
 ## 6. Yangilash (OTA, kompyutersiz)
 1. GitHub → **Actions → CI → Run workflow** → versiya: masalan `1.1.0` → **Run**. Tugagach `esp32-firmware` ni yuklab oling.
@@ -57,6 +57,6 @@ HARDWARE.md §5 dagi 5 ta sinovni bajaring (yoqish, 5 daqiqa ogohlantirish, tuga
 | Belgi | Yechim |
 |---|---|
 | Sozlash sahifasida "ro'yxatdan o'tmadi (401)" yoki "(422)" | Buildda `DEVICE_REGISTRATION_SECRET` yo'q yoki serverdagidan farq qiladi (§0, §1). |
-| "Admin panelda qurilmani o'chirib, qayta ulang" | Bu qurilma serverda hali ulangan deb turibdi: Admin → Qurilmalar → O'chirish, keyin qayta ulang. |
+| "Admin panelda qurilmani uzib, qayta ulang" | Bu qurilma serverda hali ulangan deb turibdi: Admin → Qurilmalar → **Uzish**, keyin qayta ulang. |
 | LED sekin miltillaydi | Server bilan aloqa yo'q. Stol chiroqlari baribir o'z vaqtida o'chadi. Wi-Fi signalini tekshiring (−75 dBm dan yaxshi). |
 | Serverga ulanmaydi, lekin internet bor | Server sertifikati Let's Encrypt yoki Sectigo (cPanel AutoSSL) bo'lishi kerak — boshqa sertifikat bilan qurilma xavfsizlik uchun ulanmaydi. |

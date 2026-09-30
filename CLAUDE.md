@@ -65,6 +65,7 @@ docs/               all documentation
 - Firmware: `cd devices/esp32 && pio test -e native && pio run -e esp32dev` (no PlatformIO registry access, e.g. in the cloud dev container: `scripts/native-test.sh`; CI builds the `.bin`). After changing `certs/`: `python scripts/make_ca_bundle.py`
 - Protocol: `cd packages/protocol && npm ci && npm test && npm run typecheck && npm run check-generated` (after editing schemas: `npm run generate`)
 - Hosting check script: `infrastructure/hosting-check/tests/run.sh` (build for owner: Actions → "Hosting check (build file)")
+- Release package: `infrastructure/release/build.sh <version> [out]` (owner: Actions → "Release package"). Deploy-script test: `DB_CONNECTION=… DB_HOST=… DB_PORT=… DB_DATABASE=… DB_USERNAME=… DB_PASSWORD=… infrastructure/deploy/tests/run.sh`. Hosting install/update: `docs/DEPLOY_UZ.md`
 - Secret scan: `gitleaks git --redact .` (runs in CI)
 - Dependency audit (CI): `composer audit --no-dev`, `npm audit --omit=dev --audit-level=high` (web-admin, protocol). Security test map: `docs/TESTING.md`
 - Lost 2FA device (Super Admin, cPanel → Terminal): `php artisan user:2fa-reset <login>`

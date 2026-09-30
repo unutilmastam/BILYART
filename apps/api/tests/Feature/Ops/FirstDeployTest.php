@@ -14,6 +14,8 @@ class FirstDeployTest extends TestCase
 {
     use RefreshDatabase;
 
+    private const PASSWORD = 'password-Long-2026';
+
     private function superAdmins()
     {
         return $this->asSystem(fn () => User::query()->where('role', 'SUPER_ADMIN')->get());
@@ -23,15 +25,15 @@ class FirstDeployTest extends TestCase
     public function the_console_command_creates_a_super_admin_with_a_hidden_password(): void
     {
         $this->artisan('admin:create-super', ['login' => 'Bakhrullo'])
-            ->expectsQuestion('Password (min 12 characters, hidden)', 'Very-Long-Pass-2026')
-            ->expectsQuestion('Repeat the password', 'Very-Long-Pass-2026')
+            ->expectsQuestion('Password (min 12 characters, hidden)', self::PASSWORD)
+            ->expectsQuestion('Repeat the password', self::PASSWORD)
             ->assertSuccessful();
 
         $admin = $this->superAdmins()->sole();
         $this->assertSame('bakhrullo', $admin->login);
         $this->assertNull($admin->tenant_id);
-        $this->assertTrue(Hash::check('Very-Long-Pass-2026', $admin->password));
-        $this->postJson('/api/auth/login', ['login' => 'bakhrullo', 'password' => 'Very-Long-Pass-2026'])->assertOk()->assertJsonPath('user.role', 'SUPER_ADMIN');
+        $this->assertTrue(Hash::check(self::PASSWORD, $admin->password));
+        $this->postJson('/api/auth/login', ['login' => 'bakhrullo', 'password' => self::PASSWORD])->assertOk()->assertJsonPath('user.role', 'SUPER_ADMIN');
     }
 
     #[Test]
@@ -41,8 +43,8 @@ class FirstDeployTest extends TestCase
             ->expectsQuestion('Password (min 12 characters, hidden)', 'short') // refused before the repeat question
             ->assertFailed();
         $this->artisan('admin:create-super', ['login' => 'root'])
-            ->expectsQuestion('Password (min 12 characters, hidden)', 'Very-Long-Pass-2026')
-            ->expectsQuestion('Repeat the password', 'Other-Long-Pass-2026')
+            ->expectsQuestion('Password (min 12 characters, hidden)', self::PASSWORD)
+            ->expectsQuestion('Repeat the password', strrev(self::PASSWORD))
             ->assertFailed();
         $this->artisan('admin:create-super', ['login' => 'bad login!'])->assertFailed();
         $this->assertCount(0, $this->superAdmins());
@@ -51,7 +53,7 @@ class FirstDeployTest extends TestCase
     #[Test]
     public function the_seeder_reads_config_so_it_works_with_a_cached_config(): void
     {
-        config(['platform.super_admin.login' => 'Owner', 'platform.super_admin.password' => 'Seeded-Pass-2026x']);
+        config(['platform.super_admin.login' => 'Owner', 'platform.super_admin.password' => self::PASSWORD.'x']);
         $this->seed(PlatformSeeder::class);
         $this->seed(PlatformSeeder::class); // idempotent
 
