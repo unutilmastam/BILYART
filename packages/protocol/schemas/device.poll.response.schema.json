@@ -1,0 +1,13 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://protocol.bilyart/device.poll.response.schema.json",
+  "title": "DevicePollResponse",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["serverTime", "commands", "pollIntervalSec"],
+  "properties": {
+    "serverTime": { "$ref": "common.schema.json#/definitions/EpochSeconds" },
+    "commands": { "type": "array", "maxItems": 10, "items": { "$ref": "device.command.schema.json" } },
+    "pollIntervalSec": { "type": "integer", "minimum": 1, "maximum": 60 }
+  }
+}

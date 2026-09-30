@@ -1,0 +1,14 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://protocol.bilyart/device.register.request.schema.json",
+  "title": "DeviceRegisterRequest",
+  "description": "POST /device/v1/register",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["hardwareId", "firmwareVersion", "registrationSecret"],
+  "properties": {
+    "hardwareId": { "type": "string", "pattern": "^[0-9A-F]{12}$", "description": "eFuse MAC, uppercase hex" },
+    "firmwareVersion": { "$ref": "common.schema.json#/definitions/SemVer" },
+    "registrationSecret": { "type": "string", "minLength": 16, "maxLength": 128 }
+  }
+}

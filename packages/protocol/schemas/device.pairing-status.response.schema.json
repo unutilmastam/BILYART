@@ -1,0 +1,14 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://protocol.bilyart/device.pairing-status.response.schema.json",
+  "title": "DevicePairingStatusResponse",
+  "description": "GET /device/v1/pairing-status (Authorization: PollToken <pollToken>). token is returned exactly once.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["status", "serverTime"],
+  "properties": {
+    "status": { "type": "string", "enum": ["WAITING", "PAIRED", "EXPIRED"] },
+    "token": { "type": "string", "minLength": 32, "description": "Present only in the first PAIRED response" },
+    "serverTime": { "$ref": "common.schema.json#/definitions/EpochSeconds" }
+  }
+}

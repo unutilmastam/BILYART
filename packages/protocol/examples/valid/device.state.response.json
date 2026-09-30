@@ -1,0 +1,2 @@
+{ "serverTime": 1790000100, "session": { "sessionId": "01J9ZQ3K8M4N5P6Q7R8S9T0V1W", "startAt": 1790000000, "endAt": 1790003600, "status": "ACTIVE" },
+  "config": { "pollIntervalSec": 3, "maxSessionSec": 43200, "warnBeforeSec": 300, "flashCount": 3 } }

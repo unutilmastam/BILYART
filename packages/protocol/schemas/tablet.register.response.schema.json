@@ -1,0 +1,15 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://protocol.bilyart/tablet.register.response.schema.json",
+  "title": "TabletRegisterResponse",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["tabletCode", "pairingCode", "pairingExpiresAt", "pollToken", "serverTime"],
+  "properties": {
+    "tabletCode": { "$ref": "common.schema.json#/definitions/TabletCode" },
+    "pairingCode": { "$ref": "common.schema.json#/definitions/PairingCode" },
+    "pairingExpiresAt": { "$ref": "common.schema.json#/definitions/IsoUtc" },
+    "pollToken": { "type": "string", "minLength": 32 },
+    "serverTime": { "$ref": "common.schema.json#/definitions/IsoUtc" }
+  }
+}

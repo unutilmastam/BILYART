@@ -1,0 +1,14 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://protocol.bilyart/tablet.tables.response.schema.json",
+  "title": "TabletTablesResponse",
+  "description": "GET /api/tablet/tables — polled every few seconds.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["serverTime", "isOpenNow", "tables"],
+  "properties": {
+    "serverTime": { "$ref": "common.schema.json#/definitions/IsoUtc" },
+    "isOpenNow": { "type": "boolean" },
+    "tables": { "type": "array", "items": { "$ref": "tablet.table.schema.json" } }
+  }
+}

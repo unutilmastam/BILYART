@@ -1,0 +1,55 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://protocol.bilyart/tablet.bootstrap.response.schema.json",
+  "title": "TabletBootstrapResponse",
+  "description": "GET /api/tablet/bootstrap — everything the kiosk needs after start. Also cached (IndexedDB) for offline display only.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["serverTime", "tablet", "branch", "settings", "tables"],
+  "properties": {
+    "serverTime": { "$ref": "common.schema.json#/definitions/IsoUtc" },
+    "tablet": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "code"],
+      "properties": {
+        "id": { "$ref": "common.schema.json#/definitions/PublicId" },
+        "code": { "$ref": "common.schema.json#/definitions/TabletCode" }
+      }
+    },
+    "branch": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name", "timezone", "tenantName", "isOpenNow"],
+      "properties": {
+        "id": { "$ref": "common.schema.json#/definitions/PublicId" },
+        "name": { "type": "string" },
+        "tenantName": { "type": "string" },
+        "timezone": { "type": "string" },
+        "isOpenNow": { "type": "boolean" }
+      }
+    },
+    "settings": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["locale", "photoRequired", "privacyNotice", "warnBeforeSec", "warningAudio"],
+      "properties": {
+        "locale": { "type": "string", "enum": ["uz", "ru"] },
+        "photoRequired": { "type": "boolean" },
+        "privacyNotice": { "type": "string" },
+        "warnBeforeSec": { "type": "integer", "minimum": 0, "maximum": 3600 },
+        "warningAudio": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["mode", "text"],
+          "properties": {
+            "mode": { "type": "string", "enum": ["CLIPS", "TTS"] },
+            "text": { "type": "string", "description": "Template, e.g. \"{table}-stol, sizda 5 daqiqa vaqtingiz qoldi.\"" },
+            "clipUrls": { "type": "array", "items": { "type": "string" } }
+          }
+        }
+      }
+    },
+    "tables": { "type": "array", "items": { "$ref": "tablet.table.schema.json" } }
+  }
+}

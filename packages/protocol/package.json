@@ -1,0 +1,23 @@
+{
+  "name": "@bilyart/protocol",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Single source of truth for tablet and device message formats (JSON Schema + generated TypeScript types).",
+  "type": "module",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "scripts": {
+    "generate": "node scripts/generate.mjs",
+    "check-generated": "node scripts/generate.mjs --check",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@apidevtools/swagger-parser": "^13.1.0",
+    "@types/node": "^22.20.4",
+    "ajv": "^8.20.0",
+    "json-schema-to-typescript": "^16.0.0",
+    "typescript": "^5.9.0",
+    "vitest": "^3.2.0"
+  }
+}
