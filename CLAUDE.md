@@ -28,6 +28,7 @@ For each phase:
 4. Run the tests (`composer test`, `npm test`, `pio test` as relevant). Fix failures.
 5. Update docs touched by the phase + PROGRESS.md (done / remaining / known issues).
 6. Push to a branch `phase-N-short-name` and open a PR into `main` with a checklist of acceptance criteria.
+   **The owner authorized Claude (2026-09-30) to merge the PR itself** — the owner does not merge. Merge only when CI is green on the PR head and no critical errors remain; use a merge commit. A PR may also be merged mid-phase when the owner needs something from `main` (e.g. a manual workflow), as long as CI is green.
 7. **Do not start the next phase while critical errors or failing tests remain.**
 
 ## 3. Non-negotiable rules

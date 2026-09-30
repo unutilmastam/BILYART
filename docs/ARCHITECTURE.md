@@ -1,7 +1,7 @@
 # ARCHITECTURE
 
 Status: v1 proposal. Phase 1 must verify every **[VERIFY]** item on the real Hostmaster account and update this file.
-Phase 1 (in progress): verification tooling is ready (`infrastructure/hosting-check`, see DEPLOYMENT.md §1); no decision changed yet — waiting for the owner's hosting report.
+Phase 1 (in progress): verification tooling is ready (`infrastructure/hosting-check`, see DEPLOYMENT.md §1); cPanel shows SSH, Terminal, Cron, Git VC and **PostgreSQL** in addition to MySQL. No decision changed yet: PostgreSQL vs MySQL is decided in Phase 2 once versions are known (spec §21 prefers PostgreSQL "if supported"; PostgreSQL would replace the `table_lock` generated column with a partial unique index). Deploy will use SSH/rsync if key-based SSH works for CI.
 
 ## 1. Constraints that shape everything
 | Constraint | Consequence |

@@ -3,7 +3,9 @@
 Bu yo'riqnoma telefon yoki iPad uchun. Kompyuter kerak emas.
 Maqsad: Hostmaster hostingingiz nimalarni qo'llab-quvvatlashini aniq bilish.
 
-Ikki qism bor: **A** — cPanel'dan skrinshotlar, **B** — avtomatik tekshirish fayli.
+Ikki qism bor: **A** — cPanel'dan skrinshotlar, **B** — avtomatik tekshirish fayli, **C** — qo'shimcha skrinshotlar.
+
+✅ A qism tayyor (Tools skrinshoti olindi, domen: `itcode.uz`).
 
 ---
 
@@ -32,7 +34,7 @@ Bu fayl hosting ichidagi haqiqiy qiymatlarni (PHP kengaytmalari, limitlar, Teleg
 Xavfsizlik: fayl tasodifiy nom va maxfiy kalit bilan yaratiladi, **birinchi ochilishdan keyin o'zini o'chiradi**, 24 soatdan keyin ishlamaydi.
 
 ### B1. Faylni GitHub'da yaratish
-1. Telefonda **github.com** → repozitoriy **bilyart** ni oching.
+1. Telefon brauzerida **github.com/unutilmastam/BILYART** ni oching (GitHub'ga kirgan bo'lishingiz kerak).
 2. Yuqoridagi **Actions** bo'limini bosing (ko'rinmasa — `...` menyusida).
 3. Chap ro'yxatdan **"Hosting check (build file)"** ni tanlang.
 4. O'ngdagi **Run workflow** → branch `main` → yashil **Run workflow** tugmasini bosing.
@@ -46,9 +48,18 @@ Xavfsizlik: fayl tasodifiy nom va maxfiy kalit bilan yaratiladi, **birinchi ochi
 4. Ichidagi `OCHISH.txt` faylini oching (ustiga bosing → **View**). Unda tayyor havola bor.
 
 ### B3. Natijani olish
-1. `OCHISH.txt` dagi havolani telefon brauzerida oching (`DOMEN` o'rniga saytingiz manzilini yozing).
-2. Sahifa ochiladi. Pastdagi **JSON** maydonidagi matnni to'liq nusxalang (bosib turing → Select all → Copy).
-3. Matnni Claude'ga yuboring.
+1. `OCHISH.txt` dagi havolani nusxalang, `DOMEN` so'zini `itcode.uz` ga almashtiring va telefon brauzerida oching.
+   Masalan: `https://itcode.uz/hostcheck-abc123.php?t=...`
+2. Jadval ko'rinishidagi sahifa ochiladi. **Butun sahifani skrinshot qiling** (uzun skrinshot yoki bir nechta).
+3. Skrinshotni Claude'ga yuboring. JSON nusxalash shart emas.
 4. File Manager'da `hosting-check.zip` va `OCHISH.txt` ni o'chiring (**Delete**).
+
+> Agar `itcode.uz` boshqa papkaga ulangan bo'lsa (public_html emas), zipni o'sha papkaga yuklang:
+> cPanel → **Domains** → `itcode.uz` qatorida "Document Root" ustunidagi papka.
+
+### C. Qo'shimcha skrinshotlar (bir marta)
+1. cPanel → **Resource Usage** → limitlar sahifasi.
+2. cPanel → **Domains** → domenlar ro'yxati (Document Root ustuni ko'rinsin).
+3. cPanel → **Select PHP Version** → joriy versiya va "Extensions" ro'yxati.
 
 Agar sahifa **"Not found"** desa — havola noto'g'ri nusxalangan. **"Expired"** desa — B1 dan qaytadan boshlang.

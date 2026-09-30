@@ -25,22 +25,33 @@ Owner-facing click-by-click guide (Uzbek): [HOSTING_CHECK_UZ.md](HOSTING_CHECK_U
 
 Record results in the table below and update ARCHITECTURE.md if anything differs.
 
-Status: **awaiting owner answers** (Phase 1).
+Status: **partially answered** (Phase 1). cPanel Tools screenshot received 2026-09-30; hostcheck report still pending.
+
+Seen in the cPanel Tools screenshot (theme Jupiter, CloudLinux — "Resource Usage", "X-Ray App", "AccelerateWP" present; cPanel user `unutilmastam`, home `/home/unutilmastam`, AutoSSL active):
+- Files: File Manager, FTP Accounts, Backup / Backup Wizard, **Git Version Control**, File and Directory Restoration
+- Databases: phpMyAdmin, Manage My Databases (MySQL/MariaDB), Remote Database Access, **PostgreSQL Databases** + phpPgAdmin
+- Domains: Domains, Redirects, Zone Editor, Dynamic DNS
+- Security: **SSH Access**, SSL/TLS Certificates, Manage API Tokens, Two-Factor Authentication
+- Software: MultiPHP Manager, MultiPHP INI Editor, **Select PHP Version** (CloudLinux PHP selector), Setup Node.js App, Setup Python App, Setup Ruby App
+- Advanced: **Terminal**, **Cron Jobs**
+- Metrics: Resource Usage (LVE limits)
+
+Platform domain: **itcode.uz** (owner, 2026-09-30).
 
 | item | value | affects |
 |---|---|---|
 | PHP version / SAPI | [VERIFY] | Laravel 11 needs ≥ 8.2 |
 | Required extensions | [VERIFY] | pdo_mysql, openssl, mbstring, intl, fileinfo, sodium, curl, zip, bcmath, gd/imagick |
-| DB engine + version (MySQL/MariaDB, PostgreSQL?) | [VERIFY] | DATABASE.md generated column + CHECK constraints need MySQL ≥ 8.0.16 / MariaDB ≥ 10.6 |
-| SSH / Terminal | [VERIFY] | deploy via rsync+SSH vs FTPS + deploy hook |
-| Cron Jobs + PHP CLI path | [VERIFY] | `schedule:run` every minute |
-| Git Version Control | [VERIFY] | informational |
-| Node.js app | [VERIFY] | informational (not used) |
-| SSL (AutoSSL) | [VERIFY] | HTTPS mandatory, ESP32 pinned root CA |
-| Domain / subdomain + custom document root | [VERIFY] | server layout §2 |
+| DB engine + version (MySQL/MariaDB, PostgreSQL?) | Both MySQL (phpMyAdmin) and PostgreSQL (phpPgAdmin) present; versions [VERIFY] | DATABASE.md generated column + CHECK constraints need MySQL ≥ 8.0.16 / MariaDB ≥ 10.6 |
+| SSH / Terminal | YES — SSH Access + Terminal present (key-based SSH for CI to be confirmed) | deploy via rsync+SSH vs FTPS + deploy hook |
+| Cron Jobs + PHP CLI path | Cron Jobs present; PHP CLI path [VERIFY via hostcheck] | `schedule:run` every minute |
+| Git Version Control | YES | informational |
+| Node.js app | YES (Setup Node.js App; not used) | informational (not used) |
+| SSL (AutoSSL) | SSL certificate active on primary domain; itcode.uz coverage [VERIFY] | HTTPS mandatory, ESP32 pinned root CA |
+| Domain / subdomain + custom document root | itcode.uz; subdomain + document root [VERIFY] | server layout §2 |
 | memory_limit / max_execution_time / upload_max_filesize | [VERIFY] | photo upload (2 MB), queue worker `--max-time=50` |
 | Disk quota / inodes | [VERIFY] | photo retention, backups |
-| LVE: entry processes / processes / RAM | [VERIFY] | device poll load (~17 req/s at 50 devices) |
+| LVE: entry processes / processes / RAM | CloudLinux LVE (Resource Usage page) — values [VERIFY] | device poll load (~17 req/s at 50 devices) |
 | shell_exec / proc_open enabled | [VERIFY] | `mysqldump` backups |
 | symlink works | [VERIFY] | `current -> releases/…` layout |
 | Outbound HTTPS to api.telegram.org | [VERIFY] | Telegram reports |

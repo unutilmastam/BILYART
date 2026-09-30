@@ -5,7 +5,7 @@ Updated by Claude Code at the end of every session.
 | Phase | Status | Notes |
 |---|---|---|
 | 0. Architecture pack | DONE | CLAUDE.md + docs prepared before coding |
-| 1. Inspect repo & hosting | IN PROGRESS | Skeleton, CI, hosting-check tooling done. Waiting for owner's hosting report (DEPLOYMENT.md §1). |
+| 1. Inspect repo & hosting | IN PROGRESS | Skeleton, CI, hosting-check tooling done. cPanel Tools screenshot + domain received. Waiting for hostcheck page screenshot + Resource Usage / Domains / PHP screenshots. |
 | 2–16 | TODO | see ROADMAP.md |
 
 ## Phase 1 — session 1 (2026-09-30)
@@ -20,12 +20,17 @@ Remaining for Phase 1:
 - Owner answers the open questions below.
 
 ## Open questions for the owner
-1. Platform domain/subdomain (e.g. `billiard.<domain>`)? Can its document root be set to a custom folder in cPanel → Domains?
+1. ~~Platform domain~~ → **itcode.uz**. Still open: root domain or a subdomain (e.g. `billiard.itcode.uz`)? Its document root in cPanel → Domains?
 2. First ESP32 flash method: USB-OTG from an Android phone, or one-time on any computer?
 3. Tablet model and Android version for kiosk testing? Can it be factory-reset (needed for Device Owner QR provisioning)?
 4. How many halls/tables for the pilot, and the lamp power per table (for relay/contactor sizing)?
 5. Repository is **public**. Recommend making it private (GitHub → Settings → Danger Zone → Change visibility). Note: private repos have a monthly free Actions-minutes limit.
 6. Hostmaster plan name (for LVE limits) — visible in the Hostmaster client area.
+
+## Phase 1 — session 2 (2026-09-30)
+- Owner sent the cPanel Tools screenshot + domain `itcode.uz` → recorded in DEPLOYMENT.md §1 (SSH, Terminal, Cron, Git VC, MySQL **and PostgreSQL**, Node/Python apps, CloudLinux LVE).
+- Owner could not copy JSON → hostcheck page now shows a full screenshot-friendly table; JSON moved to an optional collapsed block.
+- Owner authorized Claude to merge PRs itself (CLAUDE.md §2).
 
 ## Known issues
 - Repository is public: `hosting-check` artifact (1-day retention) is downloadable by any signed-in GitHub user. Mitigated: domain not included in the artifact, file self-deletes on first view and after 24 h, report contains no secrets.
