@@ -5,6 +5,8 @@ namespace App\Providers;
 use App\Domain\Auth\CurrentPrincipal;
 use App\Domain\Photos\Storage\LocalPrivateDisk;
 use App\Domain\Photos\Storage\PhotoStorage;
+use App\Domain\Telegram\Client\HttpTelegramClient;
+use App\Domain\Telegram\Client\TelegramClient;
 use App\Domain\Tenancy\TenantContext;
 use App\Domain\Users\Auth\TenantAgnosticUserProvider;
 use Illuminate\Cache\RateLimiting\Limit;
@@ -21,6 +23,9 @@ class AppServiceProvider extends ServiceProvider
         // One context/principal per request or queued job (scoped instances are reset between them).
         $this->app->scoped(TenantContext::class);
         $this->app->scoped(CurrentPrincipal::class);
+
+        // Telegram Bot API adapter (real HTTP; tests fake the HTTP layer).
+        $this->app->bind(TelegramClient::class, HttpTelegramClient::class);
 
         // Photo storage adapter (spec §22). v1: private local disk on the hosting.
         $this->app->bind(PhotoStorage::class, LocalPrivateDisk::class);
@@ -48,6 +53,7 @@ class AppServiceProvider extends ServiceProvider
         RateLimiter::for('tablet', fn (Request $request) => Limit::perMinute(120)->by('tablet:'.($request->bearerToken() ? hash('sha256', $request->bearerToken()) : $request->ip())));
         RateLimiter::for('photo-upload', fn (Request $request) => Limit::perMinute(10)->by('photo:'.($request->bearerToken() ? hash('sha256', $request->bearerToken()) : $request->ip())));
         RateLimiter::for('device', fn (Request $request) => Limit::perMinute(40)->by('device:'.sha1((string) $request->header('Authorization')).$request->ip()));
+        RateLimiter::for('telegram', fn (Request $request) => Limit::perMinute(120)->by('tg:'.$request->route('integration')));
         RateLimiter::for('admin', fn (Request $request) => Limit::perMinute(300)->by('admin:'.($request->user()?->id ?? $request->ip())));
     }
 }

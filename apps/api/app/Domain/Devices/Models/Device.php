@@ -31,6 +31,7 @@ class Device extends Model
             'status' => DeviceStatus::class,
             'last_state' => 'array',
             'last_seen_at' => 'immutable_datetime',
+            'offline_since' => 'immutable_datetime',
             'registered_at' => 'immutable_datetime',
             'paired_at' => 'immutable_datetime',
             'revoked_at' => 'immutable_datetime',

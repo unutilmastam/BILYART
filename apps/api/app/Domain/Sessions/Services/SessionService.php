@@ -8,6 +8,8 @@ use App\Domain\Branches\Models\Branch;
 use App\Domain\Branches\Services\WorkingHoursCalendar;
 use App\Domain\Devices\Models\Device;
 use App\Domain\Devices\Services\DeviceCommandBus;
+use App\Domain\Notifications\Enums\Severity;
+use App\Domain\Notifications\Services\NotificationService;
 use App\Domain\Pricing\Models\PricingPlan;
 use App\Domain\Pricing\Services\PriceCalculator;
 use App\Domain\Sessions\Enums\PaymentStatus;
@@ -197,6 +199,16 @@ final class SessionService
                 $this->commands->stopSession($device, $locked);
             }
             $this->audit->log('session.failed', $locked, ['reason' => $reason], ['actor_type' => ActorType::SYSTEM, 'actor_id' => null]);
+            $table = BilliardTable::query()->find($locked->table_id);
+            app(NotificationService::class)->notify($locked->tenant_id, 'session_failed', 'session_failed:'.$locked->id, [
+                'text' => __('notifications.session_failed', [
+                    'table' => $table?->name ?? '—',
+                    'branch' => Branch::query()->find($locked->branch_id)?->name ?? '—',
+                    'reason' => __('notifications.reason.'.$reason) !== 'notifications.reason.'.$reason ? __('notifications.reason.'.$reason) : $reason,
+                ]),
+                'branchId' => $locked->branch_id,
+                'sessionId' => $locked->public_id,
+            ], Severity::CRITICAL);
 
             return $locked;
         });

@@ -35,4 +35,9 @@ return [
         ],
     ],
 
+    'telegram' => [
+        // Public base URL Telegram calls for webhooks (HTTPS). Defaults to APP_URL.
+        'webhook_base_url' => env('TELEGRAM_WEBHOOK_BASE_URL', env('APP_URL')),
+    ],
+
 ];
