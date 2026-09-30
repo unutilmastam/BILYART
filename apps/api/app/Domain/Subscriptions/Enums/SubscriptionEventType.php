@@ -13,6 +13,7 @@ enum SubscriptionEventType: string
     case DEACTIVATED = 'DEACTIVATED';
     case EXPIRED = 'EXPIRED';
     case LIMIT_CHANGED = 'LIMIT_CHANGED';
+    case EXPIRY_SET = 'EXPIRY_SET';
 
     /** @return list<string> */
     public static function values(): array

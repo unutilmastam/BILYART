@@ -3,8 +3,10 @@
 namespace App\Domain\Tenancy\Models;
 
 use App\Domain\Branches\Models\Branch;
+use App\Domain\Devices\Models\Device;
 use App\Domain\Subscriptions\Models\Subscription;
 use App\Domain\Subscriptions\Models\SubscriptionPayment;
+use App\Domain\Tables\Models\BilliardTable;
 use App\Domain\Tenancy\Enums\SubscriptionStatus;
 use App\Domain\Tenancy\Enums\TenantStatusFlag;
 use App\Domain\Users\Models\User;
@@ -12,6 +14,7 @@ use App\Support\Concerns\HasPublicId;
 use Carbon\CarbonImmutable;
 use Database\Factories\TenantFactory;
 use Illuminate\Database\Eloquent\Attributes\UseFactory;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -85,6 +88,28 @@ class Tenant extends Model
         return (int) ceil($now->diffInSeconds($this->subscription_expires_at) / 86400);
     }
 
+    /**
+     * Filters by the derived subscription status (same rules as subscriptionStatus()).
+     *
+     * @param  Builder<Tenant>  $query
+     */
+    public function scopeWhereSubscriptionStatus(Builder $query, SubscriptionStatus $status, ?CarbonImmutable $now = null): void
+    {
+        $now ??= CarbonImmutable::now();
+        $soon = $now->addDays(self::EXPIRING_SOON_DAYS);
+
+        match ($status) {
+            SubscriptionStatus::DEACTIVATED => $query->where('status_flag', TenantStatusFlag::DEACTIVATED->value),
+            SubscriptionStatus::SUSPENDED => $query->where('status_flag', TenantStatusFlag::SUSPENDED->value),
+            SubscriptionStatus::EXPIRED => $query->where('status_flag', TenantStatusFlag::ACTIVE->value)
+                ->where(fn (Builder $q) => $q->whereNull('subscription_expires_at')->orWhere('subscription_expires_at', '<=', $now)),
+            SubscriptionStatus::EXPIRING_SOON => $query->where('status_flag', TenantStatusFlag::ACTIVE->value)
+                ->where('subscription_expires_at', '>', $now)->where('subscription_expires_at', '<=', $soon),
+            SubscriptionStatus::ACTIVE => $query->where('status_flag', TenantStatusFlag::ACTIVE->value)
+                ->where('subscription_expires_at', '>', $soon),
+        };
+    }
+
     /** @return HasMany<Branch, $this> */
     public function branches(): HasMany
     {
@@ -95,6 +120,18 @@ class Tenant extends Model
     public function users(): HasMany
     {
         return $this->hasMany(User::class);
+    }
+
+    /** @return HasMany<BilliardTable, $this> */
+    public function tables(): HasMany
+    {
+        return $this->hasMany(BilliardTable::class);
+    }
+
+    /** @return HasMany<Device, $this> */
+    public function devices(): HasMany
+    {
+        return $this->hasMany(Device::class);
     }
 
     /** @return HasMany<Subscription, $this> */

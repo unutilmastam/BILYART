@@ -29,9 +29,9 @@ Each phase = one or more PRs. Owner starts a phase by writing **"Phase N ni bosh
 - [x] Tests: spec §43 items 1–3, 13
 
 ## Phase 5 — Super Admin
-- [ ] API: tenants CRUD, suspend/activate/deactivate, payments, extend (both rules), limits, subscription history, audit list, dashboard stats
-- [ ] web-admin: Super Admin area (mobile-first)
-- [ ] Tests: extend from active vs expired, limit change audit
+- [x] API: tenants CRUD, suspend/activate/deactivate, payments, extend (both rules), set expiry, limits, subscription history, audit list, dashboard stats, platform settings
+- [x] web-admin: Super Admin area (mobile-first PWA)
+- [x] Tests: extend from active vs expired, limit change audit
 
 ## Phase 6 — Client Admin
 - [ ] Branches (LimitGuard), working hours, closed days, users & roles, pricing plans, tenant settings

@@ -40,6 +40,11 @@ Remaining for Phase 1:
 - Fixed: Laravel's `/storage/{path}` file serving disabled (would have exposed private files).
 - First read-only admin endpoints: `GET /api/admin/branches[/{branch}]` (used by the isolation tests).
 
+## Phase 5 — session 4 (2026-09-30)
+- API `/api/super/*`: dashboard, tenants list (derived-status filter, search, usage counts), create (owner + optional first payment), update, suspend/activate/deactivate, payments (base = max(now, expiry)), extend, set expiry (new event type via migration 2026_10_02_000001), limits (LIMIT_CHANGED old/new), subscription history, owner password reset (temporary password shown once), payments list with sum, audit log with filters, platform settings. `/api/admin/subscription` shows status + payment instructions even when inactive.
+- `apps/web-admin`: PWA shell, login, Super Admin pages (dashboard, clients list/create/detail with all actions, payments, audit, settings), client home with subscription status. 12 vitest tests (format, API client, login flow, guards).
+- Laravel serves the PWA shell for `/admin/*` deep links (`SpaController`). CI job `web-admin` uploads the `web-admin-dist` artifact.
+
 ## Open questions for the owner
 1. ~~Platform domain~~ → **itcode.uz**. Still open: root domain or a subdomain (e.g. `billiard.itcode.uz`)? Its document root in cPanel → Domains?
 2. ~~First ESP32 flash method~~ → from a computer (owner, 2026-09-30).
