@@ -99,7 +99,7 @@ jobs:
       - uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php }}
-          extensions: pdo_mysql, pdo_pgsql, intl, gd, sodium, bcmath, zip
+          extensions: pdo_mysql, pdo_pgsql, intl, gd, sodium, bcmath, zip, pcntl, posix
           coverage: none
       - uses: actions/cache@v4
         with:
