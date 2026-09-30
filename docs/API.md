@@ -64,10 +64,10 @@ Tenant, branch and table are **always** resolved from the principal, never from 
 | GET | `/dashboard?branchId=` | `sessions.view` |
 | GET/POST | `/branches` | view: any · create: `branches.manage` (LimitGuard) |
 | GET/PATCH/DELETE | `/branches/{branch}` | `branches.manage` (DELETE = disable) |
-| GET/PUT | `/branches/{branch}/working-hours` | `working_hours.manage` — 7 rows |
+| GET/PUT | `/branches/{branch}/working-hours` | `working_hours.manage` — `{days:[{weekday 1–7 (ISO), isClosed, opensAt 'HH:MM', closesAt 'HH:MM'}]}` ×7; 00:00–00:00 = open all day; closesAt ≤ opensAt = past midnight (shift belongs to its start day) |
 | GET/POST/DELETE | `/branches/{branch}/closed-days[/{day}]` | `working_hours.manage` |
 | GET/POST | `/tables` (`?branchId=`) | view `tables.view` · create `tables.manage` (LimitGuard) |
-| GET/PATCH/DELETE | `/tables/{table}` | `tables.manage` |
+| GET/PATCH/DELETE | `/tables/{table}` | view `tables.view` · change `tables.manage` (DELETE = disable; re-enable passes LimitGuard) · `{branchId (create only), number, name, pricingPlanId, isActive}` |
 | GET/POST/PATCH/DELETE | `/pricing-plans[/{plan}]` | `pricing.manage` |
 | GET/POST/PATCH | `/users[/{user}]` · POST `/users/{user}/deactivate` | `users.manage` (LimitGuard; managers cannot manage owners) |
 | GET | `/devices` | `tables.view` — real online/offline from heartbeats |

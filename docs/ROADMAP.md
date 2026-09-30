@@ -34,9 +34,9 @@ Each phase = one or more PRs. Owner starts a phase by writing **"Phase N ni bosh
 - [x] Tests: extend from active vs expired, limit change audit
 
 ## Phase 6 — Client Admin
-- [ ] Branches (LimitGuard), working hours, closed days, users & roles, pricing plans, tenant settings
-- [ ] web-admin client area + dashboard
-- [ ] Tests: spec §61 branch limit scenario (2 → denied → limit 3 → success), §43 item 7–8
+- [x] Branches (LimitGuard), working hours, closed days, users & roles, pricing plans, tenant settings (+ tables CRUD, branch access restriction)
+- [x] web-admin client area (dashboard grows with sessions in Phase 7)
+- [x] Tests: spec §61 branch limit scenario (2 → denied → limit 3 → success), §43 item 7–8
 
 ## Phase 7 — Tables & session engine
 - [ ] Tables CRUD, SessionStateMachine, SessionService, PriceCalculator, working-hours check

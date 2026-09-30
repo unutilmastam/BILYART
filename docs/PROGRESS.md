@@ -45,6 +45,13 @@ Remaining for Phase 1:
 - `apps/web-admin`: PWA shell, login, Super Admin pages (dashboard, clients list/create/detail with all actions, payments, audit, settings), client home with subscription status. 12 vitest tests (format, API client, login flow, guards).
 - Laravel serves the PWA shell for `/admin/*` deep links (`SpaController`). CI job `web-admin` uploads the `web-admin-dist` artifact.
 
+## Phase 6 — session 4 (2026-09-30)
+- `LimitGuard` (tenant row `FOR UPDATE`, only active rows count, re-activation re-checked) for branches, tables, users (devices in Phase 10).
+- Branches CRUD (+ default 24/7 hours), working hours (ISO weekdays, past-midnight shifts), closed days, `WorkingHoursCalendar` (branch timezone, shift belongs to start day).
+- Tables CRUD (unique number per branch, plan must be global or same branch), pricing plans CRUD with live quotes (`PriceCalculator`: integer maths, round *up* to step), staff (owner/manager rules, last-owner protection, no self-deactivation, per-branch restriction via `BranchAccess`), tenant settings (privacy notice, retention, photo required, warning text/minutes, operators-can-view-photos), tenant audit log.
+- Bug caught by the 3-DB matrix: PostgreSQL rejects `COUNT(*) … FOR UPDATE` → lock rows then count.
+- web-admin client area: branches (+ hours editor, closed days), tables (plan assignment, device status), pricing plans (quotes), staff (roles, branch picker), settings; nav filtered by permissions.
+
 ## Open questions for the owner
 1. ~~Platform domain~~ → **itcode.uz**. Still open: root domain or a subdomain (e.g. `billiard.itcode.uz`)? Its document root in cPanel → Domains?
 2. ~~First ESP32 flash method~~ → from a computer (owner, 2026-09-30).
