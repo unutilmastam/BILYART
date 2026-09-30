@@ -1,0 +1,22 @@
+name: Hosting check (build file)
+
+# Owner runs this from the GitHub web UI: Actions -> "Hosting check (build file)" -> Run workflow.
+# Produces a one-time PHP file with a random name and token to upload via cPanel File Manager.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: infrastructure/hosting-check/build.sh dist
+      - uses: actions/upload-artifact@v4
+        with:
+          name: hosting-check
+          path: dist/
+          retention-days: 1
