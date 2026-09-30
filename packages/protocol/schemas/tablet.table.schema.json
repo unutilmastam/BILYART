@@ -1,0 +1,60 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://protocol.bilyart/tablet.table.schema.json",
+  "title": "TabletTable",
+  "description": "A table as the kiosk sees it. status is derived server-side.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "number", "name", "status", "session", "pricing"],
+  "properties": {
+    "id": { "$ref": "common.schema.json#/definitions/PublicId" },
+    "number": { "type": "integer", "minimum": 1 },
+    "name": { "type": "string" },
+    "status": { "$ref": "common.schema.json#/definitions/TableStatus" },
+    "session": {
+      "oneOf": [
+        { "type": "null" },
+        {
+          "title": "TabletTableSession",
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["id", "status", "startAt", "endAt"],
+          "properties": {
+            "id": { "$ref": "common.schema.json#/definitions/PublicId" },
+            "status": { "$ref": "common.schema.json#/definitions/SessionStatus" },
+            "startAt": { "oneOf": [{ "$ref": "common.schema.json#/definitions/IsoUtc" }, { "type": "null" }] },
+            "endAt": { "oneOf": [{ "$ref": "common.schema.json#/definitions/IsoUtc" }, { "type": "null" }] }
+          }
+        }
+      ]
+    },
+    "pricing": {
+      "oneOf": [
+        { "type": "null" },
+        {
+          "title": "TabletPricing",
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["type", "pricePerHour", "durations"],
+          "properties": {
+            "type": { "type": "string", "enum": ["HOURLY"] },
+            "pricePerHour": { "$ref": "common.schema.json#/definitions/MoneyUzs" },
+            "durations": {
+              "type": "array",
+              "items": {
+                "title": "TabletDurationQuote",
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["minutes", "amount"],
+                "properties": {
+                  "minutes": { "type": "integer", "minimum": 1, "maximum": 720 },
+                  "amount": { "$ref": "common.schema.json#/definitions/MoneyUzs" }
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

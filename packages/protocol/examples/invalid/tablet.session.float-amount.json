@@ -1,0 +1,2 @@
+{ "serverTime": "2026-10-01T10:00:00Z", "session": { "id": "01J9ZQ3K8M4N5P6Q7R8S9T0V1W", "tableId": "01J9ZQ3K8M4N5P6Q7R8S9T0V3Y", "tableNumber": 1, "status": "RESERVED", "durationMinutes": 60, "amount": 20000.5,
+  "reservedUntil": null, "startAt": null, "endAt": null, "hasPhoto": false } }

@@ -1,0 +1,126 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://protocol.bilyart/common.schema.json",
+  "title": "Common",
+  "description": "Shared definitions. All times are Unix epoch seconds (UTC) for devices, ISO-8601 UTC strings for tablet/admin APIs. Money is integer UZS.",
+  "definitions": {
+    "PublicId": {
+      "title": "PublicId",
+      "type": "string",
+      "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$",
+      "description": "ULID exposed in APIs"
+    },
+    "EpochSeconds": {
+      "title": "EpochSeconds",
+      "type": "integer",
+      "minimum": 0
+    },
+    "IsoUtc": {
+      "title": "IsoUtc",
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,6})?Z$"
+    },
+    "MoneyUzs": {
+      "title": "MoneyUzs",
+      "type": "integer",
+      "minimum": 0
+    },
+    "DeviceCode": {
+      "title": "DeviceCode",
+      "type": "string",
+      "pattern": "^ESP32-[0-9A-F]{6}$"
+    },
+    "TabletCode": {
+      "title": "TabletCode",
+      "type": "string",
+      "pattern": "^TABLET-[0-9A-Z]{6}$"
+    },
+    "PairingCode": {
+      "title": "PairingCode",
+      "type": "string",
+      "pattern": "^[0-9]{6}$"
+    },
+    "SemVer": {
+      "title": "SemVer",
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+(-[0-9A-Za-z.-]+)?$"
+    },
+    "LightState": {
+      "title": "LightState",
+      "type": "string",
+      "enum": [
+        "ON",
+        "OFF",
+        "WARNING"
+      ]
+    },
+    "SessionStatus": {
+      "title": "SessionStatus",
+      "type": "string",
+      "enum": [
+        "RESERVED",
+        "STARTING",
+        "ACTIVE",
+        "COMPLETING",
+        "COMPLETED",
+        "CANCELLED",
+        "FAILED"
+      ]
+    },
+    "TableStatus": {
+      "title": "TableStatus",
+      "type": "string",
+      "description": "Derived display status of a table",
+      "enum": [
+        "AVAILABLE",
+        "RESERVED",
+        "STARTING",
+        "BUSY",
+        "WARNING",
+        "DISABLED",
+        "DEVICE_OFFLINE",
+        "CLOSED"
+      ]
+    },
+    "ApiError": {
+      "title": "ApiError",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "error"
+      ],
+      "properties": {
+        "error": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "code",
+            "message"
+          ],
+          "properties": {
+            "code": {
+              "type": "string",
+              "pattern": "^[A-Z][A-Z0-9_]*$"
+            },
+            "message": {
+              "type": "string"
+            },
+            "fields": {
+              "type": "object",
+              "description": "Validation errors per field",
+              "additionalProperties": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "requestId": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    }
+  }
+}

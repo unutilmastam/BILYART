@@ -1,0 +1,4 @@
+{ "serverTime": "2026-10-01T10:30:00.123Z", "isOpenNow": true, "tables": [ { "id": "01J9ZQ3K8M4N5P6Q7R8S9T0V3Y", "number": 1, "name": "1-stol", "status": "BUSY",
+  "session": { "id": "01J9ZQ3K8M4N5P6Q7R8S9T0V1W", "status": "ACTIVE", "startAt": "2026-10-01T10:00:00Z", "endAt": "2026-10-01T11:00:00Z" },
+  "pricing": { "type": "HOURLY", "pricePerHour": 20000, "durations": [ { "minutes": 30, "amount": 10000 }, { "minutes": 60, "amount": 20000 } ] } },
+  { "id": "01J9ZQ3K8M4N5P6Q7R8S9T0V2X", "number": 2, "name": "2-stol", "status": "AVAILABLE", "session": null, "pricing": null } ] }

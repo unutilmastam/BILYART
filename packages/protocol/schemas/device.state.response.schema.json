@@ -1,0 +1,30 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://protocol.bilyart/device.state.response.schema.json",
+  "title": "DeviceStateResponse",
+  "description": "GET /device/v1/state — authoritative state after boot/reconnect (SYNC).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["serverTime", "session", "config"],
+  "properties": {
+    "serverTime": { "$ref": "common.schema.json#/definitions/EpochSeconds" },
+    "session": {
+      "oneOf": [
+        { "type": "null" },
+        {
+          "title": "DeviceStateSession",
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["sessionId", "startAt", "endAt", "status"],
+          "properties": {
+            "sessionId": { "$ref": "common.schema.json#/definitions/PublicId" },
+            "startAt": { "$ref": "common.schema.json#/definitions/EpochSeconds" },
+            "endAt": { "$ref": "common.schema.json#/definitions/EpochSeconds" },
+            "status": { "type": "string", "enum": ["STARTING", "ACTIVE"] }
+          }
+        }
+      ]
+    },
+    "config": { "$ref": "device.command.schema.json#/definitions/DeviceConfig" }
+  }
+}

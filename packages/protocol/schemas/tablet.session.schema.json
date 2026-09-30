@@ -1,0 +1,30 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://protocol.bilyart/tablet.session.schema.json",
+  "title": "TabletSession",
+  "description": "Response of prepare / photo / start / cancel / show.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["serverTime", "session"],
+  "properties": {
+    "serverTime": { "$ref": "common.schema.json#/definitions/IsoUtc" },
+    "session": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "tableId", "tableNumber", "status", "durationMinutes", "amount", "reservedUntil", "startAt", "endAt", "hasPhoto"],
+      "properties": {
+        "id": { "$ref": "common.schema.json#/definitions/PublicId" },
+        "tableId": { "$ref": "common.schema.json#/definitions/PublicId" },
+        "tableNumber": { "type": "integer", "minimum": 1 },
+        "status": { "$ref": "common.schema.json#/definitions/SessionStatus" },
+        "durationMinutes": { "type": "integer", "minimum": 1 },
+        "amount": { "$ref": "common.schema.json#/definitions/MoneyUzs" },
+        "reservedUntil": { "oneOf": [{ "$ref": "common.schema.json#/definitions/IsoUtc" }, { "type": "null" }] },
+        "startAt": { "oneOf": [{ "$ref": "common.schema.json#/definitions/IsoUtc" }, { "type": "null" }] },
+        "endAt": { "oneOf": [{ "$ref": "common.schema.json#/definitions/IsoUtc" }, { "type": "null" }] },
+        "hasPhoto": { "type": "boolean" },
+        "failureReason": { "oneOf": [{ "type": "string" }, { "type": "null" }] }
+      }
+    }
+  }
+}

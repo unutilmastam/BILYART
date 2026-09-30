@@ -1,5 +1,7 @@
 # DEVICE PROTOCOL (v1 — HTTPS polling)
 
+Message schemas: `packages/protocol/schemas/device.*.schema.json` (single source; server tests validate against them).
+
 Base URL: `https://<domain>/device/v1`. TLS required; firmware validates the server certificate against a pinned root CA bundle (ISRG Root X1 + backup). All bodies JSON. All times = **Unix epoch seconds, UTC**.
 
 ## 1. Identity
@@ -11,11 +13,11 @@ Base URL: `https://<domain>/device/v1`. TLS required; firmware validates the ser
 ## 2. Provisioning & pairing
 1. First boot (no Wi-Fi creds): AP `BILLIARD-<last4>` + captive portal (password printed on the device label).
 2. Owner's phone connects → portal form: Wi-Fi SSID/password → device joins Wi-Fi.
-3. `POST /register` `{hardwareId, firmwareVersion, registrationSecret}` → `{deviceCode, pairingCode, pairingExpiresAt, pollToken}`
+3. `POST /register` `{hardwareId, firmwareVersion, registrationSecret}` → `{deviceCode, pairingCode, pairingExpiresAt, pollToken, serverTime}`
    - `registrationSecret` = per-build secret to stop random internet clients from spamming registrations (rate-limited per IP too). It is **not** trusted as ownership proof.
    - `pairingCode` = 6 digits, 15 min TTL, max 5 wrong attempts, stored hashed. Portal page shows it.
 4. Owner: Admin → Devices → Add device → code + branch + table → confirm. Server binds device to tenant/branch/table, audit `device.paired`.
-5. Device polls `GET /pairing-status` (with `pollToken`) every 3 s → once bound: `{status:"PAIRED", token}` returned **exactly once**. Device stores token in NVS (encrypted NVS partition if enabled).
+5. Device polls `GET /pairing-status` (header `Authorization: PollToken <pollToken>`) every 3 s → `{status: WAITING|PAIRED|EXPIRED, serverTime}` → once bound: `{status:"PAIRED", token}` returned **exactly once**. Device stores token in NVS (encrypted NVS partition if enabled).
 6. Unpair (admin) → token revoked, device goes back to step 3 on next call (401 → `REPAIR_REQUIRED`). Re-pairing to another tenant requires physical access (portal) — spec §17.
 
 ## 3. Endpoints
@@ -60,7 +62,7 @@ Server marks returned commands `SENT`. Heartbeat updates `devices.last_seen_at`;
 Rules: device **ignores commands whose `expiresAt` < serverTime**; commands are **idempotent** by `commandId` (last 16 applied IDs kept in RAM/NVS).
 
 ### `/ack`
-`{ "acks": [ { "commandId": "01J...", "result": "OK|ERROR", "error": null, "state": "ON" } ] }` → command `ACKNOWLEDGED`/`FAILED`. START ack moves session STARTING → ACTIVE.
+`{ "acks": [ { "commandId": "01J...", "result": "OK|ERROR|IGNORED", "error": null, "state": "ON" } ] }` → `{serverTime, accepted: [commandId…]}`; command `ACKNOWLEDGED` (OK/IGNORED — IGNORED = duplicate or expired, still counts as delivered) / `FAILED` (ERROR). START ack moves session STARTING → ACTIVE.
 
 ### Retry policy (server)
 A `SENT` command without ACK is re-delivered on next poll after 6 s, max 3 attempts, then `FAILED` (START → session FAILED + STOP queued + notification). A command past `expiresAt` → `EXPIRED`.

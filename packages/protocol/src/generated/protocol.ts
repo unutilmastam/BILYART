@@ -1,0 +1,416 @@
+/* eslint-disable */
+/**
+ * GENERATED FILE — do not edit. Source: packages/protocol/schemas/*.schema.json
+ * Regenerate: npm run generate (in packages/protocol)
+ */
+
+/**
+ * ULID exposed in APIs
+ *
+ * This interface was referenced by `ProtocolRoot`'s JSON-Schema
+ * via the `definition` "PublicId".
+ */
+export type PublicId = string;
+/**
+ * This interface was referenced by `ProtocolRoot`'s JSON-Schema
+ * via the `definition` "EpochSeconds".
+ */
+export type EpochSeconds = number;
+/**
+ * This interface was referenced by `ProtocolRoot`'s JSON-Schema
+ * via the `definition` "IsoUtc".
+ */
+export type IsoUtc = string;
+/**
+ * This interface was referenced by `ProtocolRoot`'s JSON-Schema
+ * via the `definition` "MoneyUzs".
+ */
+export type MoneyUzs = number;
+/**
+ * This interface was referenced by `ProtocolRoot`'s JSON-Schema
+ * via the `definition` "DeviceCode".
+ */
+export type DeviceCode = string;
+/**
+ * This interface was referenced by `ProtocolRoot`'s JSON-Schema
+ * via the `definition` "TabletCode".
+ */
+export type TabletCode = string;
+/**
+ * This interface was referenced by `ProtocolRoot`'s JSON-Schema
+ * via the `definition` "PairingCode".
+ */
+export type PairingCode = string;
+/**
+ * This interface was referenced by `ProtocolRoot`'s JSON-Schema
+ * via the `definition` "SemVer".
+ */
+export type SemVer = string;
+/**
+ * This interface was referenced by `ProtocolRoot`'s JSON-Schema
+ * via the `definition` "LightState".
+ */
+export type LightState = 'ON' | 'OFF' | 'WARNING';
+/**
+ * This interface was referenced by `ProtocolRoot`'s JSON-Schema
+ * via the `definition` "SessionStatus".
+ */
+export type SessionStatus =
+  'RESERVED' | 'STARTING' | 'ACTIVE' | 'COMPLETING' | 'COMPLETED' | 'CANCELLED' | 'FAILED';
+/**
+ * Derived display status of a table
+ *
+ * This interface was referenced by `ProtocolRoot`'s JSON-Schema
+ * via the `definition` "TableStatus".
+ */
+export type TableStatus =
+  'AVAILABLE' | 'RESERVED' | 'STARTING' | 'BUSY' | 'WARNING' | 'DISABLED' | 'DEVICE_OFFLINE' | 'CLOSED';
+/**
+ * Command delivered in /poll responses. Device ignores commands with expiresAt < serverTime and deduplicates by commandId.
+ *
+ * This interface was referenced by `ProtocolRoot`'s JSON-Schema
+ * via the `definition` "DeviceCommand".
+ */
+export type DeviceCommand =
+  | StartSessionCommand
+  | StopSessionCommand
+  | WarningCommand
+  | SyncCommand
+  | PingCommand
+  | ConfigUpdateCommand
+  | OtaCommand;
+
+/**
+ * This interface was referenced by `ProtocolRoot`'s JSON-Schema
+ * via the `definition` "ApiError".
+ */
+export interface ApiError {
+  error: {
+    code: string;
+    message: string;
+    /**
+     * Validation errors per field
+     */
+    fields?: {
+      [k: string]: string[] | undefined;
+    };
+    requestId?: string;
+  };
+}
+/**
+ * POST /device/v1/ack
+ *
+ * This interface was referenced by `ProtocolRoot`'s JSON-Schema
+ * via the `definition` "DeviceAckRequest".
+ */
+export interface DeviceAckRequest {
+  /**
+   * @minItems 1
+   * @maxItems 20
+   */
+  acks: DeviceAck[];
+}
+export interface DeviceAck {
+  commandId: PublicId;
+  result: 'OK' | 'ERROR' | 'IGNORED';
+  error?: string | null;
+  state?: LightState;
+}
+/**
+ * This interface was referenced by `ProtocolRoot`'s JSON-Schema
+ * via the `definition` "DeviceAckResponse".
+ */
+export interface DeviceAckResponse {
+  serverTime: EpochSeconds;
+  accepted: PublicId[];
+}
+export interface StartSessionCommand {
+  commandId: PublicId;
+  expiresAt: EpochSeconds;
+  type: 'START_SESSION';
+  payload: {
+    sessionId: PublicId;
+    startAt: EpochSeconds;
+    endAt: EpochSeconds;
+    warnBeforeSec: number;
+    flashCount: number;
+  };
+}
+export interface StopSessionCommand {
+  commandId: PublicId;
+  expiresAt: EpochSeconds;
+  type: 'STOP_SESSION';
+  payload: {
+    sessionId: PublicId;
+  };
+}
+export interface WarningCommand {
+  commandId: PublicId;
+  expiresAt: EpochSeconds;
+  type: 'WARNING';
+  payload: {
+    sessionId: PublicId;
+    flashCount: number;
+  };
+}
+export interface SyncCommand {
+  commandId: PublicId;
+  expiresAt: EpochSeconds;
+  type: 'SYNC';
+  payload: {};
+}
+export interface PingCommand {
+  commandId: PublicId;
+  expiresAt: EpochSeconds;
+  type: 'PING';
+  payload: {};
+}
+export interface ConfigUpdateCommand {
+  commandId: PublicId;
+  expiresAt: EpochSeconds;
+  type: 'CONFIG_UPDATE';
+  payload: DeviceConfig;
+}
+export interface DeviceConfig {
+  pollIntervalSec: number;
+  maxSessionSec: number;
+  warnBeforeSec: number;
+  flashCount: number;
+}
+export interface OtaCommand {
+  commandId: PublicId;
+  expiresAt: EpochSeconds;
+  type: 'OTA';
+  payload: {
+    version: SemVer;
+    sha256: string;
+    size: number;
+  };
+}
+/**
+ * GET /device/v1/pairing-status (Authorization: PollToken <pollToken>). token is returned exactly once.
+ *
+ * This interface was referenced by `ProtocolRoot`'s JSON-Schema
+ * via the `definition` "DevicePairingStatusResponse".
+ */
+export interface DevicePairingStatusResponse {
+  status: 'WAITING' | 'PAIRED' | 'EXPIRED';
+  /**
+   * Present only in the first PAIRED response
+   */
+  token?: string;
+  serverTime: EpochSeconds;
+}
+/**
+ * POST /device/v1/poll — also the heartbeat. ts is the device clock (informational only). Tenant/branch/table are never accepted from the device.
+ *
+ * This interface was referenced by `ProtocolRoot`'s JSON-Schema
+ * via the `definition` "DevicePollRequest".
+ */
+export interface DevicePollRequest {
+  ts: EpochSeconds;
+  fw: SemVer;
+  state: LightState;
+  sessionId?: PublicId | null;
+  endAt?: EpochSeconds | null;
+  rssi?: number;
+  uptime?: number;
+  bootReason?: string;
+  lastAppliedCommandId?: PublicId | null;
+}
+/**
+ * This interface was referenced by `ProtocolRoot`'s JSON-Schema
+ * via the `definition` "DevicePollResponse".
+ */
+export interface DevicePollResponse {
+  serverTime: EpochSeconds;
+  /**
+   * @maxItems 10
+   */
+  commands: DeviceCommand[];
+  pollIntervalSec: number;
+}
+/**
+ * POST /device/v1/register
+ *
+ * This interface was referenced by `ProtocolRoot`'s JSON-Schema
+ * via the `definition` "DeviceRegisterRequest".
+ */
+export interface DeviceRegisterRequest {
+  /**
+   * eFuse MAC, uppercase hex
+   */
+  hardwareId: string;
+  firmwareVersion: SemVer;
+  registrationSecret: string;
+}
+/**
+ * This interface was referenced by `ProtocolRoot`'s JSON-Schema
+ * via the `definition` "DeviceRegisterResponse".
+ */
+export interface DeviceRegisterResponse {
+  deviceCode: DeviceCode;
+  pairingCode: PairingCode;
+  pairingExpiresAt: EpochSeconds;
+  /**
+   * Only valid for GET /pairing-status
+   */
+  pollToken: string;
+  serverTime: EpochSeconds;
+}
+/**
+ * GET /device/v1/state — authoritative state after boot/reconnect (SYNC).
+ *
+ * This interface was referenced by `ProtocolRoot`'s JSON-Schema
+ * via the `definition` "DeviceStateResponse".
+ */
+export interface DeviceStateResponse {
+  serverTime: EpochSeconds;
+  session: null | DeviceStateSession;
+  config: DeviceConfig;
+}
+export interface DeviceStateSession {
+  sessionId: PublicId;
+  startAt: EpochSeconds;
+  endAt: EpochSeconds;
+  status: 'STARTING' | 'ACTIVE';
+}
+/**
+ * GET /api/tablet/bootstrap — everything the kiosk needs after start. Also cached (IndexedDB) for offline display only.
+ *
+ * This interface was referenced by `ProtocolRoot`'s JSON-Schema
+ * via the `definition` "TabletBootstrapResponse".
+ */
+export interface TabletBootstrapResponse {
+  serverTime: IsoUtc;
+  tablet: {
+    id: PublicId;
+    code: TabletCode;
+  };
+  branch: {
+    id: PublicId;
+    name: string;
+    tenantName: string;
+    timezone: string;
+    isOpenNow: boolean;
+  };
+  settings: {
+    locale: 'uz' | 'ru';
+    photoRequired: boolean;
+    privacyNotice: string;
+    warnBeforeSec: number;
+    warningAudio: {
+      mode: 'CLIPS' | 'TTS';
+      /**
+       * Template, e.g. "{table}-stol, sizda 5 daqiqa vaqtingiz qoldi."
+       */
+      text: string;
+      clipUrls?: string[];
+    };
+  };
+  tables: TabletTable[];
+}
+/**
+ * A table as the kiosk sees it. status is derived server-side.
+ *
+ * This interface was referenced by `ProtocolRoot`'s JSON-Schema
+ * via the `definition` "TabletTable".
+ */
+export interface TabletTable {
+  id: PublicId;
+  number: number;
+  name: string;
+  status: TableStatus;
+  session: null | TabletTableSession;
+  pricing: null | TabletPricing;
+}
+export interface TabletTableSession {
+  id: PublicId;
+  status: SessionStatus;
+  startAt: IsoUtc | null;
+  endAt: IsoUtc | null;
+}
+export interface TabletPricing {
+  type: 'HOURLY';
+  pricePerHour: MoneyUzs;
+  durations: TabletDurationQuote[];
+}
+export interface TabletDurationQuote {
+  minutes: number;
+  amount: MoneyUzs;
+}
+/**
+ * GET /api/tablet/pairing-status (Authorization: PollToken <pollToken>). token is returned exactly once.
+ *
+ * This interface was referenced by `ProtocolRoot`'s JSON-Schema
+ * via the `definition` "TabletPairingStatusResponse".
+ */
+export interface TabletPairingStatusResponse {
+  status: 'WAITING' | 'PAIRED' | 'EXPIRED';
+  token?: string;
+  serverTime: IsoUtc;
+}
+/**
+ * POST /api/tablet/register (public, rate-limited). Starts tablet pairing; the code is shown on the tablet screen.
+ *
+ * This interface was referenced by `ProtocolRoot`'s JSON-Schema
+ * via the `definition` "TabletRegisterRequest".
+ */
+export interface TabletRegisterRequest {
+  appVersion: SemVer;
+  deviceModel?: string;
+}
+/**
+ * This interface was referenced by `ProtocolRoot`'s JSON-Schema
+ * via the `definition` "TabletRegisterResponse".
+ */
+export interface TabletRegisterResponse {
+  tabletCode: TabletCode;
+  pairingCode: PairingCode;
+  pairingExpiresAt: IsoUtc;
+  pollToken: string;
+  serverTime: IsoUtc;
+}
+/**
+ * POST /api/tablet/sessions/prepare (Idempotency-Key required). Reserves the table for a short time.
+ *
+ * This interface was referenced by `ProtocolRoot`'s JSON-Schema
+ * via the `definition` "TabletSessionPrepareRequest".
+ */
+export interface TabletSessionPrepareRequest {
+  tableId: PublicId;
+  durationMinutes: number;
+}
+/**
+ * Response of prepare / photo / start / cancel / show.
+ *
+ * This interface was referenced by `ProtocolRoot`'s JSON-Schema
+ * via the `definition` "TabletSession".
+ */
+export interface TabletSession {
+  serverTime: IsoUtc;
+  session: {
+    id: PublicId;
+    tableId: PublicId;
+    tableNumber: number;
+    status: SessionStatus;
+    durationMinutes: number;
+    amount: MoneyUzs;
+    reservedUntil: IsoUtc | null;
+    startAt: IsoUtc | null;
+    endAt: IsoUtc | null;
+    hasPhoto: boolean;
+    failureReason?: string | null;
+  };
+}
+/**
+ * GET /api/tablet/tables — polled every few seconds.
+ *
+ * This interface was referenced by `ProtocolRoot`'s JSON-Schema
+ * via the `definition` "TabletTablesResponse".
+ */
+export interface TabletTablesResponse {
+  serverTime: IsoUtc;
+  isOpenNow: boolean;
+  tables: TabletTable[];
+}

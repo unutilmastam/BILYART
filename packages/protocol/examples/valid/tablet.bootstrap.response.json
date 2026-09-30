@@ -1,0 +1,8 @@
+{ "serverTime": "2026-10-01T10:30:00Z",
+  "tablet": { "id": "01J9ZQ3K8M4N5P6Q7R8S9T0V2X", "code": "TABLET-7K2M9Q" },
+  "branch": { "id": "01J9ZQ3K8M4N5P6Q7R8S9T0V1W", "name": "Markaziy", "tenantName": "Ali Billiard", "timezone": "Asia/Tashkent", "isOpenNow": true },
+  "settings": { "locale": "uz", "photoRequired": true, "privacyNotice": "Sessiya boshlanishida bitta surat olinadi.", "warnBeforeSec": 300,
+    "warningAudio": { "mode": "TTS", "text": "{table}-stol, sizda 5 daqiqa vaqtingiz qoldi." } },
+  "tables": [ { "id": "01J9ZQ3K8M4N5P6Q7R8S9T0V3Y", "number": 1, "name": "1-stol", "status": "BUSY",
+  "session": { "id": "01J9ZQ3K8M4N5P6Q7R8S9T0V1W", "status": "ACTIVE", "startAt": "2026-10-01T10:00:00Z", "endAt": "2026-10-01T11:00:00Z" },
+  "pricing": { "type": "HOURLY", "pricePerHour": 20000, "durations": [ { "minutes": 30, "amount": 10000 }, { "minutes": 60, "amount": 20000 } ] } } ] }

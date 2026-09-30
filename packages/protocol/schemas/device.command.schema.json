@@ -1,0 +1,314 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://protocol.bilyart/device.command.schema.json",
+  "title": "DeviceCommand",
+  "description": "Command delivered in /poll responses. Device ignores commands with expiresAt < serverTime and deduplicates by commandId.",
+  "type": "object",
+  "oneOf": [
+    {
+      "$ref": "#/definitions/StartSession"
+    },
+    {
+      "$ref": "#/definitions/StopSession"
+    },
+    {
+      "$ref": "#/definitions/Warning"
+    },
+    {
+      "$ref": "#/definitions/Sync"
+    },
+    {
+      "$ref": "#/definitions/Ping"
+    },
+    {
+      "$ref": "#/definitions/ConfigUpdate"
+    },
+    {
+      "$ref": "#/definitions/Ota"
+    }
+  ],
+  "definitions": {
+    "StartSession": {
+      "title": "StartSessionCommand",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "commandId",
+        "type",
+        "expiresAt",
+        "payload"
+      ],
+      "properties": {
+        "commandId": {
+          "$ref": "common.schema.json#/definitions/PublicId"
+        },
+        "expiresAt": {
+          "$ref": "common.schema.json#/definitions/EpochSeconds"
+        },
+        "type": {
+          "const": "START_SESSION"
+        },
+        "payload": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "sessionId",
+            "startAt",
+            "endAt",
+            "warnBeforeSec",
+            "flashCount"
+          ],
+          "properties": {
+            "sessionId": {
+              "$ref": "common.schema.json#/definitions/PublicId"
+            },
+            "startAt": {
+              "$ref": "common.schema.json#/definitions/EpochSeconds"
+            },
+            "endAt": {
+              "$ref": "common.schema.json#/definitions/EpochSeconds"
+            },
+            "warnBeforeSec": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 3600
+            },
+            "flashCount": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 10
+            }
+          }
+        }
+      }
+    },
+    "StopSession": {
+      "title": "StopSessionCommand",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "commandId",
+        "type",
+        "expiresAt",
+        "payload"
+      ],
+      "properties": {
+        "commandId": {
+          "$ref": "common.schema.json#/definitions/PublicId"
+        },
+        "expiresAt": {
+          "$ref": "common.schema.json#/definitions/EpochSeconds"
+        },
+        "type": {
+          "const": "STOP_SESSION"
+        },
+        "payload": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "sessionId"
+          ],
+          "properties": {
+            "sessionId": {
+              "$ref": "common.schema.json#/definitions/PublicId"
+            }
+          }
+        }
+      }
+    },
+    "Warning": {
+      "title": "WarningCommand",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "commandId",
+        "type",
+        "expiresAt",
+        "payload"
+      ],
+      "properties": {
+        "commandId": {
+          "$ref": "common.schema.json#/definitions/PublicId"
+        },
+        "expiresAt": {
+          "$ref": "common.schema.json#/definitions/EpochSeconds"
+        },
+        "type": {
+          "const": "WARNING"
+        },
+        "payload": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "sessionId",
+            "flashCount"
+          ],
+          "properties": {
+            "sessionId": {
+              "$ref": "common.schema.json#/definitions/PublicId"
+            },
+            "flashCount": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 10
+            }
+          }
+        }
+      }
+    },
+    "Sync": {
+      "title": "SyncCommand",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "commandId",
+        "type",
+        "expiresAt",
+        "payload"
+      ],
+      "properties": {
+        "commandId": {
+          "$ref": "common.schema.json#/definitions/PublicId"
+        },
+        "expiresAt": {
+          "$ref": "common.schema.json#/definitions/EpochSeconds"
+        },
+        "type": {
+          "const": "SYNC"
+        },
+        "payload": {
+          "type": "object",
+          "additionalProperties": false
+        }
+      }
+    },
+    "Ping": {
+      "title": "PingCommand",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "commandId",
+        "type",
+        "expiresAt",
+        "payload"
+      ],
+      "properties": {
+        "commandId": {
+          "$ref": "common.schema.json#/definitions/PublicId"
+        },
+        "expiresAt": {
+          "$ref": "common.schema.json#/definitions/EpochSeconds"
+        },
+        "type": {
+          "const": "PING"
+        },
+        "payload": {
+          "type": "object",
+          "additionalProperties": false
+        }
+      }
+    },
+    "ConfigUpdate": {
+      "title": "ConfigUpdateCommand",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "commandId",
+        "type",
+        "expiresAt",
+        "payload"
+      ],
+      "properties": {
+        "commandId": {
+          "$ref": "common.schema.json#/definitions/PublicId"
+        },
+        "expiresAt": {
+          "$ref": "common.schema.json#/definitions/EpochSeconds"
+        },
+        "type": {
+          "const": "CONFIG_UPDATE"
+        },
+        "payload": {
+          "$ref": "#/definitions/DeviceConfig"
+        }
+      }
+    },
+    "Ota": {
+      "title": "OtaCommand",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "commandId",
+        "type",
+        "expiresAt",
+        "payload"
+      ],
+      "properties": {
+        "commandId": {
+          "$ref": "common.schema.json#/definitions/PublicId"
+        },
+        "expiresAt": {
+          "$ref": "common.schema.json#/definitions/EpochSeconds"
+        },
+        "type": {
+          "const": "OTA"
+        },
+        "payload": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "version",
+            "sha256",
+            "size"
+          ],
+          "properties": {
+            "version": {
+              "$ref": "common.schema.json#/definitions/SemVer"
+            },
+            "sha256": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "size": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        }
+      }
+    },
+    "DeviceConfig": {
+      "title": "DeviceConfig",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "pollIntervalSec",
+        "maxSessionSec",
+        "warnBeforeSec",
+        "flashCount"
+      ],
+      "properties": {
+        "pollIntervalSec": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 60
+        },
+        "maxSessionSec": {
+          "type": "integer",
+          "minimum": 60,
+          "maximum": 86400
+        },
+        "warnBeforeSec": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 3600
+        },
+        "flashCount": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10
+        }
+      }
+    }
+  }
+}

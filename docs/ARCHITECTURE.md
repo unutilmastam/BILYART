@@ -1,15 +1,18 @@
 # ARCHITECTURE
 
-Status: v1 proposal. Phase 1 must verify every **[VERIFY]** item on the real Hostmaster account and update this file.
-Phase 1 (in progress): verification tooling is ready (`infrastructure/hosting-check`, see DEPLOYMENT.md §1); cPanel shows SSH, Terminal, Cron, Git VC and **PostgreSQL** in addition to MySQL. No decision changed yet: PostgreSQL vs MySQL is decided in Phase 2 once versions are known (spec §21 prefers PostgreSQL "if supported"; PostgreSQL would replace the `table_lock` generated column with a partial unique index). Deploy will use SSH/rsync if key-based SSH works for CI.
+Status: v1 — contradictions in §2 accepted by the owner on 2026-09-30 ("hamma narsani qil": proceed with the documented decisions).
+Remaining **[VERIFY]** items are checked on the real Hostmaster account before Phase 16.
+Phase 1 findings: cPanel has SSH, Terminal, Cron, Git VC, MySQL **and** PostgreSQL → the DB layer is kept portable (§2a) and the engine is picked at deploy. Deploy uses SSH/rsync if key-based SSH works for CI, else FTPS.
 
 ## 1. Constraints that shape everything
 | Constraint | Consequence |
 |---|---|
 | Production = **cPanel shared hosting (hostmaster.uz), no VPS** | No long-running processes, no own MQTT broker, WebSockets unreliable, background work only via **cron (1-minute granularity)**. |
-| PHP + MySQL are the only things reliably available on cPanel **[VERIFY: PHP ≥ 8.2 + extensions (pdo_mysql, gd/imagick, openssl, mbstring, intl, fileinfo, sodium), MySQL 8 / MariaDB ≥ 10.6, PostgreSQL, SSH/Terminal, Git Version Control, cron, Node.js selector, max upload size, memory_limit, LVE/process limits]** | Backend = **Laravel 11 (PHP)**. Database = **MySQL/MariaDB** (PostgreSQL only if Phase 1 finds it on this account and equally supported). |
+| PHP + a relational DB are what cPanel reliably offers. Phase 1 found MySQL **and** PostgreSQL, SSH, Terminal, Cron, Git VC, CloudLinux PHP selector on the account; exact versions/limits **[VERIFY at deploy]** | Backend = **Laravel 13 (PHP ≥ 8.3)**. Database layer is **portable across MySQL 8.0 / MariaDB ≥ 10.6 / PostgreSQL ≥ 13**; CI runs the full suite on all three. Production engine is chosen at deploy (PostgreSQL preferred per spec §21/§47 if its version ≥ 13, else MySQL/MariaDB). |
 | Owner has no computer | All builds in **GitHub Actions**. Deploy from CI (SSH/rsync if available, otherwise FTPS). |
 | Timers must be reliable even with 60 s cron | Timing is enforced **locally** (ESP32 + tablet) from server-issued `startAt/endAt`; cron only finalizes records. |
+
+Why Laravel 13 and not 11: Laravel 11 security support ended in March 2026; 13 is the supported line for a multi-year product (PHP 8.3+, available in the CloudLinux PHP selector).
 
 Why Laravel and not Node/NestJS (spec §47 lists Node as preferred): on cPanel, Node apps run under Passenger and are stopped when idle, scheduled work inside Node is unreliable, and there is no process manager. PHP runs per request and cron is native — this is the "actually deployable" choice the spec asks for.
 
@@ -31,9 +34,19 @@ Why Laravel and not Node/NestJS (spec §47 lists Node as preferred): on cPanel, 
 6. **ESP32 has no display for pairing code (spec §17)**
    → On first boot ESP32 opens Wi-Fi AP `BILLIARD-XXXX` with a captive portal: owner connects with a phone, enters Wi-Fi; the device registers with the server and the portal page shows the **6-digit pairing code**. Owner enters it in Admin → Devices.
 7. **First firmware flash without a computer**
-   → CI produces `.bin`. First flash: USB-OTG from an Android phone with a flasher app, or one-time pre-flash on any computer **[owner decides in Phase 11]**. All later updates = **OTA** from the platform (spec §55).
+   → CI produces `.bin`. **Owner decision (2026-09-30): first flash from a computer** (ESP Web Flasher / esptool, documented in Phase 11). All later updates = **OTA** from the platform (spec §55).
 8. **Start when ESP32 is offline** — spec shows `SESSION_START_FAILED: DEVICE_OFFLINE`.
    → Session start refused if device `last_seen > 20 s` (configurable). If START is not ACKed within 20 s, session → FAILED, table released, staff notified, and a STOP is queued so a late-arriving command cannot turn the light on (commands also carry `expiresAt`, device ignores expired commands).
+
+## 2a. Database portability rules
+- Migrations use the schema builder; driver-specific SQL only where needed and always behind a `DB::getDriverName()` switch covering `mysql`, `mariadb`, `pgsql`.
+- Double-booking guard: MySQL/MariaDB = generated `table_lock` column + UNIQUE; PostgreSQL = partial unique index `WHERE status IN (…)`. Same behaviour, tested on all engines.
+- Reports aggregate over UTC ranges computed in PHP from the branch timezone (no DB timezone functions).
+- Row locks: `lockForUpdate()` (supported by all three). Money `BIGINT`, times `TIMESTAMP(3)`/`timestamptz` via Laravel `timestampTz` where needed.
+- SQLite is **not** used for tests (composite FKs / locks must be real).
+
+## 2b. Build order (owner decision 2026-09-30)
+Server side and admin first (Phases 2–7, 9 server part, 10 server part, 12–15). Tablet app + kiosk (Phase 8, 9 client part) and ESP32 firmware (Phase 11) come after, then deployment (16). Hosting check results are collected before Phase 16.
 
 ## 3. Components
 ```
@@ -56,7 +69,7 @@ Why Laravel and not Node/NestJS (spec §47 lists Node as preferred): on cPanel, 
 ```
 
 ## 4. Backend (apps/api)
-Laravel 11, domain-organized: `app/Domain/<Domain>/{Models,Services,Policies,Events,Enums}`; thin controllers in `app/Http/Controllers/{SuperAdmin,Admin,Tablet,Device,Telegram}`.
+Laravel 13, domain-organized: `app/Domain/<Domain>/{Models,Services,Policies,Events,Enums}`; thin controllers in `app/Http/Controllers/{SuperAdmin,Admin,Tablet,Device,Telegram}`.
 
 Domains: `Auth`, `Tenancy`, `Subscriptions`, `Branches`, `Tables`, `Pricing`, `WorkingHours`, `Users`, `Devices` (pairing, commands, heartbeats, firmware), `Tablets`, `Sessions` (state machine), `Photos`, `Reports`, `Telegram`, `Notifications`, `Audit`, `Health`.
 

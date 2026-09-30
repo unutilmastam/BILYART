@@ -1,0 +1,15 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://protocol.bilyart/device.register.response.schema.json",
+  "title": "DeviceRegisterResponse",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["deviceCode", "pairingCode", "pairingExpiresAt", "pollToken", "serverTime"],
+  "properties": {
+    "deviceCode": { "$ref": "common.schema.json#/definitions/DeviceCode" },
+    "pairingCode": { "$ref": "common.schema.json#/definitions/PairingCode" },
+    "pairingExpiresAt": { "$ref": "common.schema.json#/definitions/EpochSeconds" },
+    "pollToken": { "type": "string", "minLength": 32, "description": "Only valid for GET /pairing-status" },
+    "serverTime": { "$ref": "common.schema.json#/definitions/EpochSeconds" }
+  }
+}
