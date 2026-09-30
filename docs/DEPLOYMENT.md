@@ -40,7 +40,7 @@ Platform domain: **itcode.uz** (owner, 2026-09-30).
 
 | item | value | affects |
 |---|---|---|
-| PHP version / SAPI | [VERIFY] | Laravel 11 needs ≥ 8.2 |
+| PHP version / SAPI | [VERIFY] | Laravel 13 needs ≥ 8.3 |
 | Required extensions | [VERIFY] | pdo_mysql, openssl, mbstring, intl, fileinfo, sodium, curl, zip, bcmath, gd/imagick |
 | DB engine + version (MySQL/MariaDB, PostgreSQL?) | Both MySQL (phpMyAdmin) and PostgreSQL (phpPgAdmin) present; versions [VERIFY] | DATABASE.md generated column + CHECK constraints need MySQL ≥ 8.0.16 / MariaDB ≥ 10.6 |
 | SSH / Terminal | YES — SSH Access + Terminal present (key-based SSH for CI to be confirmed) | deploy via rsync+SSH vs FTPS + deploy hook |

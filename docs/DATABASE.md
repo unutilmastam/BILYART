@@ -1,6 +1,6 @@
 # DATABASE
 
-Engine: MySQL 8 / MariaDB ≥ 10.6 (InnoDB, utf8mb4). All timestamps stored in **UTC** (`DATETIME(3)` or `TIMESTAMP`). Money = `BIGINT UNSIGNED` in UZS. IDs = `BIGINT UNSIGNED` auto-increment internally + `public_id CHAR(26)` (ULID) exposed in APIs/URLs so IDs are not guessable.
+Engine: portable — MySQL 8.0 / MariaDB ≥ 10.6 (InnoDB, utf8mb4) **or** PostgreSQL ≥ 13 (see ARCHITECTURE §2a); CI tests all three. All timestamps stored in **UTC** (`DATETIME(3)` or `TIMESTAMP`). Money = `BIGINT UNSIGNED` in UZS. IDs = `BIGINT UNSIGNED` auto-increment internally + `public_id CHAR(26)` (ULID) exposed in APIs/URLs so IDs are not guessable.
 
 ## 1. Tenant isolation at the DB level
 - Every tenant-owned table has `tenant_id NOT NULL` + index.
@@ -40,8 +40,8 @@ Engine: MySQL 8 / MariaDB ≥ 10.6 (InnoDB, utf8mb4). All timestamps stored in *
 | `session_photos` | id, public_id, tenant_id, session_id UNIQUE, storage_path, mime_type, size, width, height, sha256, created_at, deleted_at, deleted_by |
 | `session_events` | tenant_id, session_id, from_status, to_status, actor_type, actor_id, reason, created_at (state-machine history) |
 
-**Double-booking guard (spec §32):** `game_sessions.table_lock` = generated column
-`CASE WHEN status IN ('RESERVED','STARTING','ACTIVE','COMPLETING') THEN table_id ELSE NULL END` with **UNIQUE(table_lock)**. Plus `SELECT … FOR UPDATE` on the `billiard_tables` row inside the start transaction. Expired-but-not-finalized sessions on that table are finalized inside the same transaction before insert.
+**Double-booking guard (spec §32):** MySQL/MariaDB: `game_sessions.table_lock` = generated column
+`CASE WHEN status IN ('RESERVED','STARTING','ACTIVE','COMPLETING') THEN table_id ELSE NULL END` with **UNIQUE(table_lock)**. PostgreSQL: partial unique index on `(table_id) WHERE status IN (…)`. Plus `SELECT … FOR UPDATE` on the `billiard_tables` row inside the start transaction. Expired-but-not-finalized sessions on that table are finalized inside the same transaction before insert.
 
 ### Devices & tablets
 | table | key columns |

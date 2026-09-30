@@ -47,7 +47,7 @@ For each phase:
 
 ## 4. Repository layout (target)
 ```
-apps/api            Laravel 11 backend (REST API, scheduler, Telegram, storage)
+apps/api            Laravel 13 backend (REST API, scheduler, Telegram, storage)
 apps/web-admin      React + Vite + TS SPA (Super Admin + Client Admin)
 apps/tablet         React + Vite + TS PWA (customer kiosk UI)
 apps/android-kiosk  Kotlin WebView shell (Lock Task / kiosk, auto-start, camera)
@@ -63,6 +63,7 @@ docs/               all documentation
 - Admin: `cd apps/web-admin && npm ci && npm test && npm run build`
 - Tablet: `cd apps/tablet && npm ci && npm test && npm run build`
 - Firmware: `cd devices/esp32 && pio run && pio test -e native`
+- Protocol: `cd packages/protocol && npm ci && npm test && npm run typecheck && npm run check-generated` (after editing schemas: `npm run generate`)
 - Hosting check script: `infrastructure/hosting-check/tests/run.sh` (build for owner: Actions → "Hosting check (build file)")
 - Secret scan: `gitleaks git --redact .` (runs in CI)
 

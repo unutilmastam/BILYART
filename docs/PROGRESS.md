@@ -19,9 +19,15 @@ Remaining for Phase 1:
 - Owner sends cPanel screenshots + hostcheck JSON → record in DEPLOYMENT.md §1, adjust ARCHITECTURE.md if anything differs (e.g. no SSH → FTPS deploy, MariaDB version vs generated column/CHECK support, cron PHP path).
 - Owner answers the open questions below.
 
+## Phase 2 — session 3 (2026-09-30)
+- Owner decisions: build server/admin first, tablet + ESP32 later; first ESP32 flash from a computer.
+- Stack update: Laravel 13 (Laravel 11 is out of security support), DB layer portable across MySQL 8 / MariaDB 10.6 / PostgreSQL 13 (both engines exist on the hosting; versions unknown).
+- `packages/protocol`: 17 schemas (device + tablet + common), examples (valid/invalid), generated `src/generated/protocol.ts`, Ajv validator, OpenAPI validation test. CI job `protocol`.
+- `docs/API.md` (all endpoints, conventions, error codes) + `docs/openapi.yaml` (3.1 skeleton referencing the protocol schemas).
+
 ## Open questions for the owner
 1. ~~Platform domain~~ → **itcode.uz**. Still open: root domain or a subdomain (e.g. `billiard.itcode.uz`)? Its document root in cPanel → Domains?
-2. First ESP32 flash method: USB-OTG from an Android phone, or one-time on any computer?
+2. ~~First ESP32 flash method~~ → from a computer (owner, 2026-09-30).
 3. Tablet model and Android version for kiosk testing? Can it be factory-reset (needed for Device Owner QR provisioning)?
 4. How many halls/tables for the pilot, and the lamp power per table (for relay/contactor sizing)?
 5. Repository is **public**. Recommend making it private (GitHub → Settings → Danger Zone → Change visibility). Note: private repos have a monthly free Actions-minutes limit.

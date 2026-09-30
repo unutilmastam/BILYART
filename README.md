@@ -10,7 +10,7 @@ Multi-tenant SaaS for billiard halls: Super Admin (licensing), Client Admin, And
 ## Repository layout
 | path | what |
 |---|---|
-| `apps/api` | Laravel 11 backend (Phase 3+) |
+| `apps/api` | Laravel 13 backend (Phase 3+) |
 | `apps/web-admin` | Super Admin + Client Admin SPA (Phase 5+) |
 | `apps/tablet` | Tablet kiosk PWA (Phase 8) |
 | `apps/android-kiosk` | Kotlin kiosk shell, APK built by CI (Phase 8) |

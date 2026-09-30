@@ -1,20 +1,22 @@
 # ROADMAP
 
+Build order (owner, 2026-09-30): server + admin first — 2, 3, 4, 5, 6, 7, 9 (server), 10, 12, 13, 14, 15 — then 8, 9 (tablet part), 11, 16.
+
 Each phase = one or more PRs. Owner starts a phase by writing **"Phase N ni boshla"**. A phase is done only when all its checkboxes are true and CI is green.
 
 ## Phase 1 — Inspect repo & hosting
 - [x] Repo skeleton: folders from CLAUDE.md §4, root README, `.gitignore`, `.editorconfig`
-- [ ] Owner answers the DEPLOYMENT.md §1 checklist (Claude asks for it in Uzbek, step by step)
-- [ ] Results recorded in DEPLOYMENT.md; ARCHITECTURE.md adjusted if needed
+- [~] Owner answers the DEPLOYMENT.md §1 checklist — Tools screenshot + domain received; hostcheck report deferred to before Phase 16 (owner decision)
+- [x] Results recorded in DEPLOYMENT.md; ARCHITECTURE.md adjusted (portable DB, Laravel 13)
 - [x] List of open questions for the owner (domain, first flash method, tablet model) — see PROGRESS.md
 
 ## Phase 2 — Architecture docs finalized
-- [ ] ARCHITECTURE / DATABASE / SECURITY / DEVICE_PROTOCOL / DEPLOYMENT reviewed against SPEC.md, contradictions list confirmed with owner
-- [ ] `packages/protocol`: JSON Schemas for device + tablet messages, generated TS types
-- [ ] `docs/API.md` outline + OpenAPI file skeleton
+- [x] ARCHITECTURE / DATABASE / SECURITY / DEVICE_PROTOCOL / DEPLOYMENT reviewed against SPEC.md, contradictions list confirmed with owner
+- [x] `packages/protocol`: JSON Schemas for device + tablet messages, generated TS types
+- [x] `docs/API.md` outline + OpenAPI file skeleton
 
 ## Phase 3 — Database schema & migrations
-- [ ] Laravel 11 app in `apps/api`, MySQL, CI with MySQL service
+- [ ] Laravel 13 app in `apps/api`, CI with MySQL 8 + MariaDB 10.6 + PostgreSQL services
 - [ ] All migrations from DATABASE.md incl. composite FKs, generated `table_lock` unique column
 - [ ] Models + `BelongsToTenant` trait + factories
 - [ ] Tests: cross-tenant FK insert fails at DB level; double active session insert fails at DB level

@@ -262,8 +262,8 @@ function hc_collect(): array
 function hc_verdict(array $r): array
 {
     $problems = [];
-    if (version_compare($r['php']['version'], '8.2.0', '<')) {
-        $problems[] = 'PHP < 8.2 (Laravel 11 needs 8.2+). Select a newer version in cPanel → Select PHP Version.';
+    if (version_compare($r['php']['version'], '8.3.0', '<')) {
+        $problems[] = 'PHP < 8.3 (Laravel 13 needs 8.3+). Select a newer version in cPanel → Select PHP Version.';
     }
     foreach ($r['extensions']['required'] as $name => $ok) {
         if (!$ok) {
