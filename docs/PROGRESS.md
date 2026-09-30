@@ -59,6 +59,11 @@ Remaining for Phase 1:
 - Bugs caught: missing `public_id` in a narrowed select (strict mode), MySQL JSON key reordering in tests.
 - Known limitation until Phase 10: nothing ACKs START yet on a real device, so without the device API a started session fails after 20 s (by design).
 
+## Phase 9 (server) — session 4 (2026-09-30)
+- `POST /api/tablet/sessions/{id}/photo` (multipart `photo`, throttled, Idempotency-Key), `ImageSanitizer` (finfo + getimagesize, 320–2560 px, ≤ 2 MB, GD re-encode), `PhotoStorage`/`LocalPrivateDisk`, `PhotoService` (store/replace, view, delete, retention), `photos:prune` daily 01:30.
+- Admin: `GET/DELETE /api/admin/photos/{photo}`; web-admin session page shows the photo on demand and can delete it.
+- Tests: spec §43.11 (other tenant 404, operator 403 unless allowed, super admin 403, guest 401), §43.12 (deleted → 404, file removed, audit), polyglot/EXIF stripping, invalid uploads leave no file, retention per tenant.
+
 ## Open questions for the owner
 1. ~~Platform domain~~ → **itcode.uz**. Still open: root domain or a subdomain (e.g. `billiard.itcode.uz`)? Its document root in cPanel → Domains?
 2. ~~First ESP32 flash method~~ → from a computer (owner, 2026-09-30).

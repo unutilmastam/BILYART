@@ -51,8 +51,8 @@ Each phase = one or more PRs. Owner starts a phase by writing **"Phase N ni bosh
 
 ## Phase 9 — Photo capture & upload
 - [ ] MediaPipe face detection → single capture, privacy notice
-- [ ] Secure upload pipeline (validation, re-encode, private storage), authenticated viewing, deletion, retention job, access audit
-- [ ] Tests: spec §43 items 11–12
+- [x] Secure upload pipeline (validation, re-encode, private storage), authenticated viewing, deletion, retention job, access audit (server + web-admin viewer)
+- [x] Tests: spec §43 items 11–12
 
 ## Phase 10 — Device service (server side)
 - [ ] Device register/pairing/poll/ack/state endpoints, token auth, command bus + retry/expiry, online/offline
