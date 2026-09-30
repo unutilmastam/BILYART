@@ -15,17 +15,47 @@ Owner opens cPanel and reports (screenshots are fine):
 - [ ] Disk quota, inode limit, upload_max_filesize, memory_limit, max_execution_time
 - [ ] FTP account (for FTPS fallback)
 
-Claude also deploys a temporary `phpinfo`-style check script (protected by a random token, deleted after) to confirm the real values.
+To confirm the real values, the owner also runs the one-time check script `infrastructure/hosting-check/hostcheck.php`:
+- built by the `hosting-check.yml` workflow (manual trigger) with a random file name and a random 48-hex token → artifact `hosting-check` (retention 1 day);
+- owner uploads it via cPanel File Manager and opens `https://<domain>/hostcheck-<rand>.php?t=<token>`;
+- it reports PHP version/SAPI, extensions, ini limits, disabled functions, CLI binaries (PHP path for cron, mysqldump, git, node, python), symlink support, writable dirs outside the docroot, disk space, outbound HTTPS (Telegram, GitHub);
+- it never prints environment variables or credentials, deletes itself after the first successful view, and refuses to run (and deletes itself) 24 h after upload. Tests: `infrastructure/hosting-check/tests/run.sh`.
+
+Owner-facing click-by-click guide (Uzbek): [HOSTING_CHECK_UZ.md](HOSTING_CHECK_UZ.md).
 
 Record results in the table below and update ARCHITECTURE.md if anything differs.
 
-| item | value |
-|---|---|
-| PHP | [VERIFY] |
-| DB | [VERIFY] |
-| SSH/Terminal | [VERIFY] |
-| Cron | [VERIFY] |
-| Git VC | [VERIFY] |
+Status: **partially answered** (Phase 1). cPanel Tools screenshot received 2026-09-30; hostcheck report still pending.
+
+Seen in the cPanel Tools screenshot (theme Jupiter, CloudLinux — "Resource Usage", "X-Ray App", "AccelerateWP" present; cPanel user `unutilmastam`, home `/home/unutilmastam`, AutoSSL active):
+- Files: File Manager, FTP Accounts, Backup / Backup Wizard, **Git Version Control**, File and Directory Restoration
+- Databases: phpMyAdmin, Manage My Databases (MySQL/MariaDB), Remote Database Access, **PostgreSQL Databases** + phpPgAdmin
+- Domains: Domains, Redirects, Zone Editor, Dynamic DNS
+- Security: **SSH Access**, SSL/TLS Certificates, Manage API Tokens, Two-Factor Authentication
+- Software: MultiPHP Manager, MultiPHP INI Editor, **Select PHP Version** (CloudLinux PHP selector), Setup Node.js App, Setup Python App, Setup Ruby App
+- Advanced: **Terminal**, **Cron Jobs**
+- Metrics: Resource Usage (LVE limits)
+
+Platform domain: **itcode.uz** (owner, 2026-09-30).
+
+| item | value | affects |
+|---|---|---|
+| PHP version / SAPI | [VERIFY] | Laravel 11 needs ≥ 8.2 |
+| Required extensions | [VERIFY] | pdo_mysql, openssl, mbstring, intl, fileinfo, sodium, curl, zip, bcmath, gd/imagick |
+| DB engine + version (MySQL/MariaDB, PostgreSQL?) | Both MySQL (phpMyAdmin) and PostgreSQL (phpPgAdmin) present; versions [VERIFY] | DATABASE.md generated column + CHECK constraints need MySQL ≥ 8.0.16 / MariaDB ≥ 10.6 |
+| SSH / Terminal | YES — SSH Access + Terminal present (key-based SSH for CI to be confirmed) | deploy via rsync+SSH vs FTPS + deploy hook |
+| Cron Jobs + PHP CLI path | Cron Jobs present; PHP CLI path [VERIFY via hostcheck] | `schedule:run` every minute |
+| Git Version Control | YES | informational |
+| Node.js app | YES (Setup Node.js App; not used) | informational (not used) |
+| SSL (AutoSSL) | SSL certificate active on primary domain; itcode.uz coverage [VERIFY] | HTTPS mandatory, ESP32 pinned root CA |
+| Domain / subdomain + custom document root | itcode.uz; subdomain + document root [VERIFY] | server layout §2 |
+| memory_limit / max_execution_time / upload_max_filesize | [VERIFY] | photo upload (2 MB), queue worker `--max-time=50` |
+| Disk quota / inodes | [VERIFY] | photo retention, backups |
+| LVE: entry processes / processes / RAM | CloudLinux LVE (Resource Usage page) — values [VERIFY] | device poll load (~17 req/s at 50 devices) |
+| shell_exec / proc_open enabled | [VERIFY] | `mysqldump` backups |
+| symlink works | [VERIFY] | `current -> releases/…` layout |
+| Outbound HTTPS to api.telegram.org | [VERIFY] | Telegram reports |
+| FTP account | [VERIFY] | FTPS fallback deploy |
 
 ## 2. Server layout
 ```
