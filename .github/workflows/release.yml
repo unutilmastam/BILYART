@@ -1,0 +1,45 @@
+name: Release package
+
+# Builds bilyart-<version>.zip for the hosting: API + vendor (no dev) + admin/tablet PWAs + deploy scripts.
+# Owner: Actions → Release package → Run workflow → version (e.g. 1.0.0) → download the artifact.
+# Installing it: docs/DEPLOY_UZ.md. Nothing is uploaded anywhere by this workflow.
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version (semver, e.g. 1.0.0)'
+        required: true
+  workflow_call:
+    inputs:
+      version:
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    name: Build release package
+    runs-on: ubuntu-latest
+    env:
+      VERSION: ${{ inputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Version is semver
+        run: echo "$VERSION" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$' || { echo "::error::version must be semver, e.g. 1.0.0"; exit 1; }
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'   # the lowest supported version: the package must run there
+          extensions: pdo_mysql, pdo_pgsql, gd, zip
+          coverage: none
+          tools: composer:v2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: infrastructure/release/build.sh "$VERSION" release-out
+      - uses: actions/upload-artifact@v4
+        with:
+          name: bilyart-release-${{ inputs.version }}
+          path: release-out/
+          retention-days: 30

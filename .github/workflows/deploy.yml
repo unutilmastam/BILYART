@@ -1,0 +1,86 @@
+name: Deploy to hosting
+
+# Optional one-click deploy over SSH (docs/DEPLOYMENT.md §3). Disabled until the owner adds the secrets:
+#   DEPLOY_HOST, DEPLOY_USER, DEPLOY_SSH_KEY (private key, its public half in cPanel → SSH Access),
+#   DEPLOY_KNOWN_HOSTS (output of `ssh-keyscan -p <port> <host>`), optional DEPLOY_PORT;
+# and repository variable DEPLOY_URL (e.g. https://itcode.uz). The first install is done by hand (docs/DEPLOY_UZ.md).
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to build and deploy (semver, e.g. 1.0.1)'
+        required: true
+      confirm:
+        description: 'Type DEPLOY to confirm'
+        required: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  guard:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Confirmation and secrets present
+        env:
+          CONFIRM: ${{ inputs.confirm }}
+          HAS_HOST: ${{ secrets.DEPLOY_HOST != '' }}
+          HAS_USER: ${{ secrets.DEPLOY_USER != '' }}
+          HAS_KEY: ${{ secrets.DEPLOY_SSH_KEY != '' }}
+          HAS_KNOWN: ${{ secrets.DEPLOY_KNOWN_HOSTS != '' }}
+        run: |
+          [ "$CONFIRM" = "DEPLOY" ] || { echo "::error::Type DEPLOY in the confirm field."; exit 1; }
+          for v in HAS_HOST HAS_USER HAS_KEY HAS_KNOWN; do
+            [ "${!v}" = "true" ] || { echo "::error::Deploy secrets are not configured yet (docs/DEPLOYMENT.md §3)."; exit 1; }
+          done
+
+  package:
+    needs: guard
+    uses: ./.github/workflows/release.yml
+    with:
+      version: ${{ inputs.version }}
+
+  deploy:
+    needs: package
+    runs-on: ubuntu-latest
+    environment: production
+    env:
+      VERSION: ${{ inputs.version }}
+      PORT: ${{ secrets.DEPLOY_PORT || '22' }}
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: bilyart-release-${{ inputs.version }}
+          path: pkg
+      - name: Verify checksum
+        run: cd pkg && sha256sum -c "bilyart-$VERSION.zip.sha256"
+      - name: SSH setup
+        env:
+          KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          KNOWN: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$KEY" > ~/.ssh/deploy && chmod 600 ~/.ssh/deploy
+          printf '%s\n' "$KNOWN" > ~/.ssh/known_hosts
+      - name: Upload and activate
+        env:
+          HOST: ${{ secrets.DEPLOY_HOST }}
+          USER: ${{ secrets.DEPLOY_USER }}
+          PHP_BIN: ${{ vars.DEPLOY_PHP_BIN || 'php' }}
+        run: |
+          ssh_opts=(-i ~/.ssh/deploy -p "$PORT" -o StrictHostKeyChecking=yes -o BatchMode=yes)
+          scp -i ~/.ssh/deploy -P "$PORT" -o StrictHostKeyChecking=yes -o BatchMode=yes "pkg/bilyart-$VERSION.zip" "$USER@$HOST:bilyart-$VERSION.zip"
+          ssh "${ssh_opts[@]}" "$USER@$HOST" "set -e; cd ~; rm -rf 'bilyart-$VERSION'; unzip -q 'bilyart-$VERSION.zip'; PHP_BIN='$PHP_BIN' bash 'bilyart-$VERSION/activate.sh'; rm -f 'bilyart-$VERSION.zip'"
+      - name: Health check
+        env:
+          URL: ${{ vars.DEPLOY_URL }}
+        run: |
+          [ -n "$URL" ] || { echo "::warning::DEPLOY_URL variable not set — skipping the health check."; exit 0; }
+          for i in 1 2 3 4 5; do curl -fsS --max-time 15 "$URL/health" && exit 0; sleep 10; done
+          echo "::error::$URL/health is not OK after deploy. Roll back: bash ~/billiard/current/rollback.sh"; exit 1
+      - if: always()
+        run: rm -f ~/.ssh/deploy
