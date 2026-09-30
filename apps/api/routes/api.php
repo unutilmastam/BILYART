@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin;
 use App\Http\Controllers\Admin\BranchController;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\SuperAdmin;
+use App\Http\Controllers\Tablet;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -67,6 +68,18 @@ Route::middleware('web')->group(function (): void {
                     Route::post('users/{user}/deactivate', [Admin\UserController::class, 'deactivate']);
                 });
 
+                Route::get('dashboard', Admin\DashboardController::class)->middleware('perm:sessions.view');
+                Route::middleware('perm:sessions.view')->group(function (): void {
+                    Route::get('sessions', [Admin\SessionController::class, 'index']);
+                    Route::get('sessions/{session}', [Admin\SessionController::class, 'show']);
+                });
+                Route::post('sessions/{session}/stop', [Admin\SessionController::class, 'stop'])->middleware('perm:sessions.stop');
+                Route::post('sessions/{session}/payment', [Admin\SessionController::class, 'payment'])->middleware('perm:sessions.mark_payment');
+                Route::middleware('perm:reports.view')->group(function (): void {
+                    Route::get('reports/daily', [Admin\ReportController::class, 'daily']);
+                    Route::get('reports/monthly', [Admin\ReportController::class, 'monthly']);
+                });
+
                 Route::middleware('perm:tenant.settings')->group(function (): void {
                     Route::get('settings', [Admin\SettingsController::class, 'show']);
                     Route::put('settings', [Admin\SettingsController::class, 'update']);
@@ -100,5 +113,21 @@ Route::middleware('web')->group(function (): void {
             Route::get('settings', [SuperAdmin\SettingsController::class, 'show'])->middleware('perm:platform.settings');
             Route::put('settings', [SuperAdmin\SettingsController::class, 'update'])->middleware('perm:platform.settings');
         });
+    });
+});
+
+/*
+| Tablet kiosk (bearer token from pairing). Tenant + branch come from the tablet.
+| State-changing calls require an Idempotency-Key (spec §31).
+*/
+Route::prefix('tablet')->middleware(['auth.tablet', 'throttle:tablet', 'subscription.active'])->group(function (): void {
+    Route::get('bootstrap', [Tablet\KioskController::class, 'bootstrap']);
+    Route::get('tables', [Tablet\KioskController::class, 'tables']);
+    Route::post('heartbeat', [Tablet\KioskController::class, 'heartbeat']);
+    Route::get('sessions/{session}', [Tablet\SessionController::class, 'show']);
+    Route::middleware('idempotency:required')->group(function (): void {
+        Route::post('sessions/prepare', [Tablet\SessionController::class, 'prepare']);
+        Route::post('sessions/{session}/start', [Tablet\SessionController::class, 'start']);
+        Route::post('sessions/{session}/cancel', [Tablet\SessionController::class, 'cancel']);
     });
 });
