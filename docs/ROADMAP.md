@@ -55,10 +55,10 @@ Each phase = one or more PRs. Owner starts a phase by writing **"Phase N ni bosh
 - [x] Tests: spec §43 items 11–12
 
 ## Phase 10 — Device service (server side)
-- [ ] Device register/pairing/poll/ack/state endpoints, token auth, command bus + retry/expiry, online/offline
-- [ ] START on session start, ACK → ACTIVE, no-ACK → FAILED + STOP
-- [ ] Device simulator script (tests only) to exercise the protocol end-to-end
-- [ ] Tests: spec §43 items 4, 10; poll endpoint performance check
+- [x] Device register/pairing/poll/ack/state endpoints, token auth, command bus + retry/expiry, online/offline (+ firmware releases for OTA, tablet pairing server side)
+- [x] START on session start, ACK → ACTIVE, no-ACK → FAILED + STOP
+- [x] Device simulator script (tests only) to exercise the protocol end-to-end (`tests/Support/DeviceSimulator.php`)
+- [x] Tests: spec §43 items 4, 10; poll endpoint performance check (≤ 6 queries per poll)
 
 ## Phase 11 — ESP32 firmware
 - [ ] Provisioning portal, pairing, pinned TLS, poll loop, commands, NVS session, local warning/OFF, watchdog, safe boot, OTA with rollback, diagnostics

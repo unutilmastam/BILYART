@@ -64,6 +64,12 @@ Remaining for Phase 1:
 - Admin: `GET/DELETE /api/admin/photos/{photo}`; web-admin session page shows the photo on demand and can delete it.
 - Tests: spec §43.11 (other tenant 404, operator 403 unless allowed, super admin 403, guest 401), §43.12 (deleted → 404, file removed, audit), polyglot/EXIF stripping, invalid uploads leave no file, retention per tenant.
 
+## Phase 10 — session 4 (2026-09-30)
+- `/device/v1`: register (secret + rate limit), pairing-status (token once), poll (heartbeat + commands, retry 6 s × 3, expiry), ack (idempotent, START→ACTIVE, ERROR→FAILED+STOP, STOP→COMPLETED), state, firmware download (published only, sha256 header).
+- `AuthenticateDevice` (hashed token, tenant from device), `DeviceRegistry` (register/pair/move/unpair with LimitGuard), `DeviceGateway`, `TabletRegistry` + `/api/tablet/register|pairing-status`, admin devices/tablets endpoints, Super Admin firmware upload/publish (ESP32 magic byte check).
+- Tests: `DeviceSimulator` speaks the real protocol; spec §61 end-to-end (pair → 10-min session → START → warning → internet loss → local OFF → server completes → resync), §43.4, §43.10, retries/expiry, poll ≤ 6 queries, tablet pairing, OTA download rules. 160 API tests on 3 DBs.
+- web-admin: Devices page (pair ESP32 by code to a free table, pair tablet to a branch, live online status, unpair/revoke).
+
 ## Open questions for the owner
 1. ~~Platform domain~~ → **itcode.uz**. Still open: root domain or a subdomain (e.g. `billiard.itcode.uz`)? Its document root in cPanel → Domains?
 2. ~~First ESP32 flash method~~ → from a computer (owner, 2026-09-30).
