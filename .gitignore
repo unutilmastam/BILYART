@@ -1,0 +1,17 @@
+.env
+.env.*
+!.env.example
+node_modules/
+vendor/
+dist/
+build/
+.pio/
+*.log
+apps/api/storage/*.key
+apps/api/public/admin/
+apps/api/public/tablet/
+*.keystore
+*.jks
+.DS_Store
+.idea/
+.vscode/
