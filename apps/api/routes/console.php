@@ -1,8 +1,10 @@
 <?php
 
-use Illuminate\Foundation\Inspiring;
-use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Schedule;
 
-Artisan::command('inspire', function () {
-    $this->comment(Inspiring::quote());
-})->purpose('Display an inspiring quote');
+/*
+| Scheduler — driven by one cPanel cron entry every minute: `php artisan schedule:run`
+| (docs/DEPLOYMENT.md §4). withoutOverlapping() protects against slow runs on shared hosting.
+*/
+
+Schedule::command('idempotency:prune')->hourly()->withoutOverlapping();
