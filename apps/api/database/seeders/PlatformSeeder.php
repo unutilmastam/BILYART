@@ -13,8 +13,9 @@ class PlatformSeeder extends Seeder
 {
     public function run(): void
     {
-        $login = strtolower(trim((string) env('SUPER_ADMIN_LOGIN', '')));
-        $password = (string) env('SUPER_ADMIN_PASSWORD', '');
+        // Read through config (not env()) so it also works after `php artisan config:cache`.
+        $login = strtolower(trim((string) config('platform.super_admin.login')));
+        $password = (string) config('platform.super_admin.password');
 
         if ($login === '' || strlen($password) < 12) {
             throw new RuntimeException('Set SUPER_ADMIN_LOGIN and SUPER_ADMIN_PASSWORD (min 12 chars) in .env before seeding.');

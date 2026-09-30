@@ -1,0 +1,3 @@
+# False positives only — each line is the exact finding fingerprint (commit:file:rule:line), never a whole file or rule.
+# Test fixture password in a test for `admin:create-super` (not a secret; replaced by a constant in the next commit).
+83678a81b13238ec966eaefeab9bbccd143a0949:apps/api/tests/Feature/Ops/FirstDeployTest.php:generic-api-key:34

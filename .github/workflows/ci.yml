@@ -227,3 +227,34 @@ jobs:
           name: esp32-firmware
           path: fw-out/
           retention-days: 30
+
+  deploy-scripts:
+    name: Release package + server scripts (install, update, rollback)
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: bilyart_deploy
+        ports: ['3306:3306']
+        options: >-
+          --health-cmd="mysqladmin ping -proot" --health-interval=5s --health-timeout=5s --health-retries=20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: pdo_mysql, gd, zip
+          coverage: none
+          tools: composer:v2
+      - name: Shell syntax
+        run: for f in infrastructure/deploy/*.sh infrastructure/release/*.sh infrastructure/deploy/tests/*.sh; do bash -n "$f"; done
+      - run: infrastructure/deploy/tests/run.sh
+        env:
+          DB_CONNECTION: mysql
+          DB_HOST: 127.0.0.1
+          DB_PORT: 3306
+          DB_DATABASE: bilyart_deploy
+          DB_USERNAME: root
+          DB_PASSWORD: root

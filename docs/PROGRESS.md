@@ -12,7 +12,7 @@ Updated by Claude Code at the end of every session.
 | 10, 12, 13, 14 | DONE | devices/tablets server side, Telegram, notifications/subscriptions, monitoring/backups |
 | 11. ESP32 firmware | DONE (code) | builds in CI; on-hardware test pending (owner's bench, HARDWARE.md §5) |
 | 15. Security testing | DONE | see below, TESTING.md, SECURITY_REVIEW.md |
-| 16. Deployment | TODO | owner: deploy to hosting at the very end |
+| 16. Deployment | TOOLING READY | package + scripts + guides done; installing on the hosting waits for the owner |
 
 ## Phase 1 — session 1 (2026-09-30)
 Done:
@@ -93,6 +93,15 @@ Remaining for Phase 1:
 - `BackupCrypto` (AES-256-GCM chunked, tamper/truncation detection) + `BackupService` (run/verify/restore/prune/photos) + commands `backup:run [--photos]`, `backup:verify`, `backup:restore --force`, `platform:prune`; daily/weekly schedule; `docs/BACKUP.md`.
 - Tests: every DB table is either backed up or deliberately excluded; backup → damage → restore → identical data on all 3 engines; tamper/truncate/wrong key detected; retention rules; encrypted photo archive; health public vs detailed; all key commands scheduled.
 - Logs: daily channel now writes JSON lines (request id + redaction). Removed Laravel's default `/up` (replaced by `/health`).
+
+## Phase 16 (preparation) — session 4 (2026-09-30)
+- Owner: "prepare everything, the hosting part later". Nothing was uploaded to the hosting.
+- `infrastructure/release/build.sh` → `bilyart-<version>.zip` (33 MB): API without tests, `vendor --no-dev --classmap-authoritative` (git histories stripped), admin + tablet builds, deploy scripts, VERSION/COMMIT; boots and resolves all routes before zipping.
+- `activate.sh` (cPanel Terminal): PHP ≥ 8.3 + extension check, first run creates `shared/.env` with generated APP_KEY/BACKUP_ENCRYPTION_KEY/HEALTH_TOKEN (chmod 600) and stops; then shared storage/.env links, maintenance around `migrate --force`, config/route/event cache, atomic `current` switch, keep 3 releases, `/health` probe. Failure before the switch keeps the old release live. `rollback.sh`.
+- Verified here on MySQL **and** PostgreSQL in a throw-away home: first run → install → health (db/storage) → admin + tablet shells → scheduler with cached config → login → backup + verify → health all green → update keeps shared files → rollback. Found and fixed on the way: `optimize` failed on the missing views dir (now config/route/event cache only); PlatformSeeder used `env()` (breaks with cached config) → `config/platform.php`; added `admin:create-super` (hidden password, nothing in .env).
+- CI: new job "Release package + server scripts" runs `infrastructure/deploy/tests/run.sh` on every PR. Workflows: `release.yml` (manual, version), `deploy.yml` (manual, typed DEPLOY, secrets-gated SSH: scp + activate + health retry, environment `production`).
+- Docs: DEPLOY_UZ.md (click-by-click), DEPLOYMENT.md §2–4a rewritten to the implemented flow, SUPER_ADMIN_GUIDE, CLIENT_ADMIN_GUIDE, TROUBLESHOOTING (Uzbek). Fixed doc/firmware wording "Uzish" for ESP32 (the admin button name). Admin error banner now shows the request id on server errors.
+- Waiting for the owner: hosting check report, domain vs subdomain, `DEVICE_REGISTRATION_SECRET` GitHub secret, lamp power; then the real install (DEPLOY_UZ.md) and the §61 hardware scenario.
 
 ## Phase 11 — session 4 (2026-09-30)
 - `devices/esp32`: `lib/core` (session timer with hard cap, warning flasher, command handling with 16-id idempotency log and expiry, `/state` apply, boot recovery with provisional clock, poll/ack builders) — 17 host tests, fed with the protocol examples. `src/` glue: setup portal (captive, WPA2 random password printed on first boot), registration + pairing with the code on the portal, pinned root CAs (Let's Encrypt + Sectigo), `/state` → `/poll` → `/ack` loop in a network task, relay loop on the other core (never blocks), NVS session + 30 s checkpoint, task watchdog 30 s, BOOT button (3 s portal / 10 s factory reset), status LED, OTA with streaming SHA-256 check + rollback if the new image cannot reach the server in 10 min.

@@ -82,6 +82,7 @@ Each phase = one or more PRs. Owner starts a phase by writing **"Phase N ni bosh
 - [x] All spec §43 tests green, gitleaks clean, dependency audit (`composer audit`, `npm audit`), manual review checklist (TESTING.md, SECURITY_REVIEW.md)
 
 ## Phase 16 — Production deployment
-- [ ] deploy.yml to Hostmaster, cron configured, SSL, first Super Admin, smoke test
+- [x] Tooling ready (owner: deploy later): release package workflow, `activate.sh`/`rollback.sh` (tested install → update → rollback in CI), optional SSH `deploy.yml`, `admin:create-super`, click-by-click DEPLOY_UZ.md
+- [ ] On the hosting: first install, cron configured, SSL, first Super Admin, smoke test (waits for the owner + hosting check results)
 - [ ] Full spec §61 scenario on real hardware (incl. internet disconnect during session)
-- [ ] Docs: SUPER_ADMIN_GUIDE, CLIENT_ADMIN_GUIDE, TROUBLESHOOTING (Uzbek versions for end users)
+- [x] Docs: SUPER_ADMIN_GUIDE, CLIENT_ADMIN_GUIDE, TROUBLESHOOTING (Uzbek versions for end users)
