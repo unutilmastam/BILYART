@@ -1,0 +1,714 @@
+openapi: 3.1.0
+info:
+  title: Billiard SaaS + IoT API
+  version: 0.1.0
+  description: Skeleton. Narrative docs in API.md; message bodies in packages/protocol/schemas.
+servers:
+  - url: https://itcode.uz
+tags:
+  - name: Auth
+  - name: SuperAdmin
+  - name: Admin
+  - name: Tablet
+  - name: Device
+  - name: Health
+paths:
+  /api/auth/login:
+    post:
+      tags: [Auth]
+      summary: "Login (admin SPA)"
+      security: [{"csrf": []}]
+      responses:
+        '200':
+          description: OK
+        default:
+          description: Error
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiError' }
+  /api/auth/logout:
+    post:
+      tags: [Auth]
+      summary: "Logout"
+      security: [{"cookieAuth": []}]
+      responses:
+        '200':
+          description: OK
+        default:
+          description: Error
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiError' }
+  /api/me:
+    get:
+      tags: [Auth]
+      summary: "Current user, permissions, subscription"
+      security: [{"cookieAuth": []}]
+      responses:
+        '200':
+          description: OK
+        default:
+          description: Error
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiError' }
+  /api/me/password:
+    put:
+      tags: [Auth]
+      summary: "Change own password"
+      security: [{"cookieAuth": []}]
+      responses:
+        '200':
+          description: OK
+        default:
+          description: Error
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiError' }
+  /api/super/dashboard:
+    get:
+      tags: [SuperAdmin]
+      summary: "Platform dashboard"
+      security: [{"cookieAuth": []}]
+      responses:
+        '200':
+          description: OK
+        default:
+          description: Error
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiError' }
+  /api/super/tenants:
+    get:
+      tags: [SuperAdmin]
+      summary: "List clients"
+      security: [{"cookieAuth": []}]
+      responses:
+        '200':
+          description: OK
+        default:
+          description: Error
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiError' }
+    post:
+      tags: [SuperAdmin]
+      summary: "Create client + owner"
+      security: [{"cookieAuth": []}]
+      responses:
+        '201':
+          description: OK
+        default:
+          description: Error
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiError' }
+  /api/super/tenants/{tenant}:
+    get:
+      tags: [SuperAdmin]
+      summary: "Client details"
+      security: [{"cookieAuth": []}]
+      parameters:
+        - { name: tenant, in: path, required: true, schema: { type: string } }
+      responses:
+        '200':
+          description: OK
+        default:
+          description: Error
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiError' }
+    patch:
+      tags: [SuperAdmin]
+      summary: "Update client"
+      security: [{"cookieAuth": []}]
+      parameters:
+        - { name: tenant, in: path, required: true, schema: { type: string } }
+      responses:
+        '200':
+          description: OK
+        default:
+          description: Error
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiError' }
+  /api/super/tenants/{tenant}/suspend:
+    post:
+      tags: [SuperAdmin]
+      summary: "Suspend client"
+      security: [{"cookieAuth": []}]
+      parameters:
+        - { name: tenant, in: path, required: true, schema: { type: string } }
+      responses:
+        '200':
+          description: OK
+        default:
+          description: Error
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiError' }
+  /api/super/tenants/{tenant}/activate:
+    post:
+      tags: [SuperAdmin]
+      summary: "Activate client"
+      security: [{"cookieAuth": []}]
+      parameters:
+        - { name: tenant, in: path, required: true, schema: { type: string } }
+      responses:
+        '200':
+          description: OK
+        default:
+          description: Error
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiError' }
+  /api/super/tenants/{tenant}/deactivate:
+    post:
+      tags: [SuperAdmin]
+      summary: "Deactivate client"
+      security: [{"cookieAuth": []}]
+      parameters:
+        - { name: tenant, in: path, required: true, schema: { type: string } }
+      responses:
+        '200':
+          description: OK
+        default:
+          description: Error
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiError' }
+  /api/super/tenants/{tenant}/payments:
+    post:
+      tags: [SuperAdmin]
+      summary: "Record manual payment and extend"
+      security: [{"cookieAuth": []}]
+      parameters:
+        - { name: tenant, in: path, required: true, schema: { type: string } }
+      responses:
+        '200':
+          description: OK
+        default:
+          description: Error
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiError' }
+  /api/super/tenants/{tenant}/extend:
+    post:
+      tags: [SuperAdmin]
+      summary: "Manual extension"
+      security: [{"cookieAuth": []}]
+      parameters:
+        - { name: tenant, in: path, required: true, schema: { type: string } }
+      responses:
+        '200':
+          description: OK
+        default:
+          description: Error
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiError' }
+  /api/super/tenants/{tenant}/limits:
+    put:
+      tags: [SuperAdmin]
+      summary: "Set limits"
+      security: [{"cookieAuth": []}]
+      parameters:
+        - { name: tenant, in: path, required: true, schema: { type: string } }
+      responses:
+        '200':
+          description: OK
+        default:
+          description: Error
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiError' }
+  /api/super/tenants/{tenant}/subscription:
+    get:
+      tags: [SuperAdmin]
+      summary: "Subscription history"
+      security: [{"cookieAuth": []}]
+      parameters:
+        - { name: tenant, in: path, required: true, schema: { type: string } }
+      responses:
+        '200':
+          description: OK
+        default:
+          description: Error
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiError' }
+  /api/super/audit-logs:
+    get:
+      tags: [SuperAdmin]
+      summary: "Audit log"
+      security: [{"cookieAuth": []}]
+      responses:
+        '200':
+          description: OK
+        default:
+          description: Error
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiError' }
+  /api/super/health:
+    get:
+      tags: [SuperAdmin]
+      summary: "Detailed health"
+      security: [{"cookieAuth": []}]
+      responses:
+        '200':
+          description: OK
+        default:
+          description: Error
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiError' }
+  /api/admin/subscription:
+    get:
+      tags: [Admin]
+      summary: "Own subscription status"
+      security: [{"cookieAuth": []}]
+      responses:
+        '200':
+          description: OK
+        default:
+          description: Error
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiError' }
+  /api/admin/dashboard:
+    get:
+      tags: [Admin]
+      summary: "Client dashboard"
+      security: [{"cookieAuth": []}]
+      responses:
+        '200':
+          description: OK
+        default:
+          description: Error
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiError' }
+  /api/admin/branches:
+    get:
+      tags: [Admin]
+      summary: "List branches"
+      security: [{"cookieAuth": []}]
+      responses:
+        '200':
+          description: OK
+        default:
+          description: Error
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiError' }
+    post:
+      tags: [Admin]
+      summary: "Create branch (limit checked)"
+      security: [{"cookieAuth": []}]
+      responses:
+        '201':
+          description: OK
+        default:
+          description: Error
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiError' }
+  /api/admin/tables:
+    get:
+      tags: [Admin]
+      summary: "List tables"
+      security: [{"cookieAuth": []}]
+      responses:
+        '200':
+          description: OK
+        default:
+          description: Error
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiError' }
+    post:
+      tags: [Admin]
+      summary: "Create table (limit checked)"
+      security: [{"cookieAuth": []}]
+      responses:
+        '201':
+          description: OK
+        default:
+          description: Error
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiError' }
+  /api/admin/sessions:
+    get:
+      tags: [Admin]
+      summary: "List sessions"
+      security: [{"cookieAuth": []}]
+      responses:
+        '200':
+          description: OK
+        default:
+          description: Error
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiError' }
+  /api/admin/sessions/{session}/stop:
+    post:
+      tags: [Admin]
+      summary: "Stop session early"
+      security: [{"cookieAuth": []}]
+      parameters:
+        - { name: session, in: path, required: true, schema: { type: string } }
+      responses:
+        '200':
+          description: OK
+        default:
+          description: Error
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiError' }
+  /api/admin/sessions/{session}/payment:
+    post:
+      tags: [Admin]
+      summary: "Mark payment status"
+      security: [{"cookieAuth": []}]
+      parameters:
+        - { name: session, in: path, required: true, schema: { type: string } }
+      responses:
+        '200':
+          description: OK
+        default:
+          description: Error
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiError' }
+  /api/admin/photos/{photo}:
+    get:
+      tags: [Admin]
+      summary: "View session photo (audited)"
+      security: [{"cookieAuth": []}]
+      parameters:
+        - { name: photo, in: path, required: true, schema: { type: string } }
+      responses:
+        '200':
+          description: OK
+        default:
+          description: Error
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiError' }
+    delete:
+      tags: [Admin]
+      summary: "Delete session photo (audited)"
+      security: [{"cookieAuth": []}]
+      parameters:
+        - { name: photo, in: path, required: true, schema: { type: string } }
+      responses:
+        '200':
+          description: OK
+        default:
+          description: Error
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiError' }
+  /api/admin/devices/pair:
+    post:
+      tags: [Admin]
+      summary: "Pair ESP32 by code"
+      security: [{"cookieAuth": []}]
+      responses:
+        '200':
+          description: OK
+        default:
+          description: Error
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiError' }
+  /api/admin/tablets/pair:
+    post:
+      tags: [Admin]
+      summary: "Pair tablet by code"
+      security: [{"cookieAuth": []}]
+      responses:
+        '200':
+          description: OK
+        default:
+          description: Error
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiError' }
+  /api/admin/reports/daily:
+    get:
+      tags: [Admin]
+      summary: "Daily report"
+      security: [{"cookieAuth": []}]
+      responses:
+        '200':
+          description: OK
+        default:
+          description: Error
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiError' }
+  /api/tablet/register:
+    post:
+      tags: [Tablet]
+      summary: "Start tablet pairing"
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '../packages/protocol/schemas/tablet.register.request.schema.json' }
+      responses:
+        '201':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '../packages/protocol/schemas/tablet.register.response.schema.json' }
+        default:
+          description: Error
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiError' }
+  /api/tablet/pairing-status:
+    get:
+      tags: [Tablet]
+      summary: "Poll pairing"
+      security: [{"pollToken": []}]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '../packages/protocol/schemas/tablet.pairing-status.response.schema.json' }
+        default:
+          description: Error
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiError' }
+  /api/tablet/bootstrap:
+    get:
+      tags: [Tablet]
+      summary: "Kiosk bootstrap"
+      security: [{"tabletToken": []}]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '../packages/protocol/schemas/tablet.bootstrap.response.schema.json' }
+        default:
+          description: Error
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiError' }
+  /api/tablet/tables:
+    get:
+      tags: [Tablet]
+      summary: "Table statuses"
+      security: [{"tabletToken": []}]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '../packages/protocol/schemas/tablet.tables.response.schema.json' }
+        default:
+          description: Error
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiError' }
+  /api/tablet/sessions/prepare:
+    post:
+      tags: [Tablet]
+      summary: "Reserve table + quote"
+      security: [{"tabletToken": []}]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '../packages/protocol/schemas/tablet.session-prepare.request.schema.json' }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '../packages/protocol/schemas/tablet.session.schema.json' }
+        default:
+          description: Error
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiError' }
+  /api/tablet/sessions/{session}/start:
+    post:
+      tags: [Tablet]
+      summary: "Start session"
+      security: [{"tabletToken": []}]
+      parameters:
+        - { name: session, in: path, required: true, schema: { type: string } }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '../packages/protocol/schemas/tablet.session.schema.json' }
+        default:
+          description: Error
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiError' }
+  /api/tablet/sessions/{session}/cancel:
+    post:
+      tags: [Tablet]
+      summary: "Cancel reservation"
+      security: [{"tabletToken": []}]
+      parameters:
+        - { name: session, in: path, required: true, schema: { type: string } }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '../packages/protocol/schemas/tablet.session.schema.json' }
+        default:
+          description: Error
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiError' }
+  /api/tablet/sessions/{session}:
+    get:
+      tags: [Tablet]
+      summary: "Session status"
+      security: [{"tabletToken": []}]
+      parameters:
+        - { name: session, in: path, required: true, schema: { type: string } }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '../packages/protocol/schemas/tablet.session.schema.json' }
+        default:
+          description: Error
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiError' }
+  /device/v1/register:
+    post:
+      tags: [Device]
+      summary: "Register device, get pairing code"
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '../packages/protocol/schemas/device.register.request.schema.json' }
+      responses:
+        '201':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '../packages/protocol/schemas/device.register.response.schema.json' }
+        default:
+          description: Error
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiError' }
+  /device/v1/pairing-status:
+    get:
+      tags: [Device]
+      summary: "Poll pairing"
+      security: [{"pollToken": []}]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '../packages/protocol/schemas/device.pairing-status.response.schema.json' }
+        default:
+          description: Error
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiError' }
+  /device/v1/poll:
+    post:
+      tags: [Device]
+      summary: "Heartbeat + commands"
+      security: [{"deviceToken": []}]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '../packages/protocol/schemas/device.poll.request.schema.json' }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '../packages/protocol/schemas/device.poll.response.schema.json' }
+        default:
+          description: Error
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiError' }
+  /device/v1/ack:
+    post:
+      tags: [Device]
+      summary: "Acknowledge commands"
+      security: [{"deviceToken": []}]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '../packages/protocol/schemas/device.ack.request.schema.json' }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '../packages/protocol/schemas/device.ack.response.schema.json' }
+        default:
+          description: Error
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiError' }
+  /device/v1/state:
+    get:
+      tags: [Device]
+      summary: "Authoritative state"
+      security: [{"deviceToken": []}]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '../packages/protocol/schemas/device.state.response.schema.json' }
+        default:
+          description: Error
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiError' }
+  /health:
+    get:
+      tags: [Health]
+      summary: "Liveness"
+      security: []
+      responses:
+        '200':
+          description: OK
+        default:
+          description: Error
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiError' }
+components:
+  schemas:
+    ApiError:
+      $ref: '../packages/protocol/schemas/common.schema.json#/definitions/ApiError'
+  securitySchemes:
+    cookieAuth: { type: apiKey, in: cookie, name: bilyart_session }
+    csrf: { type: apiKey, in: header, name: X-XSRF-TOKEN }
+    tabletToken: { type: http, scheme: bearer }
+    pollToken: { type: apiKey, in: header, name: Authorization, description: 'PollToken <pollToken>' }
+    deviceToken: { type: apiKey, in: header, name: Authorization, description: 'Device <deviceCode>.<token>' }
