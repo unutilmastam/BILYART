@@ -37,12 +37,15 @@ Options -Indexes
 
 # Static files never reach PHP, so the headers the SecurityHeaders middleware sets are repeated here
 # (values from config/security.php; tests/Feature/Security/HtaccessTest.php keeps them in sync).
+# The tablet kiosk path sets its own Permissions-Policy (camera=(self)) in public/tablet/.htaccess / SpaController.
+SetEnvIf Request_URI "^/tablet(/|$)" BILYART_TABLET
+
 <IfModule mod_headers.c>
     Header always set X-Content-Type-Options "nosniff"
     Header always set X-Frame-Options "DENY"
     Header always set Referrer-Policy "same-origin"
     Header always set Cross-Origin-Opener-Policy "same-origin"
-    Header always set Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=(), usb=(), serial=(), bluetooth=()"
+    Header always set Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=(), usb=(), serial=(), bluetooth=()" env=!BILYART_TABLET
     Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains" env=HTTPS
     Header always unset X-Powered-By
     Header unset X-Powered-By

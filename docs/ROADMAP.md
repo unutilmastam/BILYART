@@ -44,13 +44,13 @@ Each phase = one or more PRs. Owner starts a phase by writing **"Phase N ni bosh
 - [x] Tests: concurrency (parallel start → exactly one wins), duplicate Idempotency-Key, state transitions, pricing rounding
 
 ## Phase 8 — Tablet app + kiosk shell
-- [ ] Tablet pairing (code on screen → admin binds to branch)
-- [ ] PWA screens, server-time offset, offline cache, countdown, warning audio (uploaded clips + TTS fallback)
-- [ ] ~~`android-kiosk` Kotlin shell~~ — owner chose PWA only (2026-09-30); kiosk = Android App pinning, documented limitations
-- [ ] `docs/TABLET_SETUP.md` (QR provisioning, click-by-click)
+- [x] Tablet pairing (code on screen → admin binds to branch)
+- [x] PWA screens, server-time offset, offline cache, countdown, warning audio (TTS + chime; uploaded clips: later, settings return `mode: TTS`)
+- [x] ~~`android-kiosk` Kotlin shell~~ — owner chose PWA only (2026-09-30); kiosk = Android App pinning, documented limitations
+- [x] `docs/TABLET_SETUP.md` (click-by-click; App pinning instead of QR provisioning)
 
 ## Phase 9 — Photo capture & upload
-- [ ] MediaPipe face detection → single capture, privacy notice
+- [x] MediaPipe face detection → single capture, privacy notice (tablet PWA, Phase 8)
 - [x] Secure upload pipeline (validation, re-encode, private storage), authenticated viewing, deletion, retention job, access audit (server + web-admin viewer)
 - [x] Tests: spec §43 items 11–12
 

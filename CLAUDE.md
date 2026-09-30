@@ -61,7 +61,7 @@ docs/               all documentation
 ## 5. Commands (keep this section updated as the project grows)
 - API: `cd apps/api && composer install && php artisan test` (needs a real DB; phpunit.xml defaults to MySQL on 127.0.0.1:3306 root/root db `bilyart_test`). All three engines locally: `scripts/test-all-db.sh --start` once, then `scripts/test-all-db.sh`. Style: `vendor/bin/pint --test`
 - Admin: `cd apps/web-admin && npm ci && npm test && npm run typecheck && npm run build` (PWA under `/admin/`, dev server proxies `/api` to :8000)
-- Tablet: `cd apps/tablet && npm ci && npm test && npm run build`
+- Tablet: `cd apps/tablet && npm ci && npm test && npm run typecheck && npm run build` (PWA under `/tablet/`, dev server :5174 proxies `/api`). Setup for halls: `docs/TABLET_SETUP.md`
 - Firmware: `cd devices/esp32 && pio run && pio test -e native`
 - Protocol: `cd packages/protocol && npm ci && npm test && npm run typecheck && npm run check-generated` (after editing schemas: `npm run generate`)
 - Hosting check script: `infrastructure/hosting-check/tests/run.sh` (build for owner: Actions → "Hosting check (build file)")

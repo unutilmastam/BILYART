@@ -108,7 +108,15 @@ Implementation notes (Phase 7):
 
 ## 6. Frontends
 - **web-admin**: React 18 + Vite + TypeScript + React Router + TanStack Query + Tailwind. Areas: `/admin/super/*` (SUPER_ADMIN), `/admin/*` (tenant roles). Mobile-first.
-- **tablet**: React + Vite PWA; large touch targets; screens: Tables → Duration → Price → Camera → Countdown. Caches table list/prices (IndexedDB, cache only); refuses to start sessions offline ("Aloqa yo'q. Iltimos, kuting.").
+- **tablet**: React + Vite PWA; large touch targets; screens: Pairing → Tables → Duration → Price → Camera → Start/Countdown. Caches the last bootstrap (IndexedDB, display only); refuses to start sessions offline ("Aloqa yo'q. Iltimos, kuting."). Implementation notes (Phase 8):
+  - Server time: offset from `serverTime` in every response; the sample with the lowest round trip wins (`lib/clock.ts`).
+  - Idempotency: one key per logical action (the confirm screen keeps its key across retries, so a lost response never creates a second reservation).
+  - Camera: face *detection* (MediaPipe BlazeFace, WASM + model shipped with the build, no CDN) times one JPEG; the stream stops right after. If the detector cannot load within 12 s a clearly labelled manual "Suratga olish" button takes the photo. When the tenant turned `photo_required` off, the customer may continue without a photo.
+  - Start waits for the device ACK (`STARTING` → `ACTIVE`/`FAILED`) by polling the session.
+  - 5-minute warning: decided locally from `endAt` + offset (works offline), once per session: chime + device TTS of the tenant's text (`{table}` placeholder).
+  - Idle 60 s on any step → back to tables; an open reservation is cancelled (server TTL 120 s is the backstop).
+  - Revoked tablet (401/403) → credential wiped → pairing screen. Subscription inactive (402) → "Xizmat vaqtincha to'xtatilgan".
+  - Kiosk lock: Android App pinning (docs/TABLET_SETUP.md); screen kept awake with the Wake Lock API.
 - i18n: `uz` default, `ru` prepared.
 - Both builds are copied into `apps/api/public/{admin,tablet}` by CI → same origin, no CORS.
 
