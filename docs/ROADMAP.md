@@ -66,8 +66,8 @@ Each phase = one or more PRs. Owner starts a phase by writing **"Phase N ni bosh
 - [ ] `docs/ESP32_FLASHING.md`, `docs/HARDWARE.md` (wiring diagram, relay/contactor sizing, electrician review note)
 
 ## Phase 12 — Telegram
-- [ ] Per-tenant bot setup, webhook with secret, chat linking, daily report per branch, alerts (device offline, session failed)
-- [ ] Tests: tenant bot only sees own data; token never returned by API (§43 item 15)
+- [x] Per-tenant bot setup, webhook with secret, chat linking, daily report per branch, alerts (device offline, session failed)
+- [x] Tests: tenant bot only sees own data; token never returned by API (§43 item 15)
 
 ## Phase 13 — Subscription expiry & notifications
 - [ ] Status transitions via cron, reminders 5/3/1/0 days (deduped), in-app + Telegram, expired lock-down behaviour
