@@ -286,18 +286,47 @@ function hc_verdict(array $r): array
 function hc_html(array $report, array $problems): string
 {
     $json = json_encode($report, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
-    $e = static fn ($v): string => htmlspecialchars(is_scalar($v) || $v === null ? var_export($v, true) : json_encode($v), ENT_QUOTES, 'UTF-8');
+    $e = static fn ($v): string => htmlspecialchars(match (true) {
+        $v === null => '-',
+        is_bool($v) => $v ? 'yes' : 'no',
+        is_scalar($v) => (string) $v,
+        default => (string) json_encode($v),
+    }, ENT_QUOTES, 'UTF-8');
     $rows = '';
+    $missing = array_keys(array_filter($report['extensions']['required'], static fn ($ok) => !$ok));
+    $bin = static fn (string $b): string => $report['binaries'][$b]['path'] !== null
+        ? $report['binaries'][$b]['path'] . ' ' . ($report['binaries'][$b]['version'] ?? '')
+        : 'no';
+    $net = static fn (array $o): string => !empty($o['skipped']) ? 'skipped' : (($o['ok'] ? 'OK ' : 'FAIL ') . ($o['http_status'] ?? '') . ' ' . ($o['error'] ?? ''));
     $flat = [
         'PHP' => $report['php']['version'] . ' (' . $report['php']['sapi'] . ')',
+        'Missing extensions' => $missing === [] ? 'none' : implode(', ', $missing),
+        'gd / imagick' => ($report['extensions']['image']['gd'] ? 'gd ' : '') . ($report['extensions']['image']['imagick'] ? 'imagick' : ''),
+        'argon2id' => $report['php']['argon2id'],
         'PDO drivers' => implode(', ', $report['extensions']['pdo_drivers']),
         'memory_limit' => $report['ini']['memory_limit'],
         'max_execution_time' => $report['ini']['max_execution_time'],
         'upload_max_filesize' => $report['ini']['upload_max_filesize'],
-        'shell_exec' => $report['functions']['shell_exec'],
+        'post_max_size' => $report['ini']['post_max_size'],
+        'disable_functions' => $report['ini']['disable_functions'],
+        'shell_exec / proc_open' => ($report['functions']['shell_exec'] ? 'yes' : 'no') . ' / ' . ($report['functions']['proc_open'] ? 'yes' : 'no'),
         'symlink' => $report['filesystem']['symlink_works'],
-        'Telegram reachable' => $report['outbound_https']['telegram']['ok'],
+        'Write outside docroot' => $report['filesystem']['parent_of_docroot_writable'] || $report['filesystem']['home_writable'],
+        'Home' => $report['filesystem']['home'],
+        'Document root' => $report['filesystem']['document_root'],
+        'Disk free MB' => $report['filesystem']['disk_free_mb'],
+        'PHP CLI (cron)' => implode(' | ', $report['binaries']['php_cli_candidates']),
+        'php in PATH' => $bin('php'),
+        'mysql' => $bin('mysql'),
+        'mysqldump' => $bin('mysqldump'),
+        'git' => $bin('git'),
+        'node' => $bin('node'),
+        'python3' => $bin('python3'),
+        'Telegram API' => $net($report['outbound_https']['telegram']),
+        'GitHub API' => $net($report['outbound_https']['github']),
         'HTTPS' => $report['server']['https'],
+        'Server' => $report['server']['software'],
+        'OS' => $report['server']['os'],
     ];
     foreach ($flat as $k => $v) {
         $rows .= '<tr><th>' . htmlspecialchars($k, ENT_QUOTES, 'UTF-8') . '</th><td>' . $e($v) . '</td></tr>';
@@ -313,9 +342,9 @@ function hc_html(array $report, array $problems): string
         . '.ok{color:#0a7a2f}.bad{color:#b00020}.note{background:#fff4ce;padding:8px}</style></head><body>'
         . '<h1>Hosting check</h1>'
         . '<p class="note"><b>Diqqat:</b> bu sahifa faqat bir marta ochiladi — fayl o\'zini o\'chirdi. '
-        . 'Pastdagi matnni to\'liq nusxalab (Select all → Copy) Claude\'ga yuboring.</p>'
+        . 'Butun sahifani skrinshot qiling (uzun skrinshot yoki bir nechta) va Claude\'ga yuboring.</p>'
         . $problemHtml . '<table>' . $rows . '</table>'
-        . '<h2>JSON</h2><textarea readonly>' . htmlspecialchars((string) $json, ENT_QUOTES, 'UTF-8') . '</textarea>'
+        . '<details><summary>JSON (ixtiyoriy)</summary><textarea readonly>' . htmlspecialchars((string) $json, ENT_QUOTES, 'UTF-8') . '</textarea></details>'
         . '</body></html>';
 }
 
