@@ -44,7 +44,7 @@ final class KioskController extends Controller
             ],
             'settings' => [
                 'locale' => $settings['locale'],
-                'photoRequired' => (bool) $settings['photo_required'],
+                'photoRequired' => true, // always: the photo is evidence (kiosk offers no way to skip it)
                 'privacyNotice' => $settings['privacy_notice'],
                 'warnBeforeSec' => (int) $settings['warn_before_minutes'] * 60,
                 'warningAudio' => ['mode' => 'TTS', 'text' => $settings['warning_text']],

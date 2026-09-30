@@ -58,7 +58,7 @@ Mijoz ilovadan chiqib ketmasligi uchun:
 | PIN va chiqish ishorasini biladigan odam ilovadan chiqa oladi (App pinning — to'liq "Device Owner" kiosk emas). | PIN ni faqat mas'ul xodim bilsin. To'liq qulflangan kiosk kerak bo'lsa — alohida Android ilova (keyinroq, egasi so'rasa). |
 | Chrome ma'lumotlari tozalansa, planshet ulanishi o'chadi. | §3 bo'yicha qayta ulang (1 daqiqa). |
 | O'zbek TTS ovozi ko'p planshetlarda yo'q. | Ogohlantirishdan oldin baland qo'ng'iroq chalinadi, matn eng yaqin ovozda o'qiladi. Stol chirog'i ham 3 marta miltillaydi (ESP32). |
-| Yuzni aniqlash moduli yuklanmasa (eski planshet, xotira yetishmasa). | Ekranda "Yuzni avtomatik aniqlash ishlamadi" chiqadi va **Suratga olish** tugmasi paydo bo'ladi — surat baribir olinadi. |
+| Surat faqat yuz aniqlanganda avtomatik olinadi; suratsiz o'yin boshlanmaydi (egasining qarori — surat dalil). Yuzni aniqlash moduli ishlamasa (juda eski planshet, xotira yetishmasa), o'yin boshlab bo'lmaydi. | Ekranda "Yuzni aniqlash ishga tushmadi" chiqadi → **Qayta urinish**. Takrorlansa — planshetni qayta yoqing; bo'lmasa kuchliroq planshet kerak (Android 9+, 3 GB+ RAM tavsiya). |
 
 ## 8. Muammolar
 | Belgi | Sabab / yechim |

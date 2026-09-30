@@ -62,7 +62,7 @@ class PhotoTest extends TestCase
     #[Test]
     public function the_photo_is_re_encoded_stored_privately_and_enables_start(): void
     {
-        $h = $this->hall([], ['photo_required' => true]);
+        $h = $this->hall();
         $id = $this->reserved($h);
 
         $res = $this->upload($h['token'], $id, $this->jpeg(withExif: true, extra: '<?php system($_GET["c"]); ?>'), 'evil.php.jpg')
@@ -165,7 +165,7 @@ class PhotoTest extends TestCase
     public function retention_job_deletes_old_photos_per_tenant_setting(): void
     {
         $this->travelTo(CarbonImmutable::parse('2026-10-01 10:00:00'));
-        $a = $this->hall([], ['photo_required' => false, 'photo_retention_days' => 7]);
+        $a = $this->hall([], ['photo_retention_days' => 7]);
         $b = $this->hall(); // default 30 days
         $this->upload($a['token'], $this->reserved($a), $this->jpeg())->assertOk();
         $this->upload($b['token'], $this->reserved($b), $this->jpeg())->assertOk();

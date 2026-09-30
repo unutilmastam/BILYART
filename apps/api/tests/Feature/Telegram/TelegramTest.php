@@ -184,7 +184,7 @@ class TelegramTest extends TestCase
         $this->link($integration, $secret, $owner, 555);
 
         $id = $this->tabletPost($h['token'], '/api/tablet/sessions/prepare', ['tableId' => $h['table']->public_id, 'durationMinutes' => 30])->json('session.id');
-        $this->tabletPost($h['token'], "/api/tablet/sessions/$id/start")->assertOk();
+        $this->tabletStart($h['token'], $id)->assertOk();
         $this->travel(21)->seconds();
         $this->artisan('sessions:finalize');
         $this->artisan('notifications:deliver');

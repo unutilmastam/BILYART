@@ -133,7 +133,8 @@ final class SessionService
             SessionStateMachine::assert($locked->status, SessionStatus::STARTING);
 
             $settings = $this->settings->for(Tenant::query()->findOrFail($locked->tenant_id));
-            if ($settings['photo_required'] && ! $locked->photo()->whereNull('deleted_at')->exists()) {
+            // The customer photo is evidence for the hall (owner decision 2026-09-30): no photo, no game — for every tenant.
+            if (! $locked->photo()->whereNull('deleted_at')->exists()) {
                 throw ApiException::of(ErrorCode::PHOTO_REQUIRED);
             }
             $table = BilliardTable::query()->findOrFail($locked->table_id);

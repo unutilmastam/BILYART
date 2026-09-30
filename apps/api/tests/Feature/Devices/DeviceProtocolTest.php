@@ -115,7 +115,7 @@ class DeviceProtocolTest extends TestCase
 
         // Device B cannot acknowledge (or learn about) device A's commands.
         $id = $this->tabletPost($h['token'], '/api/tablet/sessions/prepare', ['tableId' => $h['table']->public_id, 'durationMinutes' => 30])->json('session.id');
-        $this->tabletPost($h['token'], "/api/tablet/sessions/$id/start")->assertOk();
+        $this->tabletStart($h['token'], $id)->assertOk();
         $commandId = $this->asSystem(fn () => DeviceCommand::query()->latest('id')->first()->public_id);
         $other->ack([['commandId' => $commandId, 'result' => 'OK']])->assertOk()->assertJsonPath('accepted', []);
         $this->assertSame('STARTING', DB::table('game_sessions')->where('public_id', $id)->value('status'));
@@ -128,7 +128,7 @@ class DeviceProtocolTest extends TestCase
         $h = $this->hall();
         $sim = $this->pairedSimulator($h);
         $id = $this->tabletPost($h['token'], '/api/tablet/sessions/prepare', ['tableId' => $h['table']->public_id, 'durationMinutes' => 30])->json('session.id');
-        $this->tabletPost($h['token'], "/api/tablet/sessions/$id/start")->assertOk();
+        $this->tabletStart($h['token'], $id)->assertOk();
 
         $poll = $sim->poll()->assertOk();
         $this->assertMatchesProtocol('device.poll.response', $poll->json());
@@ -199,7 +199,7 @@ class DeviceProtocolTest extends TestCase
         // Start a 10-minute test session from the tablet.
         $id = $this->tabletPost($h['token'], '/api/tablet/sessions/prepare', ['tableId' => $h['table']->public_id, 'durationMinutes' => 10])
             ->assertCreated()->assertJsonPath('session.amount', 4000)->json('session.id');
-        $this->tabletPost($h['token'], "/api/tablet/sessions/$id/start")->assertOk();
+        $this->tabletStart($h['token'], $id)->assertOk();
 
         // ESP32 receives the command, light turns on, session becomes ACTIVE.
         $received = $sim->pollAndApply();
@@ -231,7 +231,7 @@ class DeviceProtocolTest extends TestCase
         $h = $this->hall();
         $sim = $this->pairedSimulator($h);
         $id = $this->tabletPost($h['token'], '/api/tablet/sessions/prepare', ['tableId' => $h['table']->public_id, 'durationMinutes' => 60])->json('session.id');
-        $this->tabletPost($h['token'], "/api/tablet/sessions/$id/start")->assertOk();
+        $this->tabletStart($h['token'], $id)->assertOk();
         $sim->pollAndApply();
 
         $this->actingAs($this->tenantUser('CLIENT_OPERATOR', $h['tenant']))->postJson("/api/admin/sessions/$id/stop")->assertOk();

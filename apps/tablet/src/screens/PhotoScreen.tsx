@@ -16,14 +16,16 @@ export interface PhotoDeps {
 
 const defaultDeps: PhotoDeps = { openCamera: openFrontCamera, loadDetector: loadMediapipeDetector, capture: (v) => captureJpeg(v) };
 
-type Phase = 'opening' | 'searching' | 'holding' | 'manual' | 'captured' | 'cameraError';
+type Phase = 'opening' | 'searching' | 'holding' | 'captured' | 'cameraError' | 'detectorError';
 
 /**
- * One customer photo with the tablet's front camera (spec STEP 5–7). Face
- * detection only times the shot. If the detector cannot load, a clearly
- * labelled manual button takes the photo instead — nothing is faked.
+ * One customer photo with the tablet's front camera (spec STEP 5–7). The photo is
+ * evidence for the hall (owner decision 2026-09-30), so it is taken only
+ * automatically, when exactly one face is well placed for HOLD_MS — there is no
+ * skip and no manual shutter. If the camera or the detector fails, the customer
+ * can retry or cancel; the game never starts without a photo.
  */
-export function PhotoScreen(props: { required: boolean; uploading: boolean; error: string | null; onPhoto: (photo: Blob) => void; onSkip: () => void; onCancel: () => void; deps?: PhotoDeps }) {
+export function PhotoScreen(props: { uploading: boolean; error: string | null; onPhoto: (photo: Blob) => void; onRetry: () => void; onCancel: () => void; deps?: PhotoDeps }) {
   const deps = props.deps ?? defaultDeps;
   const video = useRef<HTMLVideoElement>(null);
   const stream = useRef<MediaStream | null>(null);
@@ -89,7 +91,7 @@ export function PhotoScreen(props: { required: boolean; uploading: boolean; erro
         if (stopped) return detector.close();
         raf = requestAnimationFrame(loop);
       } catch {
-        if (!stopped) setPhase('manual');
+        if (!stopped) setPhase('detectorError');
       }
     })();
 
@@ -107,8 +109,8 @@ export function PhotoScreen(props: { required: boolean; uploading: boolean; erro
       ? t('photo.uploading')
       : phase === 'holding'
         ? t('photo.hold')
-        : phase === 'manual'
-          ? t('photo.detectorUnavailable')
+        : phase === 'detectorError'
+          ? t('photo.detectorFailed')
           : phase === 'cameraError'
             ? t('photo.cameraError')
             : t('photo.lookingForFace');
@@ -121,6 +123,7 @@ export function PhotoScreen(props: { required: boolean; uploading: boolean; erro
         <div className="pointer-events-none absolute inset-[15%_30%] rounded-[50%] border-4 border-dashed border-white/60" aria-hidden />
       </div>
       <p className="text-xl text-slate-300">{t('photo.hint')}</p>
+      <p className="text-lg text-slate-400">{t('photo.required')}</p>
       <p role="status" className="flex items-center gap-3 text-2xl font-semibold">
         {(props.uploading || phase === 'opening' || phase === 'captured') && <Spinner />}
         {status}
@@ -134,16 +137,7 @@ export function PhotoScreen(props: { required: boolean; uploading: boolean; erro
         <BigButton variant="ghost" onClick={props.onCancel} disabled={props.uploading}>
           {t('common.cancel')}
         </BigButton>
-        {phase === 'manual' && (
-          <BigButton onClick={() => void take()} disabled={props.uploading}>
-            {t('photo.manual')}
-          </BigButton>
-        )}
-        {!props.required && (
-          <BigButton variant="ghost" onClick={props.onSkip} disabled={props.uploading}>
-            {t('photo.skip')}
-          </BigButton>
-        )}
+        {(phase === 'detectorError' || phase === 'cameraError') && <BigButton onClick={props.onRetry}>{t('common.retry')}</BigButton>}
       </div>
     </div>
   );

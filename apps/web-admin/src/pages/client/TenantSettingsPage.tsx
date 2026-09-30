@@ -27,7 +27,6 @@ export function TenantSettingsPage() {
           <TextField label={t('tsettings.warnBeforeMinutes')} type="number" min={1} max={30} value={form.warnBeforeMinutes} onChange={(e) => setForm({ ...form, warnBeforeMinutes: Number(e.target.value) })} error={err('warnBeforeMinutes')} />
         </div>
         <TextField label={t('tsettings.warningText')} value={form.warningText} onChange={(e) => setForm({ ...form, warningText: e.target.value })} error={err('warningText')} />
-        <label className="flex items-center gap-2 text-sm"><input type="checkbox" className="size-5" checked={form.photoRequired} onChange={(e) => setForm({ ...form, photoRequired: e.target.checked })} />{t('tsettings.photoRequired')}</label>
         <label className="flex items-center gap-2 text-sm"><input type="checkbox" className="size-5" checked={form.operatorsCanViewPhotos} onChange={(e) => setForm({ ...form, operatorsCanViewPhotos: e.target.checked })} />{t('tsettings.operatorsCanViewPhotos')}</label>
         {m.isError && <ErrorBanner error={m.error} />}
         {m.isSuccess && <SuccessBanner>{t('settings.saved')}</SuccessBanner>}
