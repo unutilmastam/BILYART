@@ -7,6 +7,9 @@ import { BranchDetailPage } from './pages/client/BranchDetailPage';
 import { BranchesPage } from './pages/client/BranchesPage';
 import { ClientHomePage } from './pages/client/ClientHomePage';
 import { PricingPage } from './pages/client/PricingPage';
+import { ReportsPage } from './pages/client/ReportsPage';
+import { SessionDetailPage } from './pages/client/SessionDetailPage';
+import { SessionsPage } from './pages/client/SessionsPage';
 import { StaffPage } from './pages/client/StaffPage';
 import { TablesPage } from './pages/client/TablesPage';
 import { TenantSettingsPage } from './pages/client/TenantSettingsPage';
@@ -31,6 +34,8 @@ const superNav: NavItem[] = [
 /** Client nav items are shown only when the user's role has the permission (the API enforces it anyway). */
 const clientNav: (NavItem & { permission?: string })[] = [
   { to: '/client', label: 'nav.dashboard', end: true },
+  { to: '/client/sessions', label: 'nav.sessions', permission: 'sessions.view' },
+  { to: '/client/reports', label: 'nav.reports', permission: 'reports.view' },
   { to: '/client/branches', label: 'nav.branches' },
   { to: '/client/tables', label: 'nav.tables', permission: 'tables.view' },
   { to: '/client/pricing', label: 'nav.pricing', permission: 'pricing.manage' },
@@ -73,6 +78,9 @@ export const routes = [
     ),
     children: [
       { index: true, element: <ClientHomePage /> },
+      { path: 'sessions', element: <SessionsPage /> },
+      { path: 'sessions/:id', element: <SessionDetailPage /> },
+      { path: 'reports', element: <ReportsPage /> },
       { path: 'branches', element: <BranchesPage /> },
       { path: 'branches/:id', element: <BranchDetailPage /> },
       { path: 'tables', element: <TablesPage /> },

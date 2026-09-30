@@ -42,3 +42,17 @@ export function parseMoneyInput(value: string): number | null {
   if (!/^\d{1,13}$/.test(digits)) return null;
   return Number(digits);
 }
+
+/** 195 → "3 soat 15 daq" */
+export function formatMinutes(minutes: number): string {
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  if (h === 0) return `${m} daq`;
+  return m === 0 ? `${h} soat` : `${h} soat ${m} daq`;
+}
+
+/** Local "HH:MM" of an ISO instant in the display timezone. */
+export function formatTime(iso: string | null | undefined, timeZone = DISPLAY_TIMEZONE): string {
+  if (!iso) return '—';
+  return formatDateTime(iso, timeZone).slice(-5);
+}
