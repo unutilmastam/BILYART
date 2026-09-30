@@ -2,9 +2,12 @@
 
 namespace Tests\Feature\Devices;
 
+use App\Domain\Devices\Models\DeviceCommand;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\Concerns\AssertsProtocol;
 use Tests\Concerns\BuildsSessionFixtures;
@@ -65,14 +68,19 @@ class TabletPairingAndFirmwareTest extends TestCase
         Storage::fake('local');
         config(['devices.registration_secret' => 'test-registration-secret-123']);
         $admin = $this->superAdmin();
-        $bin = "\xE9".random_bytes(4095);
+        $bin = $this->image('1.1.0');
         $file = UploadedFile::fake()->createWithContent('fw.bin', $bin);
 
         $this->actingAs($this->tenantUser())->post('/api/super/firmware', ['version' => '1.1.0', 'file' => $file], ['Accept' => 'application/json'])->assertStatus(403);
         $up = $this->actingAs($admin)->post('/api/super/firmware', ['version' => '1.1.0', 'notes' => 'OTA test', 'file' => $file], ['Accept' => 'application/json'])
             ->assertCreated()->assertJsonPath('data.sha256', hash('sha256', $bin))->assertJsonPath('data.isPublished', false);
         $this->actingAs($admin)->post('/api/super/firmware', ['version' => '1.2.0', 'file' => UploadedFile::fake()->createWithContent('x.bin', str_repeat('A', 2048))], ['Accept' => 'application/json'])
-            ->assertStatus(422);
+            ->assertStatus(422)->assertJsonStructure(['error' => ['fields' => ['file']]]);
+        // The version typed in the panel must be the one compiled into the binary.
+        $this->actingAs($admin)->post('/api/super/firmware', ['version' => '1.3.0', 'file' => UploadedFile::fake()->createWithContent('y.bin', $this->image('1.0.0-ci.31'))], ['Accept' => 'application/json'])
+            ->assertStatus(422)->assertJsonStructure(['error' => ['fields' => ['version']]]);
+        $this->actingAs($admin)->post('/api/super/firmware', ['version' => '1.3.0', 'file' => UploadedFile::fake()->createWithContent('z.bin', "\xE9".random_bytes(4095))], ['Accept' => 'application/json'])
+            ->assertStatus(422)->assertJsonStructure(['error' => ['fields' => ['file']]]);
 
         $h = $this->hall();
         $this->asSystem(fn () => $h['device']->forceFill(['status' => 'REVOKED', 'active_table_id' => null, 'active_hardware_id' => null])->save());
@@ -86,8 +94,52 @@ class TabletPairingAndFirmwareTest extends TestCase
         $this->actingAs($admin)->postJson("/api/super/firmware/{$up->json('data.id')}/publish")->assertOk();
         $this->app['auth']->forgetGuards();
 
-        $download = $this->get('/device/v1/firmware/1.1.0', $sim->auth())->assertOk()->assertHeader('X-Firmware-Sha256', hash('sha256', $bin));
+        $download = $this->get('/device/v1/firmware/1.1.0', $sim->auth())->assertOk()->assertHeader('X-Firmware-Sha256', hash('sha256', $bin))
+            ->assertHeader('Content-Length', (string) strlen($bin)); // the firmware checks the size before flashing
         $this->assertSame($bin, $download->streamedContent());
         $this->get('/device/v1/firmware/1.1.0')->assertStatus(401);
+    }
+
+    #[Test]
+    public function a_published_release_is_rolled_out_as_ota_commands_to_idle_devices_only(): void
+    {
+        Storage::fake('local');
+        $admin = $this->superAdmin();
+        $bin = $this->image('1.2.0');
+        $release = $this->actingAs($admin)->post('/api/super/firmware', ['version' => '1.2.0', 'file' => UploadedFile::fake()->createWithContent('fw.bin', $bin)], ['Accept' => 'application/json'])
+            ->assertCreated()->json('data.id');
+
+        // Not published yet → nothing can be rolled out.
+        $this->actingAs($admin)->postJson("/api/super/firmware/{$release}/rollout")->assertStatus(409);
+        $this->actingAs($admin)->postJson("/api/super/firmware/{$release}/publish")->assertOk();
+
+        $idle = $this->hall();
+        $playing = $this->hall();
+        $current = $this->hall();
+        $this->asSystem(function () use ($playing, $current): void {
+            $current['device']->forceFill(['firmware_version' => '1.2.0'])->save();
+            DB::table('game_sessions')->insert([
+                'public_id' => (string) Str::ulid(), 'tenant_id' => $playing['tenant']->id, 'branch_id' => $playing['branch']->id, 'table_id' => $playing['table']->id,
+                'status' => 'ACTIVE', 'duration_minutes' => 60, 'start_at' => now(), 'end_at' => now()->addHour(), 'price_per_hour_snapshot' => 20000,
+                'rounding_step_snapshot' => 1000, 'amount' => 20000, 'payment_status' => 'UNPAID', 'created_at' => now(), 'updated_at' => now(),
+            ]);
+        });
+
+        $this->actingAs($admin)->postJson("/api/super/firmware/{$release}/rollout")->assertOk()
+            ->assertJsonPath('data.queued', 1)->assertJsonPath('data.skippedBusy', 1)->assertJsonPath('data.alreadyCurrent', 1);
+        // Repeating does not queue a second OTA for the same device.
+        $this->actingAs($admin)->postJson("/api/super/firmware/{$release}/rollout")->assertOk()->assertJsonPath('data.queued', 0);
+        $this->actingAs($this->tenantUser('CLIENT_OWNER', $idle['tenant']))->postJson("/api/super/firmware/{$release}/rollout")->assertStatus(403);
+
+        $cmd = $this->asSystem(fn () => DeviceCommand::query()->where('type', 'OTA')->sole());
+        $this->assertSame($idle['device']->id, $cmd->device_id);
+        $this->assertEquals(['version' => '1.2.0', 'sha256' => hash('sha256', $bin), 'size' => strlen($bin)], $cmd->payload);
+        $this->assertMatchesProtocol('device.command', ['commandId' => $cmd->public_id, 'type' => 'OTA', 'expiresAt' => $cmd->expires_at->getTimestamp(), 'payload' => $cmd->payload]);
+    }
+
+    /** A fake ESP32 app image: magic byte + the version marker the real build embeds. */
+    private function image(string $version): string
+    {
+        return "\xE9".random_bytes(2000)."BLYFWVER:{$version}\n".random_bytes(2000);
     }
 }

@@ -44,6 +44,8 @@ async function ensureCsrf(): Promise<void> {
 export interface RequestOptions {
   method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
   body?: unknown;
+  /** Multipart upload (file); the browser sets the Content-Type boundary. */
+  form?: FormData;
   query?: Record<string, string | number | undefined | null>;
   /** Idempotency-Key for state-changing requests; generated when omitted for non-GET calls. */
   idempotencyKey?: string;
@@ -75,7 +77,7 @@ export async function api<T>(path: string, options: RequestOptions = {}): Promis
       method,
       headers,
       credentials: 'same-origin',
-      body: options.body === undefined ? undefined : JSON.stringify(options.body),
+      body: options.form ?? (options.body === undefined ? undefined : JSON.stringify(options.body)),
     });
   } catch {
     throw new ApiError(0, NETWORK_ERROR_CODE, "Aloqa yo'q. Internetni tekshirib, qayta urinib ko'ring.");

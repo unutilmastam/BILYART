@@ -1,0 +1,7 @@
+{
+  "name": "core",
+  "version": "1.0.0",
+  "description": "Hardware-free firmware logic (session timing, commands, boot recovery). Unit-tested on the host (pio test -e native).",
+  "frameworks": "*",
+  "platforms": "*"
+}

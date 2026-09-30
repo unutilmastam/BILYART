@@ -61,9 +61,10 @@ Each phase = one or more PRs. Owner starts a phase by writing **"Phase N ni bosh
 - [x] Tests: spec §43 items 4, 10; poll endpoint performance check (≤ 6 queries per poll)
 
 ## Phase 11 — ESP32 firmware
-- [ ] Provisioning portal, pairing, pinned TLS, poll loop, commands, NVS session, local warning/OFF, watchdog, safe boot, OTA with rollback, diagnostics
-- [ ] Native unit tests for session timing & command idempotency
-- [ ] `docs/ESP32_FLASHING.md`, `docs/HARDWARE.md` (wiring diagram, relay/contactor sizing, electrician review note)
+- [x] Provisioning portal, pairing, pinned TLS, poll loop, commands, NVS session, local warning/OFF, watchdog, safe boot, OTA with rollback, diagnostics
+- [x] Native unit tests for session timing & command idempotency
+- [x] `docs/ESP32_FLASHING.md`, `docs/HARDWARE.md` (wiring diagram, relay/contactor sizing, electrician review note)
+- [ ] On-hardware verification (needs a real ESP32 + relay; checklist HARDWARE.md §5)
 
 ## Phase 12 — Telegram
 - [x] Per-tenant bot setup, webhook with secret, chat linking, daily report per branch, alerts (device offline, session failed)

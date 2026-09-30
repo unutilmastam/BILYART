@@ -4,6 +4,13 @@ on:
   pull_request:
   push:
     branches: [main]
+  # Owner: Actions → CI → Run workflow → optional firmware version (e.g. 1.1.0) for an OTA release build.
+  workflow_dispatch:
+    inputs:
+      firmware_version:
+        description: 'ESP32 firmware version (semver, e.g. 1.1.0). Empty = 1.0.0-ci.<run number>'
+        required: false
+        default: ''
 
 permissions:
   contents: read
@@ -171,3 +178,52 @@ jobs:
           path: apps/tablet/dist/
           include-hidden-files: true # dist/.htaccess (CSP + camera permission)
           retention-days: 14
+
+  firmware:
+    name: ESP32 firmware (native tests, build .bin)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: devices/esp32
+    env:
+      FW_VERSION: ${{ inputs.firmware_version || format('1.0.0-ci.{0}', github.run_number) }}
+      DEFAULT_API_BASE: https://itcode.uz
+      # Set in GitHub → Settings → Secrets and variables → Actions (docs/ESP32_FLASHING.md). Same value as the server's .env.
+      DEVICE_REGISTRATION_SECRET: ${{ secrets.DEVICE_REGISTRATION_SECRET }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/cache@v4
+        with:
+          path: ~/.platformio
+          key: pio-${{ hashFiles('devices/esp32/platformio.ini') }}
+      - name: Firmware version is semver
+        run: echo "$FW_VERSION" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$' || { echo "::error::FW_VERSION must be semver"; exit 1; }
+      - run: pip install platformio==6.1.18
+      - name: Pinned CA bundle is up to date
+        run: python scripts/make_ca_bundle.py --check
+      - name: Unit tests on the host (session timing, commands, boot recovery)
+        run: pio test -e native
+      - name: Build firmware
+        run: pio run -e esp32dev
+      - name: Package (app + full factory image for the first flash)
+        run: |
+          set -e
+          out=../../fw-out && mkdir -p $out
+          b=.pio/build/esp32dev
+          grep -aq "BLYFWVER:$FW_VERSION" $b/firmware.bin || { echo "::error::version marker missing from firmware.bin"; exit 1; }
+          cp $b/firmware.bin $out/bilyart-esp32-$FW_VERSION.bin
+          python ~/.platformio/packages/tool-esptoolpy/esptool.py --chip esp32 merge_bin -o $out/bilyart-esp32-$FW_VERSION-factory.bin \
+            0x1000 $b/bootloader.bin 0x8000 $b/partitions.bin \
+            0xe000 ~/.platformio/packages/framework-arduinoespressif32/tools/partitions/boot_app0.bin 0x10000 $b/firmware.bin
+          (cd $out && sha256sum *.bin > SHA256SUMS.txt && cat SHA256SUMS.txt)
+          if [ -z "$DEVICE_REGISTRATION_SECRET" ]; then
+            echo "::warning::DEVICE_REGISTRATION_SECRET is not set — this build cannot register with the server (fine for CI, not for real devices)."
+          fi
+      - uses: actions/upload-artifact@v4
+        with:
+          name: esp32-firmware
+          path: fw-out/
+          retention-days: 30

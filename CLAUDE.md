@@ -62,7 +62,7 @@ docs/               all documentation
 - API: `cd apps/api && composer install && php artisan test` (needs a real DB; phpunit.xml defaults to MySQL on 127.0.0.1:3306 root/root db `bilyart_test`). All three engines locally: `scripts/test-all-db.sh --start` once, then `scripts/test-all-db.sh`. Style: `vendor/bin/pint --test`
 - Admin: `cd apps/web-admin && npm ci && npm test && npm run typecheck && npm run build` (PWA under `/admin/`, dev server proxies `/api` to :8000)
 - Tablet: `cd apps/tablet && npm ci && npm test && npm run typecheck && npm run build` (PWA under `/tablet/`, dev server :5174 proxies `/api`). Setup for halls: `docs/TABLET_SETUP.md`
-- Firmware: `cd devices/esp32 && pio run && pio test -e native`
+- Firmware: `cd devices/esp32 && pio test -e native && pio run -e esp32dev` (no PlatformIO registry access, e.g. in the cloud dev container: `scripts/native-test.sh`; CI builds the `.bin`). After changing `certs/`: `python scripts/make_ca_bundle.py`
 - Protocol: `cd packages/protocol && npm ci && npm test && npm run typecheck && npm run check-generated` (after editing schemas: `npm run generate`)
 - Hosting check script: `infrastructure/hosting-check/tests/run.sh` (build for owner: Actions → "Hosting check (build file)")
 - Secret scan: `gitleaks git --redact .` (runs in CI)

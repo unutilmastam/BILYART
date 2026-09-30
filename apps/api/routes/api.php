@@ -153,6 +153,7 @@ Route::middleware('web')->group(function (): void {
                 Route::get('firmware', [SuperAdmin\FirmwareController::class, 'index']);
                 Route::post('firmware', [SuperAdmin\FirmwareController::class, 'store']);
                 Route::post('firmware/{release}/publish', [SuperAdmin\FirmwareController::class, 'publish']);
+                Route::post('firmware/{release}/rollout', [SuperAdmin\FirmwareController::class, 'rollout']);
             });
             Route::get('settings', [SuperAdmin\SettingsController::class, 'show'])->middleware('perm:platform.settings');
             Route::put('settings', [SuperAdmin\SettingsController::class, 'update'])->middleware('perm:platform.settings');

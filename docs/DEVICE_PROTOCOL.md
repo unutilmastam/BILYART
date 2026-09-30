@@ -96,6 +96,18 @@ A `SENT` command without ACK is re-delivered on next poll after 6 s, max 3 attem
 - Heartbeat rows are stored on state change or every 60 s (not every poll) to keep the database small; `devices.last_seen_at` is updated on every poll.
 - Device endpoints keep working when the client's subscription is inactive.
 
+## 6b. Implementation notes (firmware, Phase 11 — `devices/esp32`)
+- **Split**: `lib/core` is hardware-free C++ (session timer, flasher, command handling + idempotency log, `/state` apply, boot decision, poll/ack builders) and is unit-tested on the host against the protocol examples in `packages/protocol/examples/valid`. `src/` is thin Arduino glue.
+- **Two tasks**: the relay loop (core 1) never blocks — it ticks the local timer every 20 ms, so the light turns OFF at `endAt` even while the network task (core 0) sits in a slow HTTPS call. Shared state behind one mutex.
+- **Time**: the server's `serverTime` (every response) is the clock source — backend time is authoritative (CLAUDE.md). Before the first sample the time is unknown and nothing is evaluated. §5.4 "time unknown after 20 s" runs a provisional clock that ends the saved session after its `remainingSec` checkpoint (capped by `maxSessionSec`); the next `/state` replaces it.
+- **Sessions from `/state`** carry no `warnBeforeSec`/`flashCount`: the device uses `config.warnBeforeSec`/`flashCount`.
+- **Commands**: duplicates (last 16 ids) and expired commands → `IGNORED`; START whose `endAt` already passed → `IGNORED`; malformed → `ERROR BAD_PAYLOAD`; unknown type → `ERROR UNKNOWN_COMMAND`; OTA during a session → `ERROR SESSION_ACTIVE`. The session is written to NVS **before** the ACK is sent.
+- **CONFIG_UPDATE** values outside the protocol ranges are ignored (not clamped).
+- **Setup portal**: AP `BILLIARD-<last4 of device code>`, WPA2 password = 8 random digits generated on first boot, stored in NVS and printed once on the serial console (for the label). The page shows Wi-Fi/server status and the pairing code; it accepts only `https://` server URLs. On while unconfigured or waiting for pairing; BOOT 3 s → on for 10 min; BOOT 10 s → factory reset (physical access, spec §17).
+- **TLS**: `WiFiClientSecure` with the pinned roots in `devices/esp32/certs` (ISRG Root X1/X2 = Let's Encrypt, USERTrust RSA/ECC = Sectigo, i.e. both cPanel AutoSSL providers) compiled into `include/CaBundle.h` (CI checks it is current). Plain `http://` is refused.
+- **OTA**: server command → device downloads `/firmware/{version}` with its token, checks `Content-Length` = `size` and SHA-256 = `sha256` while streaming into the inactive slot, reboots. `verifyRollbackLater()` keeps the new image `PENDING_VERIFY` until a successful `/state`; no success within 10 min → rollback to the previous image. Each build embeds `BLYFWVER:<version>`; the server refuses an upload whose marker differs from the typed version, so a rollout always converges. Rollout: Super Admin → Proshivka → `POST /api/super/firmware/{id}/rollout` queues OTA (1 h TTL) for paired devices on another version with no occupying session; repeating skips devices that already have one pending.
+- **Build-time values** (`scripts/defaults.py`): `FW_VERSION`, `DEVICE_REGISTRATION_SECRET` (GitHub secret, never committed), `DEFAULT_API_BASE`.
+
 ## 7. Error codes
 401 `DEVICE_UNAUTHORIZED` / `REPAIR_REQUIRED`, 403 `DEVICE_REVOKED`, 429 rate limited (device backs off), 5xx → retry with backoff, keep local timer.
 

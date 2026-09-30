@@ -80,6 +80,21 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/ApiError' }
+  /api/super/firmware/{release}/rollout:
+    post:
+      tags: [SuperAdmin]
+      summary: "Queue OTA for paired devices on another version with no game in progress → {queued, skippedBusy, alreadyCurrent}"
+      security: [{"cookieAuth": []}]
+      parameters:
+        - { name: release, in: path, required: true, schema: { type: string } }
+      responses:
+        '200':
+          description: OK
+        default:
+          description: Error
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiError' }
   /api/super/dashboard:
     get:
       tags: [SuperAdmin]
