@@ -47,19 +47,20 @@ Tenant, branch and table are **always** resolved from the principal, never from 
 | POST | `/tenants/{tenant}/suspend` · `/activate` · `/deactivate` | status flag, audited |
 | POST | `/tenants/{tenant}/payments` | `{amount, method, days, paidAt, note}` → records payment **and** extends (base = max(now, expiresAt)) |
 | POST | `/tenants/{tenant}/extend` | `{days, reason}` manual adjustment without payment |
+| PUT | `/tenants/{tenant}/expiry` | `{expiresAt, reason}` set the expiry date directly (event `EXPIRY_SET`) |
 | PUT | `/tenants/{tenant}/limits` | `{branchLimit, tableLimit?, deviceLimit?, userLimit?}` → `LIMIT_CHANGED` event |
 | GET | `/tenants/{tenant}/subscription` | subscriptions + payments + events history |
 | POST | `/tenants/{tenant}/owner/reset-password` | issues a temporary password (shown once) |
 | GET | `/audit-logs` | filter by tenant/action/date |
 | GET | `/payments` | all recorded platform payments |
-| GET/PUT | `/settings` | platform settings (support contact, default limits, reminder days) |
+| GET/PUT | `/settings` | `{supportContact, paymentInstructions, defaultBranchLimit, reminderDays}` (whitelisted keys) |
 | GET/POST | `/firmware` · POST `/firmware/{release}/publish` | firmware releases (upload `.bin`, sha256 computed server-side) |
 | GET | `/health` | detailed health (db, storage, queue, cron heartbeat, backups) |
 
 ### 3.3 Client Admin (`/api/admin`, tenant roles; `subscription.active` except where noted)
 | Method | Path | Permission |
 |---|---|---|
-| GET | `/subscription` | any (allowed when inactive) |
+| GET | `/subscription` | any (allowed when inactive) → status, expiresAt, daysLeft, limits, supportContact, paymentInstructions |
 | GET | `/dashboard?branchId=` | `sessions.view` |
 | GET/POST | `/branches` | view: any · create: `branches.manage` (LimitGuard) |
 | GET/PATCH/DELETE | `/branches/{branch}` | `branches.manage` (DELETE = disable) |

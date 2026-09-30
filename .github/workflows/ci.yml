@@ -113,3 +113,26 @@ jobs:
         if: matrix.db == 'mysql' && matrix.php == '8.3'
       - run: php artisan migrate:fresh --force && php artisan migrate:rollback --force && php artisan migrate --force
       - run: php artisan test
+
+  web-admin:
+    name: Web admin (typecheck, tests, build)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/web-admin
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: apps/web-admin/package-lock.json
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: web-admin-dist
+          path: apps/web-admin/dist/
+          retention-days: 14
