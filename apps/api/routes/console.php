@@ -13,3 +13,4 @@ Schedule::command('photos:prune')->dailyAt('01:30')->withoutOverlapping();
 Schedule::command('telegram:daily-reports')->everyFiveMinutes()->withoutOverlapping(10);
 Schedule::command('notifications:deliver')->everyMinute()->withoutOverlapping(5);
 Schedule::command('devices:monitor')->everyMinute()->withoutOverlapping(5);
+Schedule::command('subscriptions:check')->hourly()->withoutOverlapping();

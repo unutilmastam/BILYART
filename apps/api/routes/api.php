@@ -25,6 +25,11 @@ Route::middleware('web')->group(function (): void {
         // Client admin (tenant users only).
         Route::prefix('admin')->middleware(['tenant.member', 'idempotency'])->group(function (): void {
             Route::get('subscription', Admin\SubscriptionController::class);
+            // Always available, even when the subscription is inactive (spec §29).
+            Route::get('notifications', [Admin\NotificationController::class, 'index']);
+            Route::post('notifications/read-all', [Admin\NotificationController::class, 'readAll']);
+            Route::post('notifications/{notification}/read', [Admin\NotificationController::class, 'read']);
+            Route::get('export', Admin\ExportController::class)->middleware('perm:tenant.export');
 
             Route::middleware('subscription.active')->group(function (): void {
                 Route::get('branches', [BranchController::class, 'index']);
@@ -115,6 +120,9 @@ Route::middleware('web')->group(function (): void {
         // Super Admin (platform) — Phase 5.
         Route::prefix('super')->middleware(['super.admin', 'idempotency'])->group(function (): void {
             Route::get('dashboard', SuperAdmin\DashboardController::class)->middleware('perm:platform.tenants');
+            Route::get('notifications', [Admin\NotificationController::class, 'index']);
+            Route::post('notifications/read-all', [Admin\NotificationController::class, 'readAll']);
+            Route::post('notifications/{notification}/read', [Admin\NotificationController::class, 'read']);
             Route::middleware('perm:platform.tenants')->group(function (): void {
                 Route::get('tenants', [SuperAdmin\TenantController::class, 'index']);
                 Route::post('tenants', [SuperAdmin\TenantController::class, 'store']);
