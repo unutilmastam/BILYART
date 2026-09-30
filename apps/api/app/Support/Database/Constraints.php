@@ -16,6 +16,13 @@ final class Constraints
         DB::statement(sprintf('ALTER TABLE %s ADD CONSTRAINT %s CHECK (%s)', self::wrap($table), self::wrap($name), $expression));
     }
 
+    /** Drops a named CHECK constraint (MySQL uses DROP CHECK; MariaDB/PostgreSQL DROP CONSTRAINT). */
+    public static function dropCheck(string $table, string $name): void
+    {
+        $clause = self::driver() === 'mysql' ? 'DROP CHECK' : 'DROP CONSTRAINT';
+        DB::statement(sprintf('ALTER TABLE %s %s %s', self::wrap($table), $clause, self::wrap($name)));
+    }
+
     /** Builds "col IN ('A','B')" for CHECK constraints from a list of allowed values. */
     public static function in(string $column, array $values): string
     {

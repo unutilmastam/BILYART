@@ -17,6 +17,6 @@ class SystemSetting extends Model
 
     protected function casts(): array
     {
-        return ['value' => 'array'];
+        return ['value' => 'json'];
     }
 }
