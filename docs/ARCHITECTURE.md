@@ -1,6 +1,7 @@
 # ARCHITECTURE
 
 Status: v1 proposal. Phase 1 must verify every **[VERIFY]** item on the real Hostmaster account and update this file.
+Phase 1 (in progress): verification tooling is ready (`infrastructure/hosting-check`, see DEPLOYMENT.md §1); no decision changed yet — waiting for the owner's hosting report.
 
 ## 1. Constraints that shape everything
 | Constraint | Consequence |

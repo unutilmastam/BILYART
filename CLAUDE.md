@@ -62,6 +62,8 @@ docs/               all documentation
 - Admin: `cd apps/web-admin && npm ci && npm test && npm run build`
 - Tablet: `cd apps/tablet && npm ci && npm test && npm run build`
 - Firmware: `cd devices/esp32 && pio run && pio test -e native`
+- Hosting check script: `infrastructure/hosting-check/tests/run.sh` (build for owner: Actions → "Hosting check (build file)")
+- Secret scan: `gitleaks git --redact .` (runs in CI)
 
 ## 6. Definition of done for any feature
 - Backend authorization + tenant scoping + subscription check applied via central middleware/policies.

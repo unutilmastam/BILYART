@@ -3,10 +3,10 @@
 Each phase = one or more PRs. Owner starts a phase by writing **"Phase N ni boshla"**. A phase is done only when all its checkboxes are true and CI is green.
 
 ## Phase 1 — Inspect repo & hosting
-- [ ] Repo skeleton: folders from CLAUDE.md §4, root README, `.gitignore`, `.editorconfig`
+- [x] Repo skeleton: folders from CLAUDE.md §4, root README, `.gitignore`, `.editorconfig`
 - [ ] Owner answers the DEPLOYMENT.md §1 checklist (Claude asks for it in Uzbek, step by step)
 - [ ] Results recorded in DEPLOYMENT.md; ARCHITECTURE.md adjusted if needed
-- [ ] List of open questions for the owner (domain, first flash method, tablet model)
+- [x] List of open questions for the owner (domain, first flash method, tablet model) — see PROGRESS.md
 
 ## Phase 2 — Architecture docs finalized
 - [ ] ARCHITECTURE / DATABASE / SECURITY / DEVICE_PROTOCOL / DEPLOYMENT reviewed against SPEC.md, contradictions list confirmed with owner
