@@ -22,11 +22,11 @@ Each phase = one or more PRs. Owner starts a phase by writing **"Phase N ni bosh
 - [x] Tests: cross-tenant FK insert fails at DB level; double active session insert fails at DB level
 
 ## Phase 4 — Auth & multi-tenancy
-- [ ] Sanctum SPA auth, login/logout/me, lockout, rate limits
-- [ ] `config/permissions.php`, policies, central middleware pipeline
-- [ ] Idempotency middleware
-- [ ] Error shape + log redaction
-- [ ] Tests: spec §43 items 1–3, 13
+- [x] SPA session auth (same-origin, no Sanctum needed), login/logout/me, lockout, rate limits
+- [x] `config/permissions.php`, central middleware pipeline (policies for per-resource rules come with each feature)
+- [x] Idempotency middleware
+- [x] Error shape + log redaction
+- [x] Tests: spec §43 items 1–3, 13
 
 ## Phase 5 — Super Admin
 - [ ] API: tenants CRUD, suspend/activate/deactivate, payments, extend (both rules), limits, subscription history, audit list, dashboard stats

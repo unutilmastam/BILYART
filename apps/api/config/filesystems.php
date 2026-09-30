@@ -33,7 +33,7 @@ return [
         'local' => [
             'driver' => 'local',
             'root' => storage_path('app/private'),
-            'serve' => true,
+            'serve' => false, // never expose private files (session photos) via URL
             'throw' => false,
             'report' => false,
         ],
