@@ -17,6 +17,8 @@ import { TelegramPage } from './pages/client/TelegramPage';
 import { TenantSettingsPage } from './pages/client/TenantSettingsPage';
 import { LoginPage } from './pages/LoginPage';
 import { NotFoundPage } from './pages/NotFoundPage';
+import { NotificationsPage } from './pages/NotificationsPage';
+import { useNotifications } from './features/notifications';
 import { AuditLogPage } from './pages/super/AuditLogPage';
 import { ClientCreatePage } from './pages/super/ClientCreatePage';
 import { ClientDetailPage } from './pages/super/ClientDetailPage';
@@ -50,7 +52,13 @@ const clientNav: (NavItem & { permission?: string })[] = [
 function ClientShell() {
   const me = useMe();
   const perms = me.data?.permissions ?? [];
-  return <Layout title={t('app.title')} nav={clientNav.filter((i) => !i.permission || perms.includes(i.permission))} />;
+  const { list } = useNotifications('client');
+  return <Layout title={t('app.title')} nav={clientNav.filter((i) => !i.permission || perms.includes(i.permission))} notificationsTo="/client/notifications" unread={list.data?.unread ?? 0} />;
+}
+
+function SuperShell() {
+  const { list } = useNotifications('super');
+  return <Layout title={t('app.superTitle')} nav={superNav} notificationsTo="/super/notifications" unread={list.data?.unread ?? 0} />;
 }
 
 export const routes = [
@@ -60,7 +68,7 @@ export const routes = [
     path: '/super',
     element: (
       <RequireAuth area="super">
-        <Layout title={t('app.superTitle')} nav={superNav} />
+        <SuperShell />
       </RequireAuth>
     ),
     children: [
@@ -71,6 +79,7 @@ export const routes = [
       { path: 'payments', element: <PaymentsPage /> },
       { path: 'audit', element: <AuditLogPage /> },
       { path: 'settings', element: <SettingsPage /> },
+      { path: 'notifications', element: <NotificationsPage area="super" /> },
     ],
   },
   {
@@ -93,6 +102,7 @@ export const routes = [
       { path: 'staff', element: <StaffPage /> },
       { path: 'telegram', element: <TelegramPage /> },
       { path: 'settings', element: <TenantSettingsPage /> },
+      { path: 'notifications', element: <NotificationsPage area="client" /> },
     ],
   },
   { path: '*', element: <NotFoundPage /> },
