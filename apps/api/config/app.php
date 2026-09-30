@@ -67,6 +67,9 @@ return [
 
     'timezone' => 'UTC',
 
+    // Optional bearer token for external monitors to read detailed /health output.
+    'health_token' => env('HEALTH_TOKEN', ''),
+
     /*
     |--------------------------------------------------------------------------
     | Application Locale Configuration

@@ -142,6 +142,7 @@ Route::middleware('web')->group(function (): void {
                 Route::get('payments', SuperAdmin\PaymentController::class);
             });
             Route::get('audit-logs', SuperAdmin\AuditLogController::class)->middleware('perm:platform.audit');
+            Route::get('health', SuperAdmin\HealthController::class)->middleware('perm:platform.health');
             Route::middleware('perm:platform.firmware')->group(function (): void {
                 Route::get('firmware', [SuperAdmin\FirmwareController::class, 'index']);
                 Route::post('firmware', [SuperAdmin\FirmwareController::class, 'store']);
