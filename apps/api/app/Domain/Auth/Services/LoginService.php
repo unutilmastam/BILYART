@@ -27,13 +27,15 @@ final class LoginService
     public function __construct(
         private readonly TenantContext $context,
         private readonly AuditLogger $audit,
+        private readonly TwoFactorService $twoFactor,
     ) {}
 
-    public function attempt(string $login, string $password): User
+    /** $code = TOTP or recovery code, required only when the user enabled 2FA. */
+    public function attempt(string $login, string $password, ?string $code = null): User
     {
         $login = strtolower(trim($login));
 
-        return $this->context->runAsSystem(function () use ($login, $password): User {
+        return $this->context->runAsSystem(function () use ($login, $password, $code): User {
             /** @var User|null $user */
             $user = User::query()->where('login', $login)->first();
 
@@ -53,6 +55,16 @@ final class LoginService
 
             if (! $user->is_active || $this->tenantDeactivated($user)) {
                 throw ApiException::of(ErrorCode::ACCOUNT_DISABLED);
+            }
+
+            if ($this->twoFactor->enabled($user)) {
+                if ($code === null || trim($code) === '') {
+                    throw ApiException::of(ErrorCode::TWO_FACTOR_REQUIRED);
+                }
+                if (! $this->twoFactor->consume($user, $code)) {
+                    $this->registerFailure($user); // wrong codes count towards the lockout too
+                    throw ApiException::of(ErrorCode::TWO_FACTOR_INVALID);
+                }
             }
 
             $user->forceFill(['failed_logins' => 0, 'locked_until' => null, 'last_login_at' => now()])->save();

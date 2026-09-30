@@ -29,7 +29,7 @@ final class AuthController extends Controller
 
     public function login(LoginRequest $request, LoginService $service): JsonResponse
     {
-        $user = $service->attempt($request->string('login'), (string) $request->input('password'));
+        $user = $service->attempt($request->string('login'), (string) $request->input('password'), $request->input('code'));
 
         Auth::guard('web')->login($user);
         $request->session()->regenerate();

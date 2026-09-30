@@ -11,6 +11,7 @@ export interface User {
   role: Role;
   isActive: boolean;
   lastLoginAt: string | null;
+  twoFactorEnabled: boolean;
 }
 
 export interface SubscriptionInfo {

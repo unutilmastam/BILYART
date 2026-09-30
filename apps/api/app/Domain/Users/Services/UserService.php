@@ -3,6 +3,7 @@
 namespace App\Domain\Users\Services;
 
 use App\Domain\Audit\Services\AuditLogger;
+use App\Domain\Auth\Services\TwoFactorService;
 use App\Domain\Tenancy\Services\LimitGuard;
 use App\Domain\Tenancy\TenantContext;
 use App\Domain\Users\Enums\Role;
@@ -54,7 +55,7 @@ final class UserService
             throw ApiException::of(ErrorCode::FORBIDDEN);
         }
 
-        $apply = function () use ($user, $data, $newRole, $deactivating): User {
+        $apply = function () use ($actor, $user, $data, $newRole, $deactivating): User {
             if (($deactivating || $newRole !== Role::CLIENT_OWNER) && $user->role === Role::CLIENT_OWNER) {
                 $this->assertAnotherOwnerRemains($user);
             }
@@ -65,6 +66,9 @@ final class UserService
             ], fn ($v) => $v !== null));
             if (! empty($data['password'])) {
                 $user->forceFill(['password' => $data['password'], 'failed_logins' => 0, 'locked_until' => null]);
+                if ($user->id !== $actor->id) {
+                    $user->forceFill(TwoFactorService::cleared()); // reset for a lost phone; own 2FA is changed only under Account
+                }
             }
             $user->save();
             if (array_key_exists('branch_ids', $data)) {

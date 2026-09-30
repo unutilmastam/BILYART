@@ -33,10 +33,13 @@ Tenant, branch and table are **always** resolved from the principal, never from 
 | Method | Path | Notes |
 |---|---|---|
 | GET | `/auth/csrf` | 204, sets `XSRF-TOKEN` cookie |
-| POST | `/auth/login` | `{login, password}` → same body as `/me`. 5 fails → 15 min lock (423 `ACCOUNT_LOCKED`); inactive user / deactivated client → 403 `ACCOUNT_DISABLED` |
+| POST | `/auth/login` | `{login, password, code?}` → same body as `/me`. With 2FA on: missing code → 401 `TWO_FACTOR_REQUIRED`, wrong/used code → 401 `TWO_FACTOR_INVALID` (counts towards the lock); `code` may be a recovery code. 5 fails → 15 min lock (423 `ACCOUNT_LOCKED`); inactive user / deactivated client → 403 `ACCOUNT_DISABLED` |
 | POST | `/auth/logout` | |
 | GET | `/me` | `{user, permissions[], tenant?: {name, subscription: {status, expiresAt, daysLeft}}}` — allowed when subscription inactive |
-| PUT | `/me/password` | `{currentPassword, password}` |
+| PUT | `/me/password` | `{currentPassword, password}` → 204; other sessions of this user are logged out |
+| POST | `/me/2fa/setup` | `{password}` → `{secret, uri}` (otpauth URI); 2FA stays off until confirmed; 409 if already on |
+| POST | `/me/2fa/confirm` | `{code}` → `{recoveryCodes[8]}` (shown once) |
+| POST | `/me/2fa/disable` | `{password, code}` → 204 |
 
 ### 3.2 Super Admin (`/api/super`, role SUPER_ADMIN, permission `platform.*`)
 | Method | Path | Notes |
@@ -109,4 +112,4 @@ Tenant, branch and table are **always** resolved from the principal, never from 
 - `GET /health` (public: `{status}` only) · `/health/db` · `/health/storage` · `/health/messaging` (details require Super Admin or `HEALTH_TOKEN`).
 
 ## 4. Error codes (stable)
-`UNAUTHENTICATED, FORBIDDEN, NOT_FOUND, METHOD_NOT_ALLOWED, VALIDATION_FAILED, RATE_LIMITED, ACCOUNT_LOCKED, ACCOUNT_DISABLED, INVALID_CREDENTIALS, CONFLICT, IDEMPOTENCY_IN_PROGRESS, DEVICE_ALREADY_PAIRED, SUBSCRIPTION_INACTIVE, LIMIT_REACHED, TABLE_UNAVAILABLE, TABLE_DISABLED, BRANCH_CLOSED, DEVICE_OFFLINE, DEVICE_NOT_ASSIGNED, PRICING_NOT_CONFIGURED, DURATION_NOT_ALLOWED, PHOTO_REQUIRED, PHOTO_INVALID, RESERVATION_EXPIRED, INVALID_STATE_TRANSITION, IDEMPOTENCY_KEY_REQUIRED, IDEMPOTENCY_KEY_REUSED, PAIRING_CODE_INVALID, PAIRING_CODE_EXPIRED, DEVICE_UNAUTHORIZED, REPAIR_REQUIRED, DEVICE_REVOKED, SERVER_ERROR`.
+`UNAUTHENTICATED, FORBIDDEN, NOT_FOUND, METHOD_NOT_ALLOWED, VALIDATION_FAILED, RATE_LIMITED, ACCOUNT_LOCKED, ACCOUNT_DISABLED, INVALID_CREDENTIALS, TWO_FACTOR_REQUIRED, TWO_FACTOR_INVALID, CONFLICT, IDEMPOTENCY_IN_PROGRESS, DEVICE_ALREADY_PAIRED, SUBSCRIPTION_INACTIVE, LIMIT_REACHED, TABLE_UNAVAILABLE, TABLE_DISABLED, BRANCH_CLOSED, DEVICE_OFFLINE, DEVICE_NOT_ASSIGNED, PRICING_NOT_CONFIGURED, DURATION_NOT_ALLOWED, PHOTO_REQUIRED, PHOTO_INVALID, RESERVATION_EXPIRED, INVALID_STATE_TRANSITION, IDEMPOTENCY_KEY_REQUIRED, IDEMPOTENCY_KEY_REUSED, PAIRING_CODE_INVALID, PAIRING_CODE_EXPIRED, DEVICE_UNAUTHORIZED, REPAIR_REQUIRED, DEVICE_REVOKED, SERVER_ERROR`.

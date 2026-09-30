@@ -66,6 +66,8 @@ docs/               all documentation
 - Protocol: `cd packages/protocol && npm ci && npm test && npm run typecheck && npm run check-generated` (after editing schemas: `npm run generate`)
 - Hosting check script: `infrastructure/hosting-check/tests/run.sh` (build for owner: Actions → "Hosting check (build file)")
 - Secret scan: `gitleaks git --redact .` (runs in CI)
+- Dependency audit (CI): `composer audit --no-dev`, `npm audit --omit=dev --audit-level=high` (web-admin, protocol). Security test map: `docs/TESTING.md`
+- Lost 2FA device (Super Admin, cPanel → Terminal): `php artisan user:2fa-reset <login>`
 
 ## 6. Definition of done for any feature
 - Backend authorization + tenant scoping + subscription check applied via central middleware/policies.

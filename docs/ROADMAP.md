@@ -78,7 +78,7 @@ Each phase = one or more PRs. Owner starts a phase by writing **"Phase N ni bosh
 - [x] Backup commands + verify + `docs/BACKUP.md` (restore proven on MySQL/MariaDB/PostgreSQL in CI)
 
 ## Phase 15 — Security testing
-- [ ] All spec §43 tests green, gitleaks clean, dependency audit (`composer audit`, `npm audit`), manual review checklist
+- [x] All spec §43 tests green, gitleaks clean, dependency audit (`composer audit`, `npm audit`), manual review checklist (TESTING.md, SECURITY_REVIEW.md)
 
 ## Phase 16 — Production deployment
 - [ ] deploy.yml to Hostmaster, cron configured, SSL, first Super Admin, smoke test

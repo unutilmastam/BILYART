@@ -6,7 +6,13 @@ Updated by Claude Code at the end of every session.
 |---|---|---|
 | 0. Architecture pack | DONE | CLAUDE.md + docs prepared before coding |
 | 1. Inspect repo & hosting | IN PROGRESS | Skeleton, CI, hosting-check tooling done. cPanel Tools screenshot + domain received. Waiting for hostcheck page screenshot + Resource Usage / Domains / PHP screenshots. |
-| 2–16 | TODO | see ROADMAP.md |
+| 2–7 | DONE | protocol, Laravel + DB, auth/tenancy, Super Admin, client admin, sessions |
+| 8. Tablet PWA | TODO | next (owner: after the server/admin work) |
+| 9. Photos | SERVER DONE | tablet camera part comes with Phase 8 |
+| 10, 12, 13, 14 | DONE | devices/tablets server side, Telegram, notifications/subscriptions, monitoring/backups |
+| 11. ESP32 firmware | TODO | after Phase 8; first flash from a computer |
+| 15. Security testing | DONE | see below, TESTING.md, SECURITY_REVIEW.md |
+| 16. Deployment | TODO | owner: deploy to hosting at the very end |
 
 ## Phase 1 — session 1 (2026-09-30)
 Done:
@@ -87,6 +93,14 @@ Remaining for Phase 1:
 - `BackupCrypto` (AES-256-GCM chunked, tamper/truncation detection) + `BackupService` (run/verify/restore/prune/photos) + commands `backup:run [--photos]`, `backup:verify`, `backup:restore --force`, `platform:prune`; daily/weekly schedule; `docs/BACKUP.md`.
 - Tests: every DB table is either backed up or deliberately excluded; backup → damage → restore → identical data on all 3 engines; tamper/truncate/wrong key detected; retention rules; encrypted photo archive; health public vs detailed; all key commands scheduled.
 - Logs: daily channel now writes JSON lines (request id + redaction). Removed Laravel's default `/up` (replaced by `/health`).
+
+## Phase 15 — session 4 (2026-09-30)
+- `RouteSweepTest`: walks the real route table — every admin route with a model parameter (all methods, nested own-parent/foreign-child) answers 404 to another tenant and tenant B's rows stay byte-identical; guests get 401 on every admin/super/account route; client users 403 on every Super Admin route; tablet/device routes reject missing, browser-session and swapped credentials; a tablet cannot touch another tenant's session. New parameter names without a fixture fail the test.
+- Found + fixed: role gates ran after route-model binding (404 instead of 403 for a client on one Super Admin URL) → middleware priority; `admin` rate limiter was unused → applied to admin + super groups; session cookie not `Secure` by default when the env variable is missing; no UI to change one's own password.
+- CSP + security headers (`config/security.php`, `SecurityHeaders`, `SpaController`), `.htaccess` HTTPS redirect / dotfile block / static-file headers, admin build ships `.htaccess` with CSP + cache rules (artifact now includes hidden files). Admin UI verified in Chromium under the CSP: zero violations.
+- Optional TOTP 2FA for all admin users (RFC 6238 vectors tested, replay protection, recovery codes, lockout integration, resets on admin password reset, `user:2fa-reset` console command) + "Hisobim" page (password change, 2FA with otpauth link + local QR) + login code field.
+- `npm audit` (prod deps, high+) in CI for web-admin and protocol. `docs/TESTING.md` maps spec §43 items 1–15 to tests; `docs/SECURITY_REVIEW.md` manual checklist.
+- 199 API tests green on MySQL 8, MariaDB 10.6, PostgreSQL 13; 20 web-admin tests.
 
 ## Open questions for the owner
 1. ~~Platform domain~~ → **itcode.uz**. Still open: root domain or a subdomain (e.g. `billiard.itcode.uz`)? Its document root in cPanel → Domains?

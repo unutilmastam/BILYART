@@ -15,6 +15,7 @@ import { StaffPage } from './pages/client/StaffPage';
 import { TablesPage } from './pages/client/TablesPage';
 import { TelegramPage } from './pages/client/TelegramPage';
 import { TenantSettingsPage } from './pages/client/TenantSettingsPage';
+import { AccountPage } from './pages/account/AccountPage';
 import { LoginPage } from './pages/LoginPage';
 import { NotFoundPage } from './pages/NotFoundPage';
 import { NotificationsPage } from './pages/NotificationsPage';
@@ -35,6 +36,7 @@ const superNav: NavItem[] = [
   { to: '/super/audit', label: 'nav.audit' },
   { to: '/super/health', label: 'nav.health' },
   { to: '/super/settings', label: 'nav.settings' },
+  { to: '/super/account', label: 'nav.account' },
 ];
 
 /** Client nav items are shown only when the user's role has the permission (the API enforces it anyway). */
@@ -49,6 +51,7 @@ const clientNav: (NavItem & { permission?: string })[] = [
   { to: '/client/staff', label: 'nav.staff', permission: 'users.manage' },
   { to: '/client/telegram', label: 'nav.telegram', permission: 'telegram.manage' },
   { to: '/client/settings', label: 'nav.clientSettings', permission: 'tenant.settings' },
+  { to: '/client/account', label: 'nav.account' },
 ];
 
 function ClientShell() {
@@ -83,6 +86,7 @@ export const routes = [
       { path: 'settings', element: <SettingsPage /> },
       { path: 'health', element: <HealthPage /> },
       { path: 'notifications', element: <NotificationsPage area="super" /> },
+      { path: 'account', element: <AccountPage /> },
     ],
   },
   {
@@ -106,6 +110,7 @@ export const routes = [
       { path: 'telegram', element: <TelegramPage /> },
       { path: 'settings', element: <TenantSettingsPage /> },
       { path: 'notifications', element: <NotificationsPage area="client" /> },
+      { path: 'account', element: <AccountPage /> },
     ],
   },
   { path: '*', element: <NotFoundPage /> },

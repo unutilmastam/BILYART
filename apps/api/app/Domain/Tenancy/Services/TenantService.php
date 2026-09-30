@@ -3,6 +3,7 @@
 namespace App\Domain\Tenancy\Services;
 
 use App\Domain\Audit\Services\AuditLogger;
+use App\Domain\Auth\Services\TwoFactorService;
 use App\Domain\Subscriptions\Enums\PaymentMethod;
 use App\Domain\Subscriptions\Enums\SubscriptionEventType;
 use App\Domain\Subscriptions\Models\SubscriptionEvent;
@@ -62,7 +63,8 @@ final class TenantService
             /** @var User $owner */
             $owner = User::query()->where('tenant_id', $tenant->id)->where('role', Role::CLIENT_OWNER->value)->orderBy('id')->firstOrFail();
             $password = Str::password(14, symbols: false);
-            $owner->forceFill(['password' => $password, 'failed_logins' => 0, 'locked_until' => null])->save();
+            // A lost phone is the usual reason for a reset, so the second factor is switched off too.
+            $owner->forceFill(['password' => $password, 'failed_logins' => 0, 'locked_until' => null] + TwoFactorService::cleared())->save();
             $this->audit->log('user.password_reset', $owner, [], ['tenant_id' => $tenant->id]);
 
             return ['login' => $owner->login, 'temporaryPassword' => $password];
