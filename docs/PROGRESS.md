@@ -76,6 +76,12 @@ Remaining for Phase 1:
 - Tests (Telegram HTTP faked only): token encrypted at rest and absent from every API response/audit/log (§43.15), webhook secret, one-time linking, /report shows only own tenant, daily report exactly once after report_time, alerts once per episode, cross-tenant isolation. 167 API tests on 3 DBs.
 - web-admin Telegram page (token write-only, link code with deep link, chats with branch/report/alert toggles, test message, disable).
 
+## Phase 13 — session 4 (2026-09-30)
+- `SubscriptionMonitor` + `subscriptions:check` (hourly): calendar-day reminders in the tenant timezone at the platform `reminder_days` (default 5/3/1/0), deduplicated per expiry instant (an extension restarts the cycle), `subscription_expired` + `EXPIRED` event + audit exactly once, mirrored as Super Admin (platform) notifications.
+- In-app notifications API for clients and the Super Admin (list, unread count, read, read-all); owner data export (streamed JSON, no photos) allowed while inactive.
+- Bug fixed: a streamed download runs after the middleware stack unwinds → tenant context re-established inside the stream callback (would otherwise export nothing — fail-closed scope).
+- web-admin: 🔔 notifications with unread badge (client + super), notifications page, export link.
+
 ## Open questions for the owner
 1. ~~Platform domain~~ → **itcode.uz**. Still open: root domain or a subdomain (e.g. `billiard.itcode.uz`)? Its document root in cPanel → Domains?
 2. ~~First ESP32 flash method~~ → from a computer (owner, 2026-09-30).
