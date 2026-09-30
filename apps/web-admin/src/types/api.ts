@@ -159,3 +159,65 @@ export interface TenantSettings {
   locale: 'uz' | 'ru';
   operatorsCanViewPhotos: boolean;
 }
+
+export type SessionStatusValue = 'RESERVED' | 'STARTING' | 'ACTIVE' | 'COMPLETING' | 'COMPLETED' | 'CANCELLED' | 'FAILED';
+export type PaymentStatusValue = 'UNPAID' | 'PAID' | 'WAIVED';
+export type TableStatusValue = 'AVAILABLE' | 'RESERVED' | 'STARTING' | 'BUSY' | 'WARNING' | 'DISABLED' | 'DEVICE_OFFLINE' | 'CLOSED';
+
+export interface GameSession {
+  id: string;
+  status: SessionStatusValue;
+  effectiveStatus: SessionStatusValue;
+  branch?: { id: string; name: string };
+  table?: { id: string; number: number; name: string };
+  device?: { code: string; online: boolean } | null;
+  durationMinutes: number;
+  startAt: string | null;
+  endAt: string | null;
+  endedAt: string | null;
+  endedEarly: boolean;
+  pricePerHour: number;
+  amount: number;
+  paymentStatus: PaymentStatusValue;
+  paymentMarkedAt: string | null;
+  failureReason: string | null;
+  photo?: { id: string; createdAt: string } | null;
+  events?: { from: string | null; to: string; actorType: string; reason: string | null; at: string }[];
+  createdAt: string | null;
+}
+
+export interface ClientDashboard {
+  serverTime: string;
+  totals: { playing: number; available: number; sessionsToday: number; amountToday: number; minutesToday: number; unpaidToday: number; devicesOnline: number; devicesOffline: number };
+  branches: {
+    branch: { id: string; name: string };
+    playing: number;
+    available: number;
+    sessionsToday: number;
+    amountToday: number;
+    minutesToday: number;
+    unpaidToday: number;
+    devicesOnline: number;
+    devicesOffline: number;
+    tables: { id: string; number: number; name: string; status: TableStatusValue; endAt: string | null }[];
+  }[];
+}
+
+export interface ReportFigures {
+  sessions: number;
+  minutes: number;
+  amount: number;
+  unpaidCount: number;
+  unpaidAmount: number;
+}
+
+export interface Report {
+  from: string;
+  to: string;
+  totals: ReportFigures;
+  branches: (ReportFigures & {
+    branch: { id: string; name: string; timezone: string };
+    utilizationPercent: number;
+    tables: { id: string; number: number; name: string; sessions: number; minutes: number; amount: number; utilizationPercent: number }[];
+  })[];
+}

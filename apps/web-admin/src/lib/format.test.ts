@@ -26,3 +26,18 @@ describe('format', () => {
     expect(parseMoneyInput('-5')).toBeNull();
   });
 });
+
+import { formatMinutes, formatTime } from './format';
+
+describe('durations and times', () => {
+  it('formats playing time', () => {
+    expect(formatMinutes(0)).toBe('0 daq');
+    expect(formatMinutes(45)).toBe('45 daq');
+    expect(formatMinutes(120)).toBe('2 soat');
+    expect(formatMinutes(195)).toBe('3 soat 15 daq');
+  });
+
+  it('shows Tashkent clock time', () => {
+    expect(formatTime('2026-10-05T06:00:00Z')).toBe('11:00');
+  });
+});
