@@ -2,7 +2,14 @@ import { createBrowserRouter, RouterProvider } from 'react-router';
 import { HomeRedirect, RequireAuth } from './auth/guards';
 import { Layout, type NavItem } from './components/Layout';
 import { t } from './i18n';
+import { useMe } from './auth/useMe';
+import { BranchDetailPage } from './pages/client/BranchDetailPage';
+import { BranchesPage } from './pages/client/BranchesPage';
 import { ClientHomePage } from './pages/client/ClientHomePage';
+import { PricingPage } from './pages/client/PricingPage';
+import { StaffPage } from './pages/client/StaffPage';
+import { TablesPage } from './pages/client/TablesPage';
+import { TenantSettingsPage } from './pages/client/TenantSettingsPage';
 import { LoginPage } from './pages/LoginPage';
 import { NotFoundPage } from './pages/NotFoundPage';
 import { AuditLogPage } from './pages/super/AuditLogPage';
@@ -21,7 +28,21 @@ const superNav: NavItem[] = [
   { to: '/super/settings', label: 'nav.settings' },
 ];
 
-const clientNav: NavItem[] = [{ to: '/client', label: 'nav.dashboard', end: true }];
+/** Client nav items are shown only when the user's role has the permission (the API enforces it anyway). */
+const clientNav: (NavItem & { permission?: string })[] = [
+  { to: '/client', label: 'nav.dashboard', end: true },
+  { to: '/client/branches', label: 'nav.branches' },
+  { to: '/client/tables', label: 'nav.tables', permission: 'tables.view' },
+  { to: '/client/pricing', label: 'nav.pricing', permission: 'pricing.manage' },
+  { to: '/client/staff', label: 'nav.staff', permission: 'users.manage' },
+  { to: '/client/settings', label: 'nav.clientSettings', permission: 'tenant.settings' },
+];
+
+function ClientShell() {
+  const me = useMe();
+  const perms = me.data?.permissions ?? [];
+  return <Layout title={t('app.title')} nav={clientNav.filter((i) => !i.permission || perms.includes(i.permission))} />;
+}
 
 export const routes = [
   { path: '/login', element: <LoginPage /> },
@@ -47,10 +68,18 @@ export const routes = [
     path: '/client',
     element: (
       <RequireAuth area="client">
-        <Layout title={t('app.title')} nav={clientNav} />
+        <ClientShell />
       </RequireAuth>
     ),
-    children: [{ index: true, element: <ClientHomePage /> }],
+    children: [
+      { index: true, element: <ClientHomePage /> },
+      { path: 'branches', element: <BranchesPage /> },
+      { path: 'branches/:id', element: <BranchDetailPage /> },
+      { path: 'tables', element: <TablesPage /> },
+      { path: 'pricing', element: <PricingPage /> },
+      { path: 'staff', element: <StaffPage /> },
+      { path: 'settings', element: <TenantSettingsPage /> },
+    ],
   },
   { path: '*', element: <NotFoundPage /> },
 ];
