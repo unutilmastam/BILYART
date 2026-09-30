@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Domain\Auth\CurrentPrincipal;
+use App\Domain\Backups\BackupCrypto;
 use App\Domain\Photos\Storage\LocalPrivateDisk;
 use App\Domain\Photos\Storage\PhotoStorage;
 use App\Domain\Telegram\Client\HttpTelegramClient;
@@ -26,6 +27,8 @@ class AppServiceProvider extends ServiceProvider
 
         // Telegram Bot API adapter (real HTTP; tests fake the HTTP layer).
         $this->app->bind(TelegramClient::class, HttpTelegramClient::class);
+
+        $this->app->bind(BackupCrypto::class, fn () => BackupCrypto::fromConfig());
 
         // Photo storage adapter (spec §22). v1: private local disk on the hosting.
         $this->app->bind(PhotoStorage::class, LocalPrivateDisk::class);

@@ -86,7 +86,7 @@ GitHub secrets: `DEPLOY_HOST`, `DEPLOY_USER`, `DEPLOY_SSH_KEY` or `DEPLOY_FTP_PA
 ```
 (PHP binary path verified in Phase 1.) Scheduler handles: session finalization, reservation expiry, command retry/expiry, device online/offline notifications, subscription status + reminders (5/3/1 days), Telegram daily reports, photo retention, pruning, queue draining, backups.
 
-## 5. Backups (spec §44)
+## 5. Backups (spec §44) — implemented as described in [BACKUP.md](BACKUP.md) (portable encrypted logical backups; the mysqldump plan below was replaced because exec() is often disabled on shared hosting)
 - Daily 03:00 (Asia/Tashkent): `mysqldump --single-transaction` → gzip → `shared/backups/db/` keep 14 daily + 8 weekly.
 - Weekly: tar of `storage/app/private` (photos) keep 4.
 - Off-host copy: encrypted (openssl AES-256, key in `.env`) DB dump sent to the Super Admin's Telegram chat (optional, `BACKUP_TELEGRAM_ENABLED`) + cPanel's own backups. Owner downloads a monthly copy from cPanel File Manager.

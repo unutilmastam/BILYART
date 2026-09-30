@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\HealthController;
 use App\Http\Controllers\Telegram\WebhookController;
 use App\Http\Middleware\AssignRequestId;
 use App\Http\Middleware\AuthenticateDevice;
@@ -23,9 +24,11 @@ return Application::configure(basePath: dirname(__DIR__))
         web: __DIR__.'/../routes/web.php',
         api: __DIR__.'/../routes/api.php',
         commands: __DIR__.'/../routes/console.php',
-        health: '/up',
         then: function (): void {
             Route::middleware('api')->prefix('device/v1')->group(base_path('routes/device.php'));
+            // Monitoring (spec §56): /health, /health/{db|storage|messaging|backups}. Stateless.
+            Route::middleware('api')->get('health/{check?}', HealthController::class)
+                ->where('check', 'db|storage|messaging|backups');
             // Telegram webhook: stateless, authenticated by Telegram's secret header (no session/CSRF).
             Route::middleware(['api', 'throttle:telegram'])->post('telegram/webhook/{integration}', WebhookController::class)
                 ->where('integration', '[0-9A-HJKMNP-TV-Z]{26}');

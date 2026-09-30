@@ -82,6 +82,12 @@ Remaining for Phase 1:
 - Bug fixed: a streamed download runs after the middleware stack unwinds → tenant context re-established inside the stream callback (would otherwise export nothing — fail-closed scope).
 - web-admin: 🔔 notifications with unread badge (client + super), notifications page, export link.
 
+## Phase 14 — session 4 (2026-09-30)
+- `HealthService` + `/health[/db|storage|messaging|backups]` (public = status only; details with `HEALTH_TOKEN` or Super Admin), scheduler heartbeat (cache), Super Admin "Tizim holati" page.
+- `BackupCrypto` (AES-256-GCM chunked, tamper/truncation detection) + `BackupService` (run/verify/restore/prune/photos) + commands `backup:run [--photos]`, `backup:verify`, `backup:restore --force`, `platform:prune`; daily/weekly schedule; `docs/BACKUP.md`.
+- Tests: every DB table is either backed up or deliberately excluded; backup → damage → restore → identical data on all 3 engines; tamper/truncate/wrong key detected; retention rules; encrypted photo archive; health public vs detailed; all key commands scheduled.
+- Logs: daily channel now writes JSON lines (request id + redaction). Removed Laravel's default `/up` (replaced by `/health`).
+
 ## Open questions for the owner
 1. ~~Platform domain~~ → **itcode.uz**. Still open: root domain or a subdomain (e.g. `billiard.itcode.uz`)? Its document root in cPanel → Domains?
 2. ~~First ESP32 flash method~~ → from a computer (owner, 2026-09-30).
