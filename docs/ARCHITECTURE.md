@@ -96,7 +96,14 @@ Key services:
 4. ESP32 polls, applies, ACKs → session `ACTIVE`. Tablet shows countdown from `end_at` using server-time offset.
 5. `end_at − 5 min`: ESP32 flashes 3×, tablet plays audio (both local). Server sets `warned_at` when observed.
 6. `end_at`: ESP32 OFF locally; tablet shows AVAILABLE; server (read-time derivation + cron) → `COMPLETED`, audit, report data.
-7. Staff early stop (permission `sessions.stop`) → `STOP_SESSION` → `COMPLETED` with `ended_early=true`.
+7. Staff early stop (permission `sessions.stop`) → `COMPLETING` + `STOP_SESSION` → `COMPLETED` on STOP ACK or after 60 s (the device also stops locally at endAt), `ended_early=true`.
+
+Implementation notes (Phase 7):
+- Transitions only via `SessionService` + `SessionStateMachine` (allowed-transition table; illegal → 409 `INVALID_STATE_TRANSITION`); every transition writes `session_events`.
+- `prepare` locks the `billiard_tables` row, finalizes stale sessions of that table, checks occupancy, inserts; a `UniqueConstraintViolation` from the DB guard is mapped to `TABLE_UNAVAILABLE`. Proven with 8 forked processes racing on one table (exactly one winner) on MySQL, MariaDB and PostgreSQL.
+- `SessionFinalizer` (`sessions:finalize`, every minute): ACTIVE past endAt → COMPLETED (ended_at = end_at), RESERVED past TTL → CANCELLED, STARTING without ACK after 20 s → FAILED + STOP, COMPLETING after 60 s → COMPLETED, `warned_at` recorded.
+- `TableStatusResolver` derives AVAILABLE/RESERVED/STARTING/BUSY/WARNING/DISABLED/DEVICE_OFFLINE/CLOSED at read time, so a missed cron run never shows a finished table as busy.
+- `DeviceCommandBus`: a newer START/STOP supersedes undelivered commands of other sessions; a STOP expires its own session's undelivered START.
 8. Payment status (UNPAID/PAID/WAIVED) is set **manually** by authorized staff. No automatic verification (spec §10, §69).
 
 ## 6. Frontends

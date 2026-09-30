@@ -39,9 +39,9 @@ Each phase = one or more PRs. Owner starts a phase by writing **"Phase N ni bosh
 - [x] Tests: spec §61 branch limit scenario (2 → denied → limit 3 → success), §43 item 7–8
 
 ## Phase 7 — Tables & session engine
-- [ ] Tables CRUD, SessionStateMachine, SessionService, PriceCalculator, working-hours check
-- [ ] prepare/start/stop/complete, derived status, cron finalization, payment status marking
-- [ ] Tests: concurrency (parallel start → exactly one wins), duplicate Idempotency-Key, state transitions, pricing rounding
+- [x] Tables CRUD, SessionStateMachine, SessionService, PriceCalculator, working-hours check
+- [x] prepare/start/stop/complete, derived status, cron finalization, payment status marking (+ admin sessions, dashboard, daily/monthly reports, tablet kiosk read API)
+- [x] Tests: concurrency (parallel start → exactly one wins), duplicate Idempotency-Key, state transitions, pricing rounding
 
 ## Phase 8 — Tablet app + kiosk shell
 - [ ] Tablet pairing (code on screen → admin binds to branch)

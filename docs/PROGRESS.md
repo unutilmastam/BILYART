@@ -52,6 +52,13 @@ Remaining for Phase 1:
 - Bug caught by the 3-DB matrix: PostgreSQL rejects `COUNT(*) … FOR UPDATE` → lock rows then count.
 - web-admin client area: branches (+ hours editor, closed days), tables (plan assignment, device status), pricing plans (quotes), staff (roles, branch picker), settings; nav filtered by permissions.
 
+## Phase 7 — session 4 (2026-09-30)
+- Server: `SessionStateMachine`, `SessionService` (prepare/start/cancel/confirmStarted/failStart/stop/complete/markPayment), `SessionFinalizer` + `sessions:finalize` (every minute), `TableStatusResolver`, `DeviceCommandBus` (queue only; delivery = Phase 10), `ReportService` (branch-timezone day/month ranges, played minutes, per-table, utilization).
+- Tablet API: bootstrap, tables, heartbeat, sessions prepare/start/cancel/show (Idempotency-Key required) — responses validated against `packages/protocol` schemas in tests (opis/json-schema).
+- Admin API: sessions list/show (events), stop, manual payment status, live dashboard, daily/monthly reports. web-admin: live dashboard (10 s refresh), sessions list/detail with stop + payment, reports.
+- Bugs caught: missing `public_id` in a narrowed select (strict mode), MySQL JSON key reordering in tests.
+- Known limitation until Phase 10: nothing ACKs START yet on a real device, so without the device API a started session fails after 20 s (by design).
+
 ## Open questions for the owner
 1. ~~Platform domain~~ → **itcode.uz**. Still open: root domain or a subdomain (e.g. `billiard.itcode.uz`)? Its document root in cPanel → Domains?
 2. ~~First ESP32 flash method~~ → from a computer (owner, 2026-09-30).
