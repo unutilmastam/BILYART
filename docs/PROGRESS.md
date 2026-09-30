@@ -25,6 +25,14 @@ Remaining for Phase 1:
 - `packages/protocol`: 17 schemas (device + tablet + common), examples (valid/invalid), generated `src/generated/protocol.ts`, Ajv validator, OpenAPI validation test. CI job `protocol`.
 - `docs/API.md` (all endpoints, conventions, error codes) + `docs/openapi.yaml` (3.1 skeleton referencing the protocol schemas).
 
+## Phase 3 — session 4 (2026-09-30)
+- Owner: no deployment now (all work in GitHub, move to hosting at the end); apps are PWAs (no native kiosk shell).
+- `apps/api`: Laravel 13.34 skeleton trimmed to API; migrations for every table in DATABASE.md with composite tenant FKs, CHECK constraints, double-booking guard (generated column on MySQL/MariaDB, partial unique index on PostgreSQL).
+- Design changes recorded in DATABASE.md: devices/tablets are registration rows (tenant set once, re-pair = new row), tablet bearer token hashed in `tablets.token_hash` (no Sanctum PATs), 3-column FKs (tenant, branch, table), ISO weekdays.
+- `TenantContext` + `TenantScope` (fails closed) + `BelongsToTenant`; `TenantAgnosticUserProvider` for auth only.
+- Tests: DB-level cross-tenant rejection (tables, sessions, devices, photos, payment marker), user role/tenant CHECK, double booking for all 16 occupying pairs, session integrity CHECKs, scope behaviour, subscription status maths.
+- CI job `api`: MySQL 8 / MariaDB 10.6 / PostgreSQL 13 on PHP 8.3 + MySQL on PHP 8.4; pint + composer audit; migrate → rollback → migrate.
+
 ## Open questions for the owner
 1. ~~Platform domain~~ → **itcode.uz**. Still open: root domain or a subdomain (e.g. `billiard.itcode.uz`)? Its document root in cPanel → Domains?
 2. ~~First ESP32 flash method~~ → from a computer (owner, 2026-09-30).

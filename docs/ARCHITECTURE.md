@@ -45,6 +45,10 @@ Why Laravel and not Node/NestJS (spec §47 lists Node as preferred): on cPanel, 
 - Row locks: `lockForUpdate()` (supported by all three). Money `BIGINT`, times `TIMESTAMP(3)`/`timestamptz` via Laravel `timestampTz` where needed.
 - SQLite is **not** used for tests (composite FKs / locks must be real).
 
+## 2c. Owner decisions 2026-09-30 (later message)
+- **No deployment for now**: everything is built and tested in GitHub (CI); moving to Hostmaster happens at the end (Phase 16).
+- **Apps are PWAs**: admin panel and tablet kiosk are installable PWAs. The native `android-kiosk` shell is **not built** unless the owner asks later. Kiosk lock on the tablet = Android's built-in **App pinning** (+ PWA installed full-screen, auto-open documented in TABLET_SETUP). Known limitation vs Lock Task/Device Owner: a person who knows the unpin gesture + device PIN can leave the app; auto-start after reboot is not guaranteed without a native shell. Documented, not hidden.
+
 ## 2b. Build order (owner decision 2026-09-30)
 Server side and admin first (Phases 2–7, 9 server part, 10 server part, 12–15). Tablet app + kiosk (Phase 8, 9 client part) and ESP32 firmware (Phase 11) come after, then deployment (16). Hosting check results are collected before Phase 16.
 

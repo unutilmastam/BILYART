@@ -57,3 +57,59 @@ jobs:
       - run: npm run check-generated
       - run: npm run typecheck
       - run: npm test
+
+  api:
+    name: API tests (${{ matrix.db }}, PHP ${{ matrix.php }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { db: mysql, php: '8.3', image: 'mysql:8.0', port: 3306, user: root }
+          - { db: mariadb, php: '8.3', image: 'mariadb:10.6', port: 3306, user: root }
+          - { db: pgsql, php: '8.3', image: 'postgres:13', port: 5432, user: postgres }
+          - { db: mysql, php: '8.4', image: 'mysql:8.0', port: 3306, user: root }
+    services:
+      db:
+        image: ${{ matrix.image }}
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: bilyart_test
+          MARIADB_ROOT_PASSWORD: root
+          MARIADB_DATABASE: bilyart_test
+          POSTGRES_PASSWORD: root
+          POSTGRES_DB: bilyart_test
+        ports:
+          - 5555:${{ matrix.port }}
+        options: >-
+          --health-cmd "${{ matrix.db == 'pgsql' && 'pg_isready -U postgres' || (matrix.db == 'mariadb' && 'healthcheck.sh --connect' || 'mysqladmin ping -proot') }}"
+          --health-interval 5s --health-timeout 5s --health-retries 20
+    defaults:
+      run:
+        working-directory: apps/api
+    env:
+      DB_CONNECTION: ${{ matrix.db }}
+      DB_HOST: 127.0.0.1
+      DB_PORT: 5555
+      DB_DATABASE: bilyart_test
+      DB_USERNAME: ${{ matrix.user }}
+      DB_PASSWORD: root
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: pdo_mysql, pdo_pgsql, intl, gd, sodium, bcmath, zip
+          coverage: none
+      - uses: actions/cache@v4
+        with:
+          path: ~/.composer/cache
+          key: composer-${{ matrix.php }}-${{ hashFiles('apps/api/composer.lock') }}
+      - run: composer install --no-interaction --no-progress --prefer-dist
+      - run: cp .env.example .env && php artisan key:generate
+      - run: vendor/bin/pint --test
+        if: matrix.db == 'mysql' && matrix.php == '8.3'
+      - run: composer audit --no-dev
+        if: matrix.db == 'mysql' && matrix.php == '8.3'
+      - run: php artisan migrate:fresh --force && php artisan migrate:rollback --force && php artisan migrate --force
+      - run: php artisan test
