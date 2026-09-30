@@ -100,3 +100,62 @@ export interface ClientSubscription extends SubscriptionInfo {
   supportContact: string;
   paymentInstructions: string;
 }
+
+export interface Branch {
+  id: string;
+  name: string;
+  address: string | null;
+  phone: string | null;
+  timezone: string;
+  isActive: boolean;
+  reportTime: string;
+}
+
+export interface WorkingDay {
+  weekday: number;
+  isClosed: boolean;
+  opensAt: string | null;
+  closesAt: string | null;
+}
+
+export interface ClosedDay {
+  id: string;
+  date: string;
+  reason: string | null;
+}
+
+export interface PricingPlan {
+  id: string;
+  name: string;
+  type: 'HOURLY';
+  branchId: string | null;
+  pricePerHour: number;
+  roundingStep: number;
+  allowedDurations: number[];
+  quotes: { minutes: number; amount: number }[];
+  isActive: boolean;
+}
+
+export interface Table {
+  id: string;
+  branchId: string;
+  number: number;
+  name: string;
+  isActive: boolean;
+  pricingPlan: { id: string; name: string; pricePerHour: number } | null;
+  device: { id: string; code: string; online: boolean; lastSeenAt: string | null } | null;
+}
+
+export interface StaffUser extends User {
+  branchIds: string[];
+}
+
+export interface TenantSettings {
+  privacyNotice: string;
+  photoRetentionDays: number;
+  photoRequired: boolean;
+  warningText: string;
+  warnBeforeMinutes: number;
+  locale: 'uz' | 'ru';
+  operatorsCanViewPhotos: boolean;
+}

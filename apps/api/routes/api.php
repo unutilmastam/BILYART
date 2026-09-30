@@ -28,6 +28,50 @@ Route::middleware('web')->group(function (): void {
             Route::middleware('subscription.active')->group(function (): void {
                 Route::get('branches', [BranchController::class, 'index']);
                 Route::get('branches/{branch}', [BranchController::class, 'show']);
+                Route::get('branches/{branch}/working-hours', [BranchController::class, 'workingHours']);
+                Route::get('branches/{branch}/closed-days', [BranchController::class, 'closedDays']);
+                Route::middleware('perm:branches.manage')->group(function (): void {
+                    Route::post('branches', [BranchController::class, 'store']);
+                    Route::patch('branches/{branch}', [BranchController::class, 'update']);
+                    Route::delete('branches/{branch}', [BranchController::class, 'destroy']);
+                });
+                Route::middleware('perm:working_hours.manage')->group(function (): void {
+                    Route::put('branches/{branch}/working-hours', [BranchController::class, 'setWorkingHours']);
+                    Route::post('branches/{branch}/closed-days', [BranchController::class, 'addClosedDay']);
+                    Route::delete('branches/{branch}/closed-days/{day}', [BranchController::class, 'removeClosedDay']);
+                });
+
+                Route::middleware('perm:tables.view')->group(function (): void {
+                    Route::get('tables', [Admin\TableController::class, 'index']);
+                    Route::get('tables/{table}', [Admin\TableController::class, 'show']);
+                });
+                Route::middleware('perm:tables.manage')->group(function (): void {
+                    Route::post('tables', [Admin\TableController::class, 'store']);
+                    Route::patch('tables/{table}', [Admin\TableController::class, 'update']);
+                    Route::delete('tables/{table}', [Admin\TableController::class, 'destroy']);
+                });
+
+                Route::middleware('perm:pricing.manage')->group(function (): void {
+                    Route::get('pricing-plans', [Admin\PricingPlanController::class, 'index']);
+                    Route::post('pricing-plans', [Admin\PricingPlanController::class, 'store']);
+                    Route::get('pricing-plans/{plan}', [Admin\PricingPlanController::class, 'show']);
+                    Route::patch('pricing-plans/{plan}', [Admin\PricingPlanController::class, 'update']);
+                    Route::delete('pricing-plans/{plan}', [Admin\PricingPlanController::class, 'destroy']);
+                });
+
+                Route::middleware('perm:users.manage')->group(function (): void {
+                    Route::get('users', [Admin\UserController::class, 'index']);
+                    Route::post('users', [Admin\UserController::class, 'store']);
+                    Route::get('users/{user}', [Admin\UserController::class, 'show']);
+                    Route::patch('users/{user}', [Admin\UserController::class, 'update']);
+                    Route::post('users/{user}/deactivate', [Admin\UserController::class, 'deactivate']);
+                });
+
+                Route::middleware('perm:tenant.settings')->group(function (): void {
+                    Route::get('settings', [Admin\SettingsController::class, 'show']);
+                    Route::put('settings', [Admin\SettingsController::class, 'update']);
+                    Route::get('audit-logs', Admin\AuditLogController::class);
+                });
             });
         });
 
