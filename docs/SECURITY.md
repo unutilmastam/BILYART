@@ -43,9 +43,10 @@ Middleware `subscription.active` on all tenant business routes, tablet routes an
 login 5/min/IP+login, pairing code entry 5/15 min/tenant, device register 10/h/IP, tablet API 120/min/tablet, photo upload 10/min/tablet, device poll 40/min/device.
 
 ## 6. Photos
-- Upload: max 2 MB, `image/jpeg|png|webp` by content sniffing (`finfo`), dimensions 320–2560 px, **re-encoded to JPEG with GD/Imagick** (strips EXIF, destroys polyglots), server-generated name `{ulid}.jpg`.
+- Upload: max 2 MB, `image/jpeg|png|webp` by content sniffing (`finfo`) cross-checked with `getimagesize`, dimensions 320–2560 px, **re-encoded to JPEG with GD** (strips EXIF/GPS, destroys polyglots — tested with an appended `<?php` payload and a fake GPS EXIF segment), server-generated name `{ulid}.jpg`. Only while the session is RESERVED (a retake replaces the previous file); tablet must own the session.
 - Path: `storage/app/private/tenants/{tenantId}/sessions/{sessionPublicId}/{ulid}.jpg` — outside document root.
-- Served only via `GET /api/admin/photos/{publicId}` with policy check; response `Cache-Control: private, no-store`; access logged (`photo.viewed`).
+- Served only via `GET /api/admin/photos/{publicId}`: tenant scope (other tenant → 404) + branch access + `photos.view` (operators only if the tenant enables `operators_can_view_photos`; SUPER_ADMIN never); `Cache-Control: no-store, private`; every view audited (`photo.viewed`). The web-admin loads the image only when staff press "Suratni ko'rish".
+- Storage adapter `PhotoStorage` (v1 `LocalPrivateDisk`), paths re-validated against a strict pattern (no traversal).
 - Deletion: file removed + row `deleted_at`, audit `photo.deleted`; deleted → 404.
 - Retention job per tenant setting. Privacy notice text configurable per tenant and shown on tablet camera screen.
 

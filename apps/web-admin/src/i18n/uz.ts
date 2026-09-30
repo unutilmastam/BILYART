@@ -226,6 +226,11 @@ export const uz = {
   'sess.markWaived': 'Bepul',
   'sess.history': 'Tarix',
   'sess.photo': 'Surat',
+  'sess.showPhoto': "Suratni ko'rish",
+  'sess.deletePhoto': "Suratni o'chirish",
+  'sess.confirmDeletePhoto': "Surat butunlay o'chiriladi. Davom etasizmi?",
+  'sess.noPhoto': "Surat yo'q yoki o'chirilgan",
+  'sess.photoNotice': "Surat faqat ruxsati bor xodimlarga ko'rinadi, har bir ko'rish qayd etiladi.",
   'sess.endedEarly': "Muddatidan oldin to'xtatilgan",
   'sess.minutes': '{n} daq',
 

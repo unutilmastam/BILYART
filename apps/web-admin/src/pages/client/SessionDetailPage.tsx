@@ -8,6 +8,7 @@ import { useMarkPayment, useSession, useStopSession } from '../../features/clien
 import { t, tDynamic } from '../../i18n';
 import { formatDateTime, formatMoney } from '../../lib/format';
 import type { PaymentStatusValue } from '../../types/api';
+import { SessionPhoto } from './SessionPhoto';
 
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -55,6 +56,9 @@ export function SessionDetailPage() {
           ))}
         </div>
         {(stop.isError || pay.isError) && <div className="mt-3"><ErrorBanner error={stop.error ?? pay.error} /></div>}
+      </Card>
+      <Card title={t('sess.photo')}>
+        <SessionPhoto photoId={s.photo?.id ?? null} canDelete={perms.includes('photos.delete')} />
       </Card>
       <Card title={t('sess.history')}>
         <ol className="space-y-1 text-sm">

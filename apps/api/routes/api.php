@@ -75,6 +75,9 @@ Route::middleware('web')->group(function (): void {
                 });
                 Route::post('sessions/{session}/stop', [Admin\SessionController::class, 'stop'])->middleware('perm:sessions.stop');
                 Route::post('sessions/{session}/payment', [Admin\SessionController::class, 'payment'])->middleware('perm:sessions.mark_payment');
+                // Photo view permission (incl. the operator setting) is checked in PhotoService.
+                Route::get('photos/{photo}', [Admin\PhotoController::class, 'show']);
+                Route::delete('photos/{photo}', [Admin\PhotoController::class, 'destroy'])->middleware('perm:photos.delete');
                 Route::middleware('perm:reports.view')->group(function (): void {
                     Route::get('reports/daily', [Admin\ReportController::class, 'daily']);
                     Route::get('reports/monthly', [Admin\ReportController::class, 'monthly']);
@@ -129,5 +132,6 @@ Route::prefix('tablet')->middleware(['auth.tablet', 'throttle:tablet', 'subscrip
         Route::post('sessions/prepare', [Tablet\SessionController::class, 'prepare']);
         Route::post('sessions/{session}/start', [Tablet\SessionController::class, 'start']);
         Route::post('sessions/{session}/cancel', [Tablet\SessionController::class, 'cancel']);
+        Route::post('sessions/{session}/photo', [Tablet\PhotoController::class, 'store'])->middleware('throttle:photo-upload');
     });
 });
