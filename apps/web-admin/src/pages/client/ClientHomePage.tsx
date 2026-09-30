@@ -73,6 +73,11 @@ export function ClientHomePage() {
     <div className="space-y-4">
       <SubscriptionCard />
       {active && me.data?.permissions.includes('sessions.view') && <LiveDashboard />}
+      {me.data?.permissions.includes('tenant.export') && (
+        <a href="/api/admin/export" className="inline-flex min-h-11 items-center rounded-lg px-4 text-sm font-semibold text-brand-700 ring-1 ring-slate-300">
+          ⬇ {t('notif.export')}
+        </a>
+      )}
     </div>
   );
 }

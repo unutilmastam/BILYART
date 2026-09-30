@@ -70,8 +70,8 @@ Each phase = one or more PRs. Owner starts a phase by writing **"Phase N ni bosh
 - [x] Tests: tenant bot only sees own data; token never returned by API (§43 item 15)
 
 ## Phase 13 — Subscription expiry & notifications
-- [ ] Status transitions via cron, reminders 5/3/1/0 days (deduped), in-app + Telegram, expired lock-down behaviour
-- [ ] Tests: §43 items 5–6
+- [x] Status transitions via cron, reminders 5/3/1/0 days (deduped), in-app + Telegram, expired lock-down behaviour (+ Super Admin notifications, owner data export)
+- [x] Tests: §43 items 5–6
 
 ## Phase 14 — Monitoring, logging, backups
 - [ ] `/health`, `/health/db`, `/health/storage`, `/health/messaging`, Super Admin health page
