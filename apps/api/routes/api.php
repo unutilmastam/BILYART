@@ -75,6 +75,17 @@ Route::middleware('web')->group(function (): void {
                 });
                 Route::post('sessions/{session}/stop', [Admin\SessionController::class, 'stop'])->middleware('perm:sessions.stop');
                 Route::post('sessions/{session}/payment', [Admin\SessionController::class, 'payment'])->middleware('perm:sessions.mark_payment');
+                Route::get('devices', [Admin\DeviceController::class, 'index'])->middleware('perm:tables.view');
+                Route::get('tablets', [Admin\DeviceController::class, 'tablets'])->middleware('perm:tables.view');
+                Route::middleware('perm:devices.manage')->group(function (): void {
+                    Route::post('devices/pair', [Admin\DeviceController::class, 'pair'])->middleware('throttle:pairing');
+                    Route::patch('devices/{device}', [Admin\DeviceController::class, 'move']);
+                    Route::post('devices/{device}/unpair', [Admin\DeviceController::class, 'unpair']);
+                    Route::post('devices/{device}/ping', [Admin\DeviceController::class, 'ping']);
+                    Route::post('tablets/pair', [Admin\DeviceController::class, 'pairTablet'])->middleware('throttle:pairing');
+                    Route::post('tablets/{tablet}/revoke', [Admin\DeviceController::class, 'revokeTablet']);
+                });
+
                 // Photo view permission (incl. the operator setting) is checked in PhotoService.
                 Route::get('photos/{photo}', [Admin\PhotoController::class, 'show']);
                 Route::delete('photos/{photo}', [Admin\PhotoController::class, 'destroy'])->middleware('perm:photos.delete');
@@ -113,6 +124,11 @@ Route::middleware('web')->group(function (): void {
                 Route::get('payments', SuperAdmin\PaymentController::class);
             });
             Route::get('audit-logs', SuperAdmin\AuditLogController::class)->middleware('perm:platform.audit');
+            Route::middleware('perm:platform.firmware')->group(function (): void {
+                Route::get('firmware', [SuperAdmin\FirmwareController::class, 'index']);
+                Route::post('firmware', [SuperAdmin\FirmwareController::class, 'store']);
+                Route::post('firmware/{release}/publish', [SuperAdmin\FirmwareController::class, 'publish']);
+            });
             Route::get('settings', [SuperAdmin\SettingsController::class, 'show'])->middleware('perm:platform.settings');
             Route::put('settings', [SuperAdmin\SettingsController::class, 'update'])->middleware('perm:platform.settings');
         });
@@ -123,6 +139,9 @@ Route::middleware('web')->group(function (): void {
 | Tablet kiosk (bearer token from pairing). Tenant + branch come from the tablet.
 | State-changing calls require an Idempotency-Key (spec §31).
 */
+Route::post('tablet/register', [Tablet\PairingController::class, 'register'])->middleware('throttle:tablet-register');
+Route::get('tablet/pairing-status', [Tablet\PairingController::class, 'status'])->middleware('throttle:tablet');
+
 Route::prefix('tablet')->middleware(['auth.tablet', 'throttle:tablet', 'subscription.active'])->group(function (): void {
     Route::get('bootstrap', [Tablet\KioskController::class, 'bootstrap']);
     Route::get('tables', [Tablet\KioskController::class, 'tables']);
