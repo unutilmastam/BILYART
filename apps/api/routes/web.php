@@ -1,3 +1,8 @@
 <?php
 
-// The API is JSON-only; the admin and tablet SPAs are static builds under /admin and /tablet (see ARCHITECTURE §3).
+use App\Http\Controllers\SpaController;
+use Illuminate\Support\Facades\Route;
+
+// The API is JSON-only. The admin and tablet PWAs are static builds copied to public/admin and public/tablet;
+// the web server serves their files directly and deep links fall back to their index.html here.
+Route::get('/admin/{path?}', [SpaController::class, 'admin'])->where('path', '.*');
