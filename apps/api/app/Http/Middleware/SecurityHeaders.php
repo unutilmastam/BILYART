@@ -17,7 +17,9 @@ final class SecurityHeaders
         $headers->set('X-Frame-Options', 'DENY');
         $headers->set('Referrer-Policy', 'same-origin');
         $headers->set('Cross-Origin-Opener-Policy', 'same-origin');
-        $headers->set('Permissions-Policy', config('security.permissions_policy'));
+        if (! $headers->has('Permissions-Policy')) {
+            $headers->set('Permissions-Policy', config('security.permissions_policy'));
+        }
         if (! $headers->has('Content-Security-Policy')) {
             $headers->set('Content-Security-Policy', config('security.csp.api'));
         }

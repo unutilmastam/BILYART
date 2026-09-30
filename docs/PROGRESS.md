@@ -7,10 +7,10 @@ Updated by Claude Code at the end of every session.
 | 0. Architecture pack | DONE | CLAUDE.md + docs prepared before coding |
 | 1. Inspect repo & hosting | IN PROGRESS | Skeleton, CI, hosting-check tooling done. cPanel Tools screenshot + domain received. Waiting for hostcheck page screenshot + Resource Usage / Domains / PHP screenshots. |
 | 2–7 | DONE | protocol, Laravel + DB, auth/tenancy, Super Admin, client admin, sessions |
-| 8. Tablet PWA | TODO | next (owner: after the server/admin work) |
-| 9. Photos | SERVER DONE | tablet camera part comes with Phase 8 |
+| 8. Tablet PWA | DONE | kiosk PWA + TABLET_SETUP.md (App pinning) |
+| 9. Photos | DONE | server + tablet camera (face detection, one photo) |
 | 10, 12, 13, 14 | DONE | devices/tablets server side, Telegram, notifications/subscriptions, monitoring/backups |
-| 11. ESP32 firmware | TODO | after Phase 8; first flash from a computer |
+| 11. ESP32 firmware | TODO | next; first flash from a computer |
 | 15. Security testing | DONE | see below, TESTING.md, SECURITY_REVIEW.md |
 | 16. Deployment | TODO | owner: deploy to hosting at the very end |
 
@@ -93,6 +93,13 @@ Remaining for Phase 1:
 - `BackupCrypto` (AES-256-GCM chunked, tamper/truncation detection) + `BackupService` (run/verify/restore/prune/photos) + commands `backup:run [--photos]`, `backup:verify`, `backup:restore --force`, `platform:prune`; daily/weekly schedule; `docs/BACKUP.md`.
 - Tests: every DB table is either backed up or deliberately excluded; backup → damage → restore → identical data on all 3 engines; tamper/truncate/wrong key detected; retention rules; encrypted photo archive; health public vs detailed; all key commands scheduled.
 - Logs: daily channel now writes JSON lines (request id + redaction). Removed Laravel's default `/up` (replaced by `/health`).
+
+## Phase 8 (+ Phase 9 client) — session 4 (2026-09-30)
+- `apps/tablet`: React 19 + Vite 8 PWA under `/tablet/` (fullscreen, landscape). Pairing screen (register → big 6-digit code → poll → token in IndexedDB), tables grid with live countdowns, duration quotes, confirm (price, pay-at-desk note, privacy notice), camera with MediaPipe face detection → one JPEG → upload → start → waits for the ESP32 ACK → countdown. Server-time offset, IndexedDB display cache, offline banner (no starts offline), closed/suspended screens, 60 s idle reset (cancels reservation), revoked tablet → re-pair, 5-minute warning (chime + TTS, local timing), wake lock, heartbeat.
+- Server: `/tablet/{path?}` shell with its own CSP (`'wasm-unsafe-eval'`, `media-src blob:`) and `camera=(self)`; everything else keeps `camera=()`; `.htaccess` sets the same for static files.
+- CI job "Tablet kiosk": audit, typecheck, 16 tests, build, model sha256 + WASM presence check, `tablet-dist` artifact.
+- Verified end-to-end in Chromium against the real Laravel app + an HTTP ESP32 simulator: pairing via the admin API, table → 1 soat → start → device ACK → ACTIVE → countdown; manual-capture path uploaded a real 1280×720 JPEG through the sanitizer; the pairing rate limit kicked in after 5 pairings as designed. Found and documented: MediaPipe telemetry is blocked by our CSP.
+- Docs: `TABLET_SETUP.md` (Uzbek, click-by-click), ARCHITECTURE tablet notes, SECURITY §9, READMEs.
 
 ## Phase 15 — session 4 (2026-09-30)
 - `RouteSweepTest`: walks the real route table — every admin route with a model parameter (all methods, nested own-parent/foreign-child) answers 404 to another tenant and tenant B's rows stay byte-identical; guests get 401 on every admin/super/account route; client users 403 on every Super Admin route; tablet/device routes reject missing, browser-session and swapped credentials; a tablet cannot touch another tenant's session. New parameter names without a fixture fail the test.

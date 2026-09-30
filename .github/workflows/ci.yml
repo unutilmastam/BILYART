@@ -141,3 +141,33 @@ jobs:
           path: apps/web-admin/dist/
           include-hidden-files: true # dist/.htaccess (CSP + cache headers)
           retention-days: 14
+
+  tablet:
+    name: Tablet kiosk (typecheck, tests, build)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/tablet
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: apps/tablet/package-lock.json
+      - run: npm ci
+      - run: npm audit --omit=dev --audit-level=high
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+      - name: Build contains the .htaccess, face model and WASM runtime
+        run: |
+          test -f dist/.htaccess
+          echo "b4578f35940bf5a1a655214a1cce5cab13eba73c1297cd78e1a04c2380b0152f  dist/models/blaze_face_short_range.tflite" | sha256sum -c -
+          test -f dist/mediapipe/vision_wasm_internal.wasm
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tablet-dist
+          path: apps/tablet/dist/
+          include-hidden-files: true # dist/.htaccess (CSP + camera permission)
+          retention-days: 14

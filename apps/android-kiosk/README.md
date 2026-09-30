@@ -1,5 +1,5 @@
 # apps/android-kiosk
 
-Minimal Kotlin WebView shell: Lock Task (Device Owner), boot auto-start, crash restart, camera permission. APK is built by GitHub Actions only.
+**Not built.** Owner decision (2026-09-30): the kiosk is the tablet PWA (`apps/tablet`) locked with Android App pinning — see [docs/TABLET_SETUP.md](../../docs/TABLET_SETUP.md) §5 and its limitations (§7).
 
-Status: empty — built in **Phase 8**. See [ARCHITECTURE §2.4](../../docs/ARCHITECTURE.md).
+A native Kotlin WebView shell (Lock Task as Device Owner, boot auto-start, crash restart) can be added later if the owner asks; the PWA needs no changes for it.

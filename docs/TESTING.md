@@ -7,6 +7,7 @@ How the project is tested and where each security requirement is proven.
 |---|---|---|
 | API (PHPUnit, ~200 tests) | CI matrix: MySQL 8 / MariaDB 10.6 / PostgreSQL 13 on PHP 8.3, MySQL on PHP 8.4 | `cd apps/api && php artisan test` (all engines locally: `scripts/test-all-db.sh`) |
 | Admin PWA (Vitest + Testing Library) | CI | `cd apps/web-admin && npm test` |
+| Tablet kiosk PWA (Vitest, fake IndexedDB, mocked camera/detector) | CI | `cd apps/tablet && npm test` |
 | Protocol schemas | CI | `cd packages/protocol && npm test` |
 | Hosting check script | CI | `infrastructure/hosting-check/tests/run.sh` |
 | Secret scan | CI (full history) | `gitleaks git --redact .` |

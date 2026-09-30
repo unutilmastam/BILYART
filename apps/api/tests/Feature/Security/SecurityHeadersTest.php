@@ -61,12 +61,42 @@ class SecurityHeadersTest extends TestCase
     }
 
     #[Test]
+    public function only_the_tablet_shell_may_use_the_camera_and_wasm(): void
+    {
+        $dir = public_path('tablet');
+        $created = ! is_dir($dir);
+        @mkdir($dir, 0775, true);
+        $existing = is_file("$dir/index.html") ? file_get_contents("$dir/index.html") : null;
+        file_put_contents("$dir/index.html", '<!doctype html><title>kiosk</title>');
+
+        try {
+            $res = $this->get('/tablet/')->assertOk()->assertSee('kiosk', false);
+        } finally {
+            $existing === null ? unlink("$dir/index.html") : file_put_contents("$dir/index.html", $existing);
+            if ($created) {
+                rmdir($dir);
+            }
+        }
+
+        $res->assertHeader('Content-Security-Policy', config('security.csp.tablet'))
+            ->assertHeader('Permissions-Policy', config('security.permissions_policy_tablet'));
+        $this->assertStringContainsString('camera=(self)', config('security.permissions_policy_tablet'));
+        $this->assertStringNotContainsString("'unsafe-eval'", config('security.csp.tablet'));
+        $this->assertStringNotContainsString('unsafe-inline', config('security.csp.tablet'));
+        // Everything else keeps the camera off.
+        $this->getJson('http://localhost/api/me')->assertHeader('Permissions-Policy', config('security.permissions_policy'));
+    }
+
+    #[Test]
     public function htaccess_copies_match_the_php_values(): void
     {
         $root = (string) file_get_contents(public_path('.htaccess'));
         $admin = (string) file_get_contents(base_path('../web-admin/public/.htaccess'));
 
-        $this->assertStringContainsString('Header always set Permissions-Policy "'.config('security.permissions_policy').'"', $root);
+        $tablet = (string) file_get_contents(base_path('../tablet/public/.htaccess'));
+        $this->assertStringContainsString('Header always set Permissions-Policy "'.config('security.permissions_policy').'" env=!BILYART_TABLET', $root);
+        $this->assertStringContainsString('Header always set Content-Security-Policy "'.config('security.csp.tablet').'"', $tablet);
+        $this->assertStringContainsString('Header always set Permissions-Policy "'.config('security.permissions_policy_tablet').'"', $tablet);
         $this->assertStringContainsString('Header always set Strict-Transport-Security "'.config('security.hsts').'" env=HTTPS', $root);
         $this->assertStringContainsString('Header always set Content-Security-Policy "'.config('security.csp.admin').'"', $admin);
         // HTTPS redirect, dotfile block, no directory listing.

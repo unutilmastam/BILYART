@@ -1,0 +1,13 @@
+# Copied by Vite into the build (public/tablet/.htaccess on the server).
+# Kiosk PWA: strict CSP (same value as config/security.php 'csp.tablet'); the front camera is allowed for this path only.
+<IfModule mod_headers.c>
+    Header always set Content-Security-Policy "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self'; img-src 'self' data: blob:; media-src 'self' blob:; font-src 'self'; connect-src 'self'; manifest-src 'self'; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
+    Header always set Permissions-Policy "camera=(self), microphone=(), geolocation=(), payment=(), usb=(), serial=(), bluetooth=()"
+
+    <FilesMatch "^[\w.-]+-[\w-]{8,}\.(js|css|woff2?|png|svg|webp)$">
+        Header set Cache-Control "public, max-age=31536000, immutable"
+    </FilesMatch>
+    <FilesMatch "^(index\.html|sw\.js|registerSW\.js|manifest\.webmanifest|workbox-[\w-]+\.js)$">
+        Header set Cache-Control "no-cache"
+    </FilesMatch>
+</IfModule>
