@@ -10,7 +10,7 @@ Updated by Claude Code at the end of every session.
 | 8. Tablet PWA | DONE | kiosk PWA + TABLET_SETUP.md (App pinning) |
 | 9. Photos | DONE | server + tablet camera (face detection, one photo) |
 | 10, 12, 13, 14 | DONE | devices/tablets server side, Telegram, notifications/subscriptions, monitoring/backups |
-| 11. ESP32 firmware | TODO | next; first flash from a computer |
+| 11. ESP32 firmware | DONE (code) | builds in CI; on-hardware test pending (owner's bench, HARDWARE.md §5) |
 | 15. Security testing | DONE | see below, TESTING.md, SECURITY_REVIEW.md |
 | 16. Deployment | TODO | owner: deploy to hosting at the very end |
 
@@ -93,6 +93,14 @@ Remaining for Phase 1:
 - `BackupCrypto` (AES-256-GCM chunked, tamper/truncation detection) + `BackupService` (run/verify/restore/prune/photos) + commands `backup:run [--photos]`, `backup:verify`, `backup:restore --force`, `platform:prune`; daily/weekly schedule; `docs/BACKUP.md`.
 - Tests: every DB table is either backed up or deliberately excluded; backup → damage → restore → identical data on all 3 engines; tamper/truncate/wrong key detected; retention rules; encrypted photo archive; health public vs detailed; all key commands scheduled.
 - Logs: daily channel now writes JSON lines (request id + redaction). Removed Laravel's default `/up` (replaced by `/health`).
+
+## Phase 11 — session 4 (2026-09-30)
+- `devices/esp32`: `lib/core` (session timer with hard cap, warning flasher, command handling with 16-id idempotency log and expiry, `/state` apply, boot recovery with provisional clock, poll/ack builders) — 17 host tests, fed with the protocol examples. `src/` glue: setup portal (captive, WPA2 random password printed on first boot), registration + pairing with the code on the portal, pinned root CAs (Let's Encrypt + Sectigo), `/state` → `/poll` → `/ack` loop in a network task, relay loop on the other core (never blocks), NVS session + 30 s checkpoint, task watchdog 30 s, BOOT button (3 s portal / 10 s factory reset), status LED, OTA with streaming SHA-256 check + rollback if the new image cannot reach the server in 10 min.
+- CI job "ESP32 firmware": host tests, CA bundle freshness, build, version-marker check, app `.bin` + merged factory image + SHA256SUMS as `esp32-firmware` artifact; `workflow_dispatch` with a firmware version input for OTA releases. First CI build: flash 51 %, RAM 15 %.
+- Server: `POST /api/super/firmware/{id}/rollout` (OTA to idle paired devices, idempotent), uploads must carry the `BLYFWVER:` marker matching the typed version; firmware download sends `Content-Length`. Web admin: Super Admin → **Proshivka** page (upload / publish / rollout); multipart support in the API client.
+- Docs: `HARDWARE.md` (parts, contactor sizing, wiring, electrician note), `ESP32_FLASHING.md` (Uzbek, browser-based first flash, pairing, OTA), DEVICE_PROTOCOL §6b.
+- Not verified yet: real hardware (no ESP32 in the dev container). The PlatformIO registry is blocked in the cloud dev container, so host tests there run via `scripts/native-test.sh`; CI runs `pio`.
+- Owner action needed: add GitHub secret `DEVICE_REGISTRATION_SECRET` (ESP32_FLASHING.md §0).
 
 ## Phase 8 (+ Phase 9 client) — session 4 (2026-09-30)
 - `apps/tablet`: React 19 + Vite 8 PWA under `/tablet/` (fullscreen, landscape). Pairing screen (register → big 6-digit code → poll → token in IndexedDB), tables grid with live countdowns, duration quotes, confirm (price, pay-at-desk note, privacy notice), camera with MediaPipe face detection → one JPEG → upload → start → waits for the ESP32 ACK → countdown. Server-time offset, IndexedDB display cache, offline banner (no starts offline), closed/suspended screens, 60 s idle reset (cancels reservation), revoked tablet → re-pair, 5-minute warning (chime + TTS, local timing), wake lock, heartbeat.

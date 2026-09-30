@@ -57,7 +57,7 @@ Tenant, branch and table are **always** resolved from the principal, never from 
 | GET | `/audit-logs` | filter by tenant/action/date |
 | GET | `/payments` | all recorded platform payments |
 | GET/PUT | `/settings` | `{supportContact, paymentInstructions, defaultBranchLimit, reminderDays}` (whitelisted keys) |
-| GET/POST | `/firmware` · POST `/firmware/{release}/publish` | firmware releases (upload `.bin`, sha256 computed server-side) |
+| GET/POST | `/firmware` · POST `/firmware/{release}/publish` · POST `/firmware/{release}/rollout` | firmware releases: multipart upload of the app `.bin` (sha256 computed server-side; the embedded `BLYFWVER:` marker must equal `version`), publish, rollout = OTA commands to idle paired devices on another version → `{queued, skippedBusy, alreadyCurrent}` (409 if not published) |
 | GET | `/health` | detailed health (db, storage, queue, cron heartbeat, backups) |
 
 ### 3.3 Client Admin (`/api/admin`, tenant roles; `subscription.active` except where noted)

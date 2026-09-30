@@ -33,6 +33,7 @@ SavedSession session();
 void saveSession(const bl::Session& s, bool warned, int64_t remainingSec);
 void checkpoint(int64_t remainingSec, bool warned);
 
+/** Clears everything except the setup-portal password (it is written on the device label). */
 void factoryReset();
 
 }  // namespace store

@@ -20,6 +20,10 @@
 Shared g;
 SemaphoreHandle_t gLock;
 
+// Version marker inside the binary: the server refuses an upload whose marker differs from the
+// version typed in the admin panel (otherwise a rollout could never converge).
+extern "C" __attribute__((used)) const char kFirmwareMarker[] = "BLYFWVER:" FW_VERSION "\n";
+
 namespace {
 
 constexpr uint32_t kWatchdogSec = 30;
@@ -296,6 +300,7 @@ void netTask(void*) {
       {
         Lock l;
         g.paired = false;
+        g.portalWanted = true;  // status + pairing code stay visible even if the server is unreachable
       }
       pairDevice();
       continue;
@@ -360,6 +365,7 @@ void setup() {
   saved = store::session();
   g.deviceCode = store::deviceCode().length() ? store::deviceCode() : "ESP32-" + hardwareId.substring(6);
 
+  Serial.print(kFirmwareMarker);  // also keeps the marker in the linked image
   Serial.printf("\nBilyart ESP32 %s | hardwareId %s | device %s | boot %s\n", FW_VERSION, hardwareId.c_str(), g.deviceCode.c_str(), bootReason());
   Serial.printf("Setup Wi-Fi: BILLIARD-%s  password: %s  (write this on the device label)\n", g.deviceCode.substring(g.deviceCode.length() - 4).c_str(), store::portalPassword().c_str());
   if (strlen(DEVICE_REGISTRATION_SECRET) < 16) Serial.println("WARNING: firmware built without DEVICE_REGISTRATION_SECRET — registration will be refused.");

@@ -90,6 +90,11 @@ void checkpoint(int64_t remainingSec, bool warned) {
   prefs.putBool("s_warned", warned);
 }
 
-void factoryReset() { prefs.clear(); }
+void factoryReset() {
+  // Forget Wi-Fi, pairing, config and session — but keep the setup password printed on the label.
+  const String pw = portalPassword();
+  prefs.clear();
+  prefs.putString("appw", pw);
+}
 
 }  // namespace store
