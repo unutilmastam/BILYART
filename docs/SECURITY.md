@@ -3,14 +3,15 @@
 ## 1. Principals & authentication
 | Principal | Mechanism |
 |---|---|
-| SUPER_ADMIN | Laravel session cookie (Sanctum SPA), separate route group `/api/super/*`, optional TOTP 2FA (Phase 15) |
+| SUPER_ADMIN | Laravel session cookie (`web` guard, same-origin SPA — Sanctum is not needed), separate route group `/api/super/*`, optional TOTP 2FA (Phase 15) |
 | CLIENT_OWNER / MANAGER / OPERATOR | Same cookie auth, tenant-scoped |
 | TABLET | Random bearer token issued once at pairing, stored as SHA-256 (`tablets.token_hash`), bound to one branch; revoke = status REVOKED (re-pair issues a new row + token) |
 | DEVICE (ESP32) | Device token (hashed SHA-256 in DB), `Authorization: Device …`, see DEVICE_PROTOCOL.md |
 
 - Passwords: `Hash::make` (argon2id if available, else bcrypt cost ≥ 12). Never logged (`$hidden`, log redaction processor).
-- Cookies: `Secure`, `HttpOnly`, `SameSite=Lax`; CSRF via Sanctum `/sanctum/csrf-cookie`.
-- Lockout: 5 failed logins → 15 min lock per account + per-IP throttle.
+- Cookies: `Secure`, `HttpOnly`, `SameSite=Lax`, session encrypted; CSRF via Laravel `PreventRequestForgery` (token + Origin check). SPA calls `GET /api/auth/csrf` once to receive `XSRF-TOKEN`.
+- Lockout: 5 consecutive failed logins → 15 min lock per account (`LoginService`) + throttle 5/min per IP+login and 20/min per IP. Unknown login and wrong password return the same `INVALID_CREDENTIALS`. Deactivated users/tenants → `ACCOUNT_DISABLED`; a user deactivated mid-session is logged out on the next request.
+- Request pipeline (implemented in `bootstrap/app.php` + `routes/api.php`): `AssignRequestId` → `web` group (session, CSRF) → `auth:web` → `tenant.user` (`ResolveUserTenant`: TenantContext + Principal from the user; runs before route-model binding) → `tenant.member` / `super.admin` → `perm:<permission>` → `subscription.active` → `idempotency` → controller. Tablets: `auth.tablet` (hashed bearer token) sets the same context.
 - HTTPS only (`.htaccess` redirect + HSTS).
 
 ## 2. Authorization
@@ -52,8 +53,9 @@ login 5/min/IP+login, pairing code entry 5/15 min/tenant, device register 10/h/I
 `.env` only (never committed; `.env.example` with placeholders). Telegram bot tokens encrypted with `Crypt` (APP_KEY) in DB. GitHub Actions secrets for deploy credentials. `gitleaks` runs in CI.
 
 ## 8. Error handling & logging
-- JSON error shape: `{ "error": { "code": "TABLE_UNAVAILABLE", "message": "<uz user-friendly>" } }`. No stack traces (`APP_DEBUG=false`).
-- Structured JSON logs (daily files, 14 days) with request id; redaction of `password`, `token`, `authorization`, `bot_token`.
+- JSON error shape: `{ "error": { "code": "TABLE_UNAVAILABLE", "message": "<uz user-friendly>", "requestId": "…" } }` rendered by `ApiErrorRenderer` for every exception — no stack traces even with `APP_DEBUG=true`. Unexpected errors are logged as `SERVER_ERROR` with the request id.
+- Laravel's local-disk file serving (`/storage/{path}`) is disabled (`serve => false`): private files are never reachable by URL.
+- Daily log files (14 days) with request id; `RedactSensitiveProcessor` masks any key containing password/secret/…token, `authorization`, `cookie` in log context (tested, spec §43.13). Audit metadata goes through the same `Redactor`.
 
 ## 9. Web hardening
 CSP (self + MediaPipe CDN/WASM hosted locally preferred), `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: same-origin`, `Permissions-Policy: camera=(self)` on tablet only. Disable directory listing. `storage/` and `.env` unreachable (document root = `public/`).

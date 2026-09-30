@@ -15,12 +15,12 @@ Device and tablet message bodies: JSON Schemas in [`packages/protocol/schemas`](
   ```
   `message` is Uzbek (Latin) user-facing text; `code` is stable for programs. `fields` only on 422.
 - Status codes: 200/201 ok · 204 no content · 401 `UNAUTHENTICATED` · 402 `SUBSCRIPTION_INACTIVE` · 403 `FORBIDDEN` · 404 `NOT_FOUND` (also for other tenants' resources) · 409 conflict (`TABLE_UNAVAILABLE`, `IDEMPOTENCY_KEY_REUSED`, `INVALID_STATE_TRANSITION`) · 422 `VALIDATION_FAILED` / `LIMIT_REACHED` · 423 `ACCOUNT_LOCKED` · 429 `RATE_LIMITED` · 5xx `SERVER_ERROR`.
-- `Idempotency-Key` (UUID/ULID, 16–64 chars) is **required** on state-changing tablet and device endpoints and accepted on admin POSTs. Same key + same body → the stored response is replayed; same key + different body → 409 `IDEMPOTENCY_KEY_REUSED`. Keys live 48 h.
+- `Idempotency-Key` (UUID/ULID, 16–64 chars) is **required** on state-changing tablet and device endpoints and accepted on admin POSTs. Same key + same body → the stored response is replayed (header `Idempotent-Replayed: true`); same key + different body → 409 `IDEMPOTENCY_KEY_REUSED`; still running → 409 `IDEMPOTENCY_IN_PROGRESS`; missing where required → 400 `IDEMPOTENCY_KEY_REQUIRED`. 5xx responses are not stored (safe to retry). Keys are per principal and live 48 h (`idempotency:prune`, hourly).
 
 ## 2. Authentication
 | Client | Mechanism | Header |
 |---|---|---|
-| Admin SPA (all roles) | Sanctum SPA cookie session + CSRF (`GET /sanctum/csrf-cookie` → `X-XSRF-TOKEN`) | cookie |
+| Admin SPA (all roles) | Session cookie (`web` guard) + CSRF (`GET /api/auth/csrf` sets `XSRF-TOKEN` → send `X-XSRF-TOKEN`) | cookie |
 | Tablet | Sanctum personal access token issued at pairing (ability `tablet`) | `Authorization: Bearer <token>` |
 | Tablet/Device during pairing | one-time poll token | `Authorization: PollToken <pollToken>` |
 | ESP32 | device token | `Authorization: Device <deviceCode>.<token>` |
@@ -32,7 +32,8 @@ Tenant, branch and table are **always** resolved from the principal, never from 
 ### 3.1 Auth & profile (`/api`)
 | Method | Path | Notes |
 |---|---|---|
-| POST | `/auth/login` | `{login, password}` → `{user}`. 5 fails → 15 min lock (423) |
+| GET | `/auth/csrf` | 204, sets `XSRF-TOKEN` cookie |
+| POST | `/auth/login` | `{login, password}` → same body as `/me`. 5 fails → 15 min lock (423 `ACCOUNT_LOCKED`); inactive user / deactivated client → 403 `ACCOUNT_DISABLED` |
 | POST | `/auth/logout` | |
 | GET | `/me` | `{user, permissions[], tenant?: {name, subscription: {status, expiresAt, daysLeft}}}` — allowed when subscription inactive |
 | PUT | `/me/password` | `{currentPassword, password}` |
@@ -107,4 +108,4 @@ Tenant, branch and table are **always** resolved from the principal, never from 
 - `GET /health` (public: `{status}` only) · `/health/db` · `/health/storage` · `/health/messaging` (details require Super Admin or `HEALTH_TOKEN`).
 
 ## 4. Error codes (stable)
-`UNAUTHENTICATED, FORBIDDEN, NOT_FOUND, VALIDATION_FAILED, RATE_LIMITED, ACCOUNT_LOCKED, INVALID_CREDENTIALS, SUBSCRIPTION_INACTIVE, LIMIT_REACHED, TABLE_UNAVAILABLE, TABLE_DISABLED, BRANCH_CLOSED, DEVICE_OFFLINE, DEVICE_NOT_ASSIGNED, PRICING_NOT_CONFIGURED, DURATION_NOT_ALLOWED, PHOTO_REQUIRED, PHOTO_INVALID, RESERVATION_EXPIRED, INVALID_STATE_TRANSITION, IDEMPOTENCY_KEY_REQUIRED, IDEMPOTENCY_KEY_REUSED, PAIRING_CODE_INVALID, PAIRING_CODE_EXPIRED, DEVICE_UNAUTHORIZED, REPAIR_REQUIRED, DEVICE_REVOKED, SERVER_ERROR`.
+`UNAUTHENTICATED, FORBIDDEN, NOT_FOUND, METHOD_NOT_ALLOWED, VALIDATION_FAILED, RATE_LIMITED, ACCOUNT_LOCKED, ACCOUNT_DISABLED, INVALID_CREDENTIALS, CONFLICT, IDEMPOTENCY_IN_PROGRESS, DEVICE_ALREADY_PAIRED, SUBSCRIPTION_INACTIVE, LIMIT_REACHED, TABLE_UNAVAILABLE, TABLE_DISABLED, BRANCH_CLOSED, DEVICE_OFFLINE, DEVICE_NOT_ASSIGNED, PRICING_NOT_CONFIGURED, DURATION_NOT_ALLOWED, PHOTO_REQUIRED, PHOTO_INVALID, RESERVATION_EXPIRED, INVALID_STATE_TRANSITION, IDEMPOTENCY_KEY_REQUIRED, IDEMPOTENCY_KEY_REUSED, PAIRING_CODE_INVALID, PAIRING_CODE_EXPIRED, DEVICE_UNAUTHORIZED, REPAIR_REQUIRED, DEVICE_REVOKED, SERVER_ERROR`.

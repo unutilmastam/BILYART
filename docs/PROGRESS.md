@@ -33,6 +33,13 @@ Remaining for Phase 1:
 - Tests: DB-level cross-tenant rejection (tables, sessions, devices, photos, payment marker), user role/tenant CHECK, double booking for all 16 occupying pairs, session integrity CHECKs, scope behaviour, subscription status maths.
 - CI job `api`: MySQL 8 / MariaDB 10.6 / PostgreSQL 13 on PHP 8.3 + MySQL on PHP 8.4; pint + composer audit; migrate → rollback → migrate.
 
+## Phase 4 — session 4 (2026-09-30)
+- Auth: `POST /api/auth/login|logout`, `GET /api/me`, `PUT /api/me/password`, `GET /api/auth/csrf`; `LoginService` lockout (5 → 15 min), per-IP+login throttle, audit `auth.*`.
+- Pipeline middlewares: `ResolveUserTenant` (before route binding), `EnsureTenantUser`, `EnsureSuperAdmin`, `RequirePermission` (`perm:`), `EnsureActiveSubscription` (402), `EnsureIdempotency`, `AuthenticateTablet`, `AssignRequestId`, `SecurityHeaders`.
+- `config/permissions.php` (pinned by a test), `ApiErrorRenderer` + `ErrorCode` + `lang/uz/errors.php`, `Redactor` + Monolog processor, `AuditLogger`, rate limiters for every principal type, `idempotency:prune` scheduled hourly.
+- Fixed: Laravel's `/storage/{path}` file serving disabled (would have exposed private files).
+- First read-only admin endpoints: `GET /api/admin/branches[/{branch}]` (used by the isolation tests).
+
 ## Open questions for the owner
 1. ~~Platform domain~~ → **itcode.uz**. Still open: root domain or a subdomain (e.g. `billiard.itcode.uz`)? Its document root in cPanel → Domains?
 2. ~~First ESP32 flash method~~ → from a computer (owner, 2026-09-30).
