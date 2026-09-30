@@ -24,6 +24,7 @@ import { ClientCreatePage } from './pages/super/ClientCreatePage';
 import { ClientDetailPage } from './pages/super/ClientDetailPage';
 import { ClientsPage } from './pages/super/ClientsPage';
 import { DashboardPage } from './pages/super/DashboardPage';
+import { HealthPage } from './pages/super/HealthPage';
 import { PaymentsPage } from './pages/super/PaymentsPage';
 import { SettingsPage } from './pages/super/SettingsPage';
 
@@ -32,6 +33,7 @@ const superNav: NavItem[] = [
   { to: '/super/clients', label: 'nav.clients' },
   { to: '/super/payments', label: 'nav.payments' },
   { to: '/super/audit', label: 'nav.audit' },
+  { to: '/super/health', label: 'nav.health' },
   { to: '/super/settings', label: 'nav.settings' },
 ];
 
@@ -79,6 +81,7 @@ export const routes = [
       { path: 'payments', element: <PaymentsPage /> },
       { path: 'audit', element: <AuditLogPage /> },
       { path: 'settings', element: <SettingsPage /> },
+      { path: 'health', element: <HealthPage /> },
       { path: 'notifications', element: <NotificationsPage area="super" /> },
     ],
   },
