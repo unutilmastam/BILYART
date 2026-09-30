@@ -221,3 +221,30 @@ export interface Report {
     tables: { id: string; number: number; name: string; sessions: number; minutes: number; amount: number; utilizationPercent: number }[];
   })[];
 }
+
+export interface DeviceInfo {
+  id: string;
+  code: string;
+  status: 'PAIRED' | 'UNPAIRED' | 'REVOKED';
+  online: boolean;
+  lastSeenAt: string | null;
+  firmwareVersion: string | null;
+  state: 'ON' | 'OFF' | 'WARNING' | null;
+  rssi: number | null;
+  branch?: { id: string; name: string } | null;
+  table?: { id: string; number: number; name: string } | null;
+  pairedAt: string | null;
+}
+
+export interface TabletInfo {
+  id: string;
+  code: string;
+  name: string | null;
+  status: 'PAIRED' | 'UNPAIRED' | 'REVOKED';
+  online: boolean;
+  lastSeenAt: string | null;
+  appVersion: string | null;
+  deviceModel: string | null;
+  branch?: { id: string; name: string } | null;
+  pairedAt: string | null;
+}
