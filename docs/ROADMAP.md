@@ -74,8 +74,8 @@ Each phase = one or more PRs. Owner starts a phase by writing **"Phase N ni bosh
 - [x] Tests: §43 items 5–6
 
 ## Phase 14 — Monitoring, logging, backups
-- [ ] `/health`, `/health/db`, `/health/storage`, `/health/messaging`, Super Admin health page
-- [ ] Backup commands + verify + `docs/BACKUP.md`
+- [x] `/health`, `/health/db`, `/health/storage`, `/health/messaging` (+ `/health/backups`), Super Admin health page
+- [x] Backup commands + verify + `docs/BACKUP.md` (restore proven on MySQL/MariaDB/PostgreSQL in CI)
 
 ## Phase 15 — Security testing
 - [ ] All spec §43 tests green, gitleaks clean, dependency audit (`composer audit`, `npm audit`), manual review checklist
