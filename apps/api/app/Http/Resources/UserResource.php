@@ -18,6 +18,7 @@ final class UserResource extends JsonResource
             'role' => $this->role->value,
             'isActive' => $this->is_active,
             'lastLoginAt' => $this->last_login_at?->toIso8601ZuluString(),
+            'twoFactorEnabled' => $this->two_factor_confirmed_at !== null,
             'branchIds' => $this->whenLoaded('branches', fn () => $this->branches->pluck('public_id')->values()),
         ];
     }

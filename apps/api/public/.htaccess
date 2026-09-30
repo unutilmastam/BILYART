@@ -5,6 +5,14 @@
 
     RewriteEngine On
 
+    # HTTPS only (SECURITY.md §9). X-Forwarded-Proto covers a TLS-terminating proxy/CDN.
+    RewriteCond %{HTTPS} !=on
+    RewriteCond %{HTTP:X-Forwarded-Proto} !=https
+    RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+    # Never serve dotfiles (.env, .git, .htaccess ...) except ACME challenges.
+    RewriteRule (^|/)\.(?!well-known/) - [F,L]
+
     # Handle Authorization Header
     RewriteCond %{HTTP:Authorization} .
     RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
@@ -22,4 +30,20 @@
     RewriteCond %{REQUEST_FILENAME} !-d
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteRule ^ index.php [L]
+</IfModule>
+
+# Directory listing off even where mod_negotiation is missing.
+Options -Indexes
+
+# Static files never reach PHP, so the headers the SecurityHeaders middleware sets are repeated here
+# (values from config/security.php; tests/Feature/Security/HtaccessTest.php keeps them in sync).
+<IfModule mod_headers.c>
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-Frame-Options "DENY"
+    Header always set Referrer-Policy "same-origin"
+    Header always set Cross-Origin-Opener-Policy "same-origin"
+    Header always set Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=(), usb=(), serial=(), bluetooth=()"
+    Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains" env=HTTPS
+    Header always unset X-Powered-By
+    Header unset X-Powered-By
 </IfModule>

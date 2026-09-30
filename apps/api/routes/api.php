@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin;
 use App\Http\Controllers\Admin\BranchController;
 use App\Http\Controllers\Auth\AuthController;
+use App\Http\Controllers\Auth\TwoFactorController;
 use App\Http\Controllers\SuperAdmin;
 use App\Http\Controllers\Tablet;
 use Illuminate\Support\Facades\Route;
@@ -21,9 +22,14 @@ Route::middleware('web')->group(function (): void {
         Route::post('auth/logout', [AuthController::class, 'logout']);
         Route::get('me', [AuthController::class, 'me']);
         Route::put('me/password', [AuthController::class, 'changePassword'])->middleware('throttle:login');
+        Route::middleware('throttle:login')->group(function (): void {
+            Route::post('me/2fa/setup', [TwoFactorController::class, 'setup']);
+            Route::post('me/2fa/confirm', [TwoFactorController::class, 'confirm']);
+            Route::post('me/2fa/disable', [TwoFactorController::class, 'disable']);
+        });
 
         // Client admin (tenant users only).
-        Route::prefix('admin')->middleware(['tenant.member', 'idempotency'])->group(function (): void {
+        Route::prefix('admin')->middleware(['tenant.member', 'throttle:admin', 'idempotency'])->group(function (): void {
             Route::get('subscription', Admin\SubscriptionController::class);
             // Always available, even when the subscription is inactive (spec §29).
             Route::get('notifications', [Admin\NotificationController::class, 'index']);
@@ -118,7 +124,7 @@ Route::middleware('web')->group(function (): void {
         });
 
         // Super Admin (platform) — Phase 5.
-        Route::prefix('super')->middleware(['super.admin', 'idempotency'])->group(function (): void {
+        Route::prefix('super')->middleware(['super.admin', 'throttle:admin', 'idempotency'])->group(function (): void {
             Route::get('dashboard', SuperAdmin\DashboardController::class)->middleware('perm:platform.tenants');
             Route::get('notifications', [Admin\NotificationController::class, 'index']);
             Route::post('notifications/read-all', [Admin\NotificationController::class, 'readAll']);

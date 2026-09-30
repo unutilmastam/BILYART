@@ -16,7 +16,7 @@ paths:
   /api/auth/login:
     post:
       tags: [Auth]
-      summary: "Login (admin SPA)"
+      summary: "Login (admin SPA). Body {login, password, code?}; code = TOTP or recovery code when 2FA is on"
       security: [{"csrf": []}]
       responses:
         '200':
@@ -57,6 +57,21 @@ paths:
       tags: [Auth]
       summary: "Change own password"
       security: [{"cookieAuth": []}]
+      responses:
+        '200':
+          description: OK
+        default:
+          description: Error
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiError' }
+  /api/me/2fa/{action}:
+    post:
+      tags: [Auth]
+      summary: "Own two-factor login: setup {password} → {secret, uri}; confirm {code} → {recoveryCodes}; disable {password, code}"
+      security: [{"cookieAuth": []}]
+      parameters:
+        - { name: action, in: path, required: true, schema: { type: string, enum: [setup, confirm, disable] } }
       responses:
         '200':
           description: OK

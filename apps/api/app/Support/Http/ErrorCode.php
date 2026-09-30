@@ -17,6 +17,8 @@ enum ErrorCode: string
     case ACCOUNT_LOCKED = 'ACCOUNT_LOCKED';
     case ACCOUNT_DISABLED = 'ACCOUNT_DISABLED';
     case INVALID_CREDENTIALS = 'INVALID_CREDENTIALS';
+    case TWO_FACTOR_REQUIRED = 'TWO_FACTOR_REQUIRED';
+    case TWO_FACTOR_INVALID = 'TWO_FACTOR_INVALID';
     case SUBSCRIPTION_INACTIVE = 'SUBSCRIPTION_INACTIVE';
     case LIMIT_REACHED = 'LIMIT_REACHED';
     case TABLE_UNAVAILABLE = 'TABLE_UNAVAILABLE';
@@ -45,7 +47,7 @@ enum ErrorCode: string
     public function status(): int
     {
         return match ($this) {
-            self::UNAUTHENTICATED, self::INVALID_CREDENTIALS, self::DEVICE_UNAUTHORIZED, self::REPAIR_REQUIRED => 401,
+            self::UNAUTHENTICATED, self::INVALID_CREDENTIALS, self::TWO_FACTOR_REQUIRED, self::TWO_FACTOR_INVALID, self::DEVICE_UNAUTHORIZED, self::REPAIR_REQUIRED => 401,
             self::SUBSCRIPTION_INACTIVE => 402,
             self::FORBIDDEN, self::ACCOUNT_DISABLED, self::DEVICE_REVOKED => 403,
             self::NOT_FOUND => 404,

@@ -11,6 +11,8 @@ return [
     'ACCOUNT_LOCKED' => 'Hisob vaqtincha bloklangan. :minutes daqiqadan so\'ng qayta urinib ko\'ring.',
     'ACCOUNT_DISABLED' => 'Hisob faol emas. Administrator bilan bog\'laning.',
     'INVALID_CREDENTIALS' => 'Login yoki parol noto\'g\'ri.',
+    'TWO_FACTOR_REQUIRED' => 'Autentifikator ilovasidagi 6 xonali kodni kiriting.',
+    'TWO_FACTOR_INVALID' => 'Kod noto\'g\'ri yoki eskirgan.',
     'SUBSCRIPTION_INACTIVE' => 'Obuna muddati tugagan yoki to\'xtatilgan. Platforma administratori bilan bog\'laning.',
     'LIMIT_REACHED' => 'Litsenziya limitiga yetdingiz (:limit).',
     'TABLE_UNAVAILABLE' => 'Stol band. Boshqa stolni tanlang.',

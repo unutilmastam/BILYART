@@ -15,12 +15,18 @@ export function LoginPage() {
   const navigate = useNavigate();
   const [login, setLogin] = useState('');
   const [password, setPassword] = useState('');
+  const [code, setCode] = useState('');
+  // Shown once the server says this account uses two-factor login; stays visible after a wrong code.
+  const [needsCode, setNeedsCode] = useState(false);
 
   const mutation = useMutation({
-    mutationFn: () => api<Me>('/auth/login', { method: 'POST', body: { login, password } }),
+    mutationFn: () => api<Me>('/auth/login', { method: 'POST', body: code ? { login, password, code } : { login, password } }),
     onSuccess: (data) => {
       qc.setQueryData(ME_KEY, data);
       navigate(data.user.role === 'SUPER_ADMIN' ? '/super' : '/client', { replace: true });
+    },
+    onError: (e) => {
+      if (e instanceof ApiError && e.code.startsWith('TWO_FACTOR_')) setNeedsCode(true);
     },
   });
 
@@ -43,6 +49,9 @@ export function LoginPage() {
         {mutation.isError && !fieldError('login') && !fieldError('password') && <ErrorBanner error={mutation.error} />}
         <TextField label={t('auth.login')} autoComplete="username" autoCapitalize="none" value={login} onChange={(e) => setLogin(e.target.value)} error={fieldError('login')} required />
         <TextField label={t('auth.password')} type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} error={fieldError('password')} required />
+        {needsCode && (
+          <TextField label={t('auth.code')} hint={t('auth.codeHint')} inputMode="numeric" autoComplete="one-time-code" autoFocus value={code} onChange={(e) => setCode(e.target.value)} required />
+        )}
         <Button type="submit" className="w-full" loading={mutation.isPending}>
           {t('auth.signIn')}
         </Button>
