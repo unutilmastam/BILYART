@@ -168,12 +168,15 @@ export function Kiosk({ onUnpaired, photoDeps }: { onUnpaired: () => void; photo
       screen = (
         <PhotoScreen
           key={flow.attempt}
-          required={settings.photoRequired}
           uploading={busy}
           error={error}
           deps={photoDeps}
           onPhoto={(photo) => void uploadPhoto(flow.session, photo, flow.attempt)}
-          onSkip={() => void start(flow.session)}
+          onRetry={() => {
+            setError(null);
+            lastTouch.current = Date.now();
+            setFlow({ step: 'photo', session: flow.session, attempt: flow.attempt + 1 }); // fresh camera + detector
+          }}
           onCancel={() => reset(flow.session)}
         />
       );

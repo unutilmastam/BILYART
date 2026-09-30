@@ -8,6 +8,7 @@ use App\Domain\Pricing\Models\PricingPlan;
 use App\Domain\Tables\Models\BilliardTable;
 use App\Domain\Tablets\Models\Tablet;
 use App\Domain\Tenancy\Models\Tenant;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 /**
@@ -17,7 +18,7 @@ use Illuminate\Support\Str;
 trait BuildsSessionFixtures
 {
     /** @return array{tenant: Tenant, branch: Branch, plan: PricingPlan, table: BilliardTable, device: Device, tablet: Tablet, token: string} */
-    protected function hall(array $tenantAttrs = [], array $settings = ['photo_required' => false]): array
+    protected function hall(array $tenantAttrs = [], array $settings = []): array
     {
         return $this->asSystem(function () use ($tenantAttrs, $settings): array {
             $tenant = Tenant::factory()->create($tenantAttrs + ['settings' => $settings]);
@@ -54,6 +55,27 @@ trait BuildsSessionFixtures
     protected function touchDevice(Device $device): void
     {
         $this->asSystem(fn () => Device::query()->whereKey($device->id)->update(['last_seen_at' => now()]));
+    }
+
+    /** Records a customer photo row for the session (the real upload path is covered in PhotoTest). */
+    protected function attachPhoto(string $sessionPublicId): void
+    {
+        $this->asSystem(function () use ($sessionPublicId): void {
+            $s = DB::table('game_sessions')->where('public_id', $sessionPublicId)->first(['id', 'tenant_id']);
+            DB::table('session_photos')->insert([
+                'public_id' => (string) Str::ulid(), 'tenant_id' => $s->tenant_id, 'session_id' => $s->id,
+                'storage_path' => "tenants/{$s->tenant_id}/sessions/{$sessionPublicId}/".strtoupper((string) Str::ulid()).'.jpg',
+                'mime_type' => 'image/jpeg', 'size' => 1, 'width' => 640, 'height' => 480, 'sha256' => str_repeat('0', 64), 'created_at' => now(),
+            ]);
+        });
+    }
+
+    /** Photo + start, as the kiosk does it (a photo is always required). */
+    protected function tabletStart(string $token, string $sessionPublicId)
+    {
+        $this->attachPhoto($sessionPublicId);
+
+        return $this->tabletPost($token, "/api/tablet/sessions/{$sessionPublicId}/start");
     }
 
     protected function tabletPost(string $token, string $uri, array $body = [], ?string $key = null)

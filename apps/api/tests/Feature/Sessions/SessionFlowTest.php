@@ -39,7 +39,7 @@ class SessionFlowTest extends TestCase
         $id = $prepared->json('session.id');
         $this->withToken($h['token'])->getJson('/api/tablet/tables')->assertJsonPath('tables.0.status', 'RESERVED');
 
-        $started = $this->tabletPost($h['token'], "/api/tablet/sessions/$id/start")->assertOk()
+        $started = $this->tabletStart($h['token'], $id)->assertOk()
             ->assertJsonPath('session.status', 'STARTING')
             ->assertJsonPath('session.startAt', '2026-10-05T10:00:00Z')
             ->assertJsonPath('session.endAt', '2026-10-05T11:00:00Z');
@@ -144,19 +144,17 @@ class SessionFlowTest extends TestCase
     }
 
     #[Test]
-    public function photo_is_required_before_start_when_configured(): void
+    public function a_photo_is_always_required_before_start_even_if_an_old_setting_turned_it_off(): void
     {
-        $h = $this->hall([], ['photo_required' => true]);
+        // A stale tenant setting from before the rule (photo_required=false) must not open a way around it.
+        $h = $this->hall([], ['photo_required' => false]);
         $id = $this->tabletPost($h['token'], '/api/tablet/sessions/prepare', ['tableId' => $h['table']->public_id, 'durationMinutes' => 30])->json('session.id');
 
         $this->tabletPost($h['token'], "/api/tablet/sessions/$id/start")->assertStatus(422)->assertJsonPath('error.code', 'PHOTO_REQUIRED');
 
-        $sessionId = DB::table('game_sessions')->where('public_id', $id)->value('id');
-        DB::table('session_photos')->insert([
-            'public_id' => (string) Str::ulid(), 'tenant_id' => $h['tenant']->id, 'session_id' => $sessionId, 'storage_path' => 'x.jpg',
-            'mime_type' => 'image/jpeg', 'size' => 1, 'width' => 640, 'height' => 480, 'sha256' => str_repeat('a', 64), 'created_at' => now(),
-        ]);
-        $this->tabletPost($h['token'], "/api/tablet/sessions/$id/start")->assertOk()->assertJsonPath('session.hasPhoto', true);
+        $this->withToken($h['token'])->getJson('/api/tablet/bootstrap')->assertJsonPath('settings.photoRequired', true);
+
+        $this->tabletStart($h['token'], $id)->assertOk()->assertJsonPath('session.hasPhoto', true);
     }
 
     #[Test]
@@ -167,7 +165,7 @@ class SessionFlowTest extends TestCase
 
         $this->travel(121)->seconds();
         $this->touchDevice($h['device']);
-        $this->tabletPost($h['token'], "/api/tablet/sessions/$id/start")->assertStatus(409)->assertJsonPath('error.code', 'RESERVATION_EXPIRED');
+        $this->tabletStart($h['token'], $id)->assertStatus(409)->assertJsonPath('error.code', 'RESERVATION_EXPIRED');
         $this->assertSame('CANCELLED', DB::table('game_sessions')->where('public_id', $id)->value('status'));
         $this->tabletPost($h['token'], '/api/tablet/sessions/prepare', ['tableId' => $h['table']->public_id, 'durationMinutes' => 30])->assertCreated();
     }
@@ -180,7 +178,7 @@ class SessionFlowTest extends TestCase
         $this->tabletPost($h['token'], "/api/tablet/sessions/$id/cancel")->assertOk()->assertJsonPath('session.status', 'CANCELLED');
 
         $id2 = $this->tabletPost($h['token'], '/api/tablet/sessions/prepare', ['tableId' => $h['table']->public_id, 'durationMinutes' => 30])->json('session.id');
-        $this->tabletPost($h['token'], "/api/tablet/sessions/$id2/start")->assertOk();
+        $this->tabletStart($h['token'], $id2)->assertOk();
         $this->tabletPost($h['token'], "/api/tablet/sessions/$id2/cancel")->assertStatus(409)->assertJsonPath('error.code', 'INVALID_STATE_TRANSITION');
     }
 
@@ -189,7 +187,7 @@ class SessionFlowTest extends TestCase
     {
         $h = $this->hall();
         $id = $this->tabletPost($h['token'], '/api/tablet/sessions/prepare', ['tableId' => $h['table']->public_id, 'durationMinutes' => 30])->json('session.id');
-        $this->tabletPost($h['token'], "/api/tablet/sessions/$id/start")->assertOk();
+        $this->tabletStart($h['token'], $id)->assertOk();
 
         $this->travel(21)->seconds();
         $this->artisan('sessions:finalize')->assertSuccessful();
@@ -208,7 +206,7 @@ class SessionFlowTest extends TestCase
     {
         $h = $this->hall();
         $id = $this->tabletPost($h['token'], '/api/tablet/sessions/prepare', ['tableId' => $h['table']->public_id, 'durationMinutes' => 60])->json('session.id');
-        $this->tabletPost($h['token'], "/api/tablet/sessions/$id/start")->assertOk();
+        $this->tabletStart($h['token'], $id)->assertOk();
         $session = $this->asSystem(fn () => GameSession::query()->where('public_id', $id)->sole());
         $this->asSystem(fn () => app(SessionService::class)->confirmStarted($session, $h['device']->id));
         $operator = $this->tenantUser('CLIENT_OPERATOR', $h['tenant']);
@@ -232,7 +230,7 @@ class SessionFlowTest extends TestCase
         $operator = $this->tenantUser('CLIENT_OPERATOR', $h['tenant']);
 
         $this->actingAs($operator)->postJson("/api/admin/sessions/$id/payment", ['status' => 'PAID'])->assertStatus(409); // not started
-        $this->tabletPost($h['token'], "/api/tablet/sessions/$id/start")->assertOk();
+        $this->tabletStart($h['token'], $id)->assertOk();
         $this->actingAs($operator)->postJson("/api/admin/sessions/$id/payment", ['status' => 'PAID'])->assertOk()->assertJsonPath('data.paymentStatus', 'PAID');
         $this->actingAs($operator)->postJson("/api/admin/sessions/$id/payment", ['status' => 'VERIFIED'])->assertStatus(422);
 
@@ -248,7 +246,7 @@ class SessionFlowTest extends TestCase
         $id = $this->tabletPost($h['token'], '/api/tablet/sessions/prepare', ['tableId' => $h['table']->public_id, 'durationMinutes' => 30])->json('session.id');
         $this->asSystem(fn () => $h['tenant']->forceFill(['subscription_expires_at' => now()->subMinute()])->save());
 
-        $this->tabletPost($h['token'], "/api/tablet/sessions/$id/start")->assertStatus(402)->assertJsonPath('error.code', 'SUBSCRIPTION_INACTIVE');
+        $this->tabletStart($h['token'], $id)->assertStatus(402)->assertJsonPath('error.code', 'SUBSCRIPTION_INACTIVE');
         $this->tabletPost($h['token'], '/api/tablet/sessions/prepare', ['tableId' => $h['table']->public_id, 'durationMinutes' => 30])->assertStatus(402);
         $this->assertSame(1, DB::table('game_sessions')->where('tenant_id', $h['tenant']->id)->count()); // item 6: data intact
     }
@@ -261,7 +259,7 @@ class SessionFlowTest extends TestCase
 
         $this->tabletPost($a['token'], '/api/tablet/sessions/prepare', ['tableId' => $b['table']->public_id, 'durationMinutes' => 30])->assertNotFound();
         $idB = $this->tabletPost($b['token'], '/api/tablet/sessions/prepare', ['tableId' => $b['table']->public_id, 'durationMinutes' => 30])->json('session.id');
-        $this->tabletPost($a['token'], "/api/tablet/sessions/$idB/start")->assertNotFound();
+        $this->tabletStart($a['token'], $idB)->assertNotFound();
         $this->withToken($a['token'])->getJson("/api/tablet/sessions/$idB")->assertNotFound();
 
         // Another branch of the same tenant.

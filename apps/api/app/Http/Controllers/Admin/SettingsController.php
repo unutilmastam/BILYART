@@ -13,7 +13,6 @@ final class SettingsController extends Controller
     private const MAP = [
         'privacyNotice' => 'privacy_notice',
         'photoRetentionDays' => 'photo_retention_days',
-        'photoRequired' => 'photo_required',
         'warningText' => 'warning_text',
         'warnBeforeMinutes' => 'warn_before_minutes',
         'locale' => 'locale',
@@ -35,7 +34,7 @@ final class SettingsController extends Controller
         $values = [];
         foreach (self::MAP as $in => $key) {
             if ($request->has($in)) {
-                $values[$key] = in_array($in, ['photoRequired', 'operatorsCanViewPhotos'], true) ? $request->boolean($in)
+                $values[$key] = $in === 'operatorsCanViewPhotos' ? $request->boolean($in)
                     : (in_array($in, ['photoRetentionDays', 'warnBeforeMinutes'], true) ? (int) $request->input($in) : $request->input($in));
             }
         }

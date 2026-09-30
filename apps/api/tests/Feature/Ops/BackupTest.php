@@ -41,7 +41,7 @@ class BackupTest extends TestCase
         $h = $this->hall();
         $this->tenantUser('CLIENT_OPERATOR', $h['tenant']);
         $id = $this->tabletPost($h['token'], '/api/tablet/sessions/prepare', ['tableId' => $h['table']->public_id, 'durationMinutes' => 30])->json('session.id');
-        $this->tabletPost($h['token'], "/api/tablet/sessions/$id/start")->assertOk();
+        $this->tabletStart($h['token'], $id)->assertOk();
         $this->actingAs($this->superAdmin())->postJson("/api/super/tenants/{$h['tenant']->public_id}/payments", ['amount' => 500000, 'method' => 'CASH', 'days' => 30, 'note' => "Naqd — o'zbekcha matn"])->assertCreated();
 
         return $h;

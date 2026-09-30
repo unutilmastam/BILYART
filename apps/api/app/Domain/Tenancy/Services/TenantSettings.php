@@ -11,7 +11,6 @@ final class TenantSettings
     public const DEFAULTS = [
         'privacy_notice' => "Sessiya boshlanishida planshet kamerasi orqali bitta surat olinadi. Surat faqat shu billiard zali xodimlariga ko'rinadi va belgilangan muddatdan so'ng o'chiriladi.",
         'photo_retention_days' => 30,
-        'photo_required' => true,
         'warning_text' => '{table}-stol, sizda 5 daqiqa vaqtingiz qoldi.',
         'warn_before_minutes' => 5,
         'locale' => 'uz',

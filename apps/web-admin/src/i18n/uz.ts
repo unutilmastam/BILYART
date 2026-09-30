@@ -220,7 +220,6 @@ export const uz = {
 
   'tsettings.privacyNotice': "Mijozlarga surat haqida xabar (planshetda ko'rinadi)",
   'tsettings.photoRetentionDays': 'Suratlarni saqlash muddati (kun)',
-  'tsettings.photoRequired': 'Sessiya uchun surat majburiy',
   'tsettings.warningText': 'Ogohlantirish matni ({table} = stol raqami)',
   'tsettings.warnBeforeMinutes': 'Ogohlantirish (tugashiga necha daqiqa qolganda)',
   'tsettings.operatorsCanViewPhotos': "Operatorlar suratlarni ko'ra oladi",

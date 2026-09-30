@@ -12,7 +12,6 @@ final class TenantSettingsRequest extends FormRequest
         return [
             'privacyNotice' => ['sometimes', 'string', 'min:10', 'max:2000'],
             'photoRetentionDays' => ['sometimes', 'integer', 'min:1', 'max:365'],
-            'photoRequired' => ['sometimes', 'boolean'],
             'warningText' => ['sometimes', 'string', 'max:200'],
             'warnBeforeMinutes' => ['sometimes', 'integer', 'min:1', 'max:30'],
             'locale' => ['sometimes', Rule::in(['uz', 'ru'])],

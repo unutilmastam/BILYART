@@ -18,7 +18,6 @@ Xodimni faqat ayrim filiallarga bog'lash mumkin (**Xodimlar → Filiallar**; bo'
 5. **Qurilmalar → ESP32 ulash**: qurilma Wi-Fi sahifasidagi 6 xonali kod + stol (ESP32_FLASHING.md §3).
 6. **Qurilmalar → Planshet ulash**: planshet ekranidagi kod + filial (TABLET_SETUP.md §3).
 7. **Sozlamalar**:
-   - *Sessiya uchun surat majburiy* — yoqilgan bo'lsa, suratsiz o'yin boshlanmaydi.
    - *Suratlarni saqlash muddati (kun)* — muddat o'tgach suratlar avtomatik o'chiriladi.
    - *Mijozlarga surat haqida xabar* — planshetda ko'rsatiladi (qonun bo'yicha mijozni ogohlantirish zal egasining vazifasi).
    - *Operatorlar suratlarni ko'ra oladi* — ixtiyoriy.
@@ -28,7 +27,7 @@ Xodimni faqat ayrim filiallarga bog'lash mumkin (**Xodimlar → Filiallar**; bo'
 
 ## 3. Kundalik ish
 - **Bosh sahifa**: bo'sh / o'ynalayotgan stollar (qachongacha), bugungi sessiyalar, o'yin vaqti, summa, to'lanmaganlar, qurilmalar onlayn/oflayn. Har necha soniyada yangilanadi.
-- Mijoz o'yinni **planshetda o'zi** boshlaydi: stol → vaqt → narx → surat → chiroq yonadi. To'lov **kassada** olinadi.
+- Mijoz o'yinni **planshetda o'zi** boshlaydi: stol → vaqt → narx → surat → chiroq yonadi. Surat **majburiy**: kamera yuzni aniqlagandagina avtomatik olinadi, suratsiz o'yin boshlanmaydi (surat — dalil). To'lov **kassada** olinadi.
 - **Sessiyalar**: ro'yxat (holat va to'lov bo'yicha filtr). Sessiyani oching:
   - **To'landi** — kassada pul olinganda belgilang (yoki "Bepul").
   - **To'xtatish** — o'yinni muddatidan oldin tugatish; chiroq bir necha soniyada o'chadi.

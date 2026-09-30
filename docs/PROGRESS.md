@@ -94,6 +94,13 @@ Remaining for Phase 1:
 - Tests: every DB table is either backed up or deliberately excluded; backup → damage → restore → identical data on all 3 engines; tamper/truncate/wrong key detected; retention rules; encrypted photo archive; health public vs detailed; all key commands scheduled.
 - Logs: daily channel now writes JSON lines (request id + redaction). Removed Laravel's default `/up` (replaced by `/health`).
 
+## Owner request — mandatory photo (2026-09-30)
+- Owner: "take the photo only after the camera sees the face, remove the continue-without-photo buttons, continue automatically only after the photo — the photo is evidence".
+- Tablet: removed "Suratsiz davom etish" and the manual "Suratga olish" fallback; capture only when one well-placed face stays in view for 0.7 s; detector/camera failure → message + "Qayta urinish" (fresh camera/detector) or cancel. Start follows the upload automatically.
+- Server: `PHOTO_REQUIRED` on start for every tenant; the `photo_required` tenant setting and its admin checkbox were removed (stale stored values ignored); the kiosk bootstrap always says `photoRequired: true`.
+- Tests: API 204 on 3 engines (sessions now start through a photo helper; a test proves a stale `photo_required=false` cannot bypass it); tablet 17 (no skip/manual buttons, no upload without a face, retry reloads the detector).
+- Limitation: the face check runs on the tablet; the server cannot tell a face photo from another JPEG. The photo is viewable per session in the admin panel.
+
 ## Phase 16 (preparation) — session 4 (2026-09-30)
 - Owner: "prepare everything, the hosting part later". Nothing was uploaded to the hosting.
 - `infrastructure/release/build.sh` → `bilyart-<version>.zip` (33 MB): API without tests, `vendor --no-dev --classmap-authoritative` (git histories stripped), admin + tablet builds, deploy scripts, VERSION/COMMIT; boots and resolves all routes before zipping.

@@ -142,7 +142,7 @@ describe('customer flow', () => {
     expect(keys[0]).toBe(keys[1]);
   });
 
-  it('shows the manual button only when face detection cannot load, and cancelling frees the table', async () => {
+  it('never offers a way to continue without a photo when face detection cannot load', async () => {
     const calls = mockApi({
       'GET /api/tablet/bootstrap': () => ({ status: 200, body: bootstrap([table(1)]) }),
       'GET /api/tablet/tables': () => ({ status: 200, body: { serverTime: new Date().toISOString(), isOpenNow: true, tables: [table(1)] } }),
@@ -150,17 +150,46 @@ describe('customer flow', () => {
       'POST /api/tablet/sessions/prepare': () => ({ status: 201, body: session('RESERVED') }),
       [`POST /api/tablet/sessions/${ID(500)}/cancel`]: () => ({ status: 200, body: session('CANCELLED') }),
     });
-    render(<App photoDeps={photoDeps({ loadDetector: () => Promise.reject(new Error('no wasm')) })} />);
+    let loads = 0;
+    render(<App photoDeps={photoDeps({ loadDetector: () => { loads++; return Promise.reject(new Error('no wasm')); } })} />);
 
     await userEvent.click(await screen.findByRole('button', { name: /1-stol/ }));
     await userEvent.click(await screen.findByRole('button', { name: /30 daqiqa/ }));
     await userEvent.click(screen.getByRole('button', { name: 'Davom etish' }));
-    expect(await screen.findByRole('button', { name: 'Suratga olish' })).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Suratsiz davom etish' })).not.toBeInTheDocument(); // photo required
+
+    expect(await screen.findByText(/Yuzni aniqlash ishga tushmadi/)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Suratga olish' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Suratsiz davom etish' })).not.toBeInTheDocument();
+    expect(calls.some((c) => c.path.endsWith('/start') || c.path.endsWith('/photo'))).toBe(false);
+
+    // Retry opens a fresh camera + detector.
+    await userEvent.click(screen.getByRole('button', { name: 'Qayta urinish' }));
+    await vi.waitFor(() => expect(loads).toBe(2));
 
     await userEvent.click(screen.getByRole('button', { name: 'Bekor qilish' }));
     await waitFor(() => expect(calls.some((c) => c.path.endsWith('/cancel'))).toBe(true));
     expect(await screen.findByText('Stolni tanlang')).toBeInTheDocument();
+  });
+
+  it('does not take or upload a photo while no face is in view', async () => {
+    const calls = mockApi({
+      'GET /api/tablet/bootstrap': () => ({ status: 200, body: bootstrap([table(1)]) }),
+      'GET /api/tablet/tables': () => ({ status: 200, body: { serverTime: new Date().toISOString(), isOpenNow: true, tables: [table(1)] } }),
+      'POST /api/tablet/heartbeat': () => ({ status: 204 }),
+      'POST /api/tablet/sessions/prepare': () => ({ status: 201, body: session('RESERVED') }),
+    });
+    const capture = vi.fn(async () => new Blob(['jpeg'], { type: 'image/jpeg' }));
+    render(<App photoDeps={photoDeps({ loadDetector: async () => ({ detect: () => [], close: () => undefined }), capture })} />);
+
+    await userEvent.click(await screen.findByRole('button', { name: /1-stol/ }));
+    await userEvent.click(await screen.findByRole('button', { name: /30 daqiqa/ }));
+    await userEvent.click(screen.getByRole('button', { name: 'Davom etish' }));
+    expect(await screen.findByText('Yuz qidirilmoqda…')).toBeInTheDocument();
+    await new Promise((r) => setTimeout(r, 1500));
+
+    expect(capture).not.toHaveBeenCalled();
+    expect(calls.some((c) => c.path.endsWith('/photo') || c.path.endsWith('/start'))).toBe(false);
+    expect(screen.getByText("O'yin faqat surat olingandan keyin boshlanadi.")).toBeInTheDocument();
   });
 });
 

@@ -154,7 +154,6 @@ export interface StaffUser extends User {
 export interface TenantSettings {
   privacyNotice: string;
   photoRetentionDays: number;
-  photoRequired: boolean;
   warningText: string;
   warnBeforeMinutes: number;
   locale: 'uz' | 'ru';

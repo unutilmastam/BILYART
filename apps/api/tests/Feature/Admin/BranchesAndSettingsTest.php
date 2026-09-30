@@ -40,12 +40,14 @@ class BranchesAndSettingsTest extends TestCase
         $ownerA = $this->tenantUser('CLIENT_OWNER', $a);
         $ownerB = $this->tenantUser('CLIENT_OWNER', $b);
 
-        $this->actingAs($ownerA)->getJson('/api/admin/settings')->assertOk()->assertJsonPath('photoRetentionDays', 30)->assertJsonPath('photoRequired', true);
+        $this->actingAs($ownerA)->getJson('/api/admin/settings')->assertOk()->assertJsonPath('photoRetentionDays', 30)->assertJsonMissingPath('photoRequired');
         $this->actingAs($ownerA)->putJson('/api/admin/settings', ['photoRetentionDays' => 7, 'warningText' => '{table}-stol, 5 daqiqa qoldi.', 'tenantId' => $b->id])
             ->assertOk()->assertJsonPath('photoRetentionDays', 7);
         $this->actingAs($ownerB)->getJson('/api/admin/settings')->assertJsonPath('photoRetentionDays', 30);
 
         $this->actingAs($ownerA)->putJson('/api/admin/settings', ['photoRetentionDays' => 0])->assertStatus(422);
+        // The photo rule is not a tenant setting any more: the old field is ignored.
+        $this->actingAs($ownerA)->putJson('/api/admin/settings', ['photoRequired' => false])->assertOk()->assertJsonMissingPath('photoRequired');
         $this->actingAs($this->tenantUser('CLIENT_MANAGER', $a))->getJson('/api/admin/settings')->assertStatus(403);
     }
 

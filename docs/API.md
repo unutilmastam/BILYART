@@ -84,7 +84,7 @@ Tenant, branch and table are **always** resolved from the principal, never from 
 | DELETE | `/photos/{photo}` | `photos.delete` — audited |
 | GET | `/reports/daily?date=&branchId=` · `/reports/monthly?month=&branchId=` | `reports.view` |
 | GET/PUT | `/telegram` · POST `/telegram/link-code` · GET/DELETE `/telegram/chats[/{chat}]` · POST `/telegram/test` | `telegram.manage` — token write-only |
-| GET/PUT | `/settings` | `tenant.settings` (privacy notice, photo retention days, photo required, warning text/audio, locale) |
+| GET/PUT | `/settings` | `tenant.settings` (privacy notice, photo retention days, warning text/audio, locale, operators can view photos). The customer photo is always required — not a setting |
 | POST | `/settings/warning-audio` | upload clip · `tenant.settings` |
 | GET | `/audit-logs` | `tenant.settings` |
 | GET | `/notifications` · POST `/notifications/{id}/read` | any |
@@ -100,7 +100,7 @@ Tenant, branch and table are **always** resolved from the principal, never from 
 | POST | `/heartbeat` | `{appVersion}` |
 | POST | `/sessions/prepare` | `Idempotency-Key` · `TabletSessionPrepareRequest` → `TabletSession` (RESERVED, TTL 120 s) · checks subscription, working hours, table in tablet's branch, device online, table free |
 | POST | `/sessions/{session}/photo` | multipart `photo` (≤ 2 MB), 10/min · RESERVED only |
-| POST | `/sessions/{session}/start` | `Idempotency-Key` → STARTING, queues `START_SESSION` |
+| POST | `/sessions/{session}/start` | `Idempotency-Key` → STARTING, queues `START_SESSION`. Requires the uploaded photo (422 `PHOTO_REQUIRED` otherwise, for every tenant) |
 | POST | `/sessions/{session}/cancel` | `Idempotency-Key` · RESERVED only |
 | GET | `/sessions/{session}` | `TabletSession` |
 
