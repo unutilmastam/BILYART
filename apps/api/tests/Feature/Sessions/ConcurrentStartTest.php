@@ -37,6 +37,9 @@ class ConcurrentStartTest extends TestCase
     public function parallel_prepare_on_one_table_has_exactly_one_winner(): void
     {
         if (! function_exists('pcntl_fork')) {
+            if (getenv('CI')) {
+                $this->fail('pcntl must be enabled in CI: the race test may never be skipped there.');
+            }
             $this->markTestSkipped('pcntl is required for the real concurrency test.');
         }
 

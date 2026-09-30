@@ -3,6 +3,8 @@
 namespace App\Providers;
 
 use App\Domain\Auth\CurrentPrincipal;
+use App\Domain\Photos\Storage\LocalPrivateDisk;
+use App\Domain\Photos\Storage\PhotoStorage;
 use App\Domain\Tenancy\TenantContext;
 use App\Domain\Users\Auth\TenantAgnosticUserProvider;
 use Illuminate\Cache\RateLimiting\Limit;
@@ -19,6 +21,9 @@ class AppServiceProvider extends ServiceProvider
         // One context/principal per request or queued job (scoped instances are reset between them).
         $this->app->scoped(TenantContext::class);
         $this->app->scoped(CurrentPrincipal::class);
+
+        // Photo storage adapter (spec §22). v1: private local disk on the hosting.
+        $this->app->bind(PhotoStorage::class, LocalPrivateDisk::class);
     }
 
     public function boot(): void
