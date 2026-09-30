@@ -10,3 +10,6 @@ use Illuminate\Support\Facades\Schedule;
 Schedule::command('idempotency:prune')->hourly()->withoutOverlapping();
 Schedule::command('sessions:finalize')->everyMinute()->withoutOverlapping(5);
 Schedule::command('photos:prune')->dailyAt('01:30')->withoutOverlapping();
+Schedule::command('telegram:daily-reports')->everyFiveMinutes()->withoutOverlapping(10);
+Schedule::command('notifications:deliver')->everyMinute()->withoutOverlapping(5);
+Schedule::command('devices:monitor')->everyMinute()->withoutOverlapping(5);

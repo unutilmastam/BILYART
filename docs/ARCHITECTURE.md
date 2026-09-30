@@ -116,7 +116,7 @@ Implementation notes (Phase 7):
 PlatformIO, Arduino-ESP32 core. Modules: `net` (Wi-Fi + captive-portal provisioning), `api` (HTTPS client, pinned root CA), `session` (state + NVS persistence), `relay`, `clock` (NTP + server time), `ota`, `watchdog`, `diag`. Pure logic (session timing, command handling) is in platform-independent C++ so it can be unit-tested with `pio test -e native`. Details: DEVICE_PROTOCOL.md.
 
 ## 8. Telegram
-Per-tenant bot token (encrypted). Webhook `POST /telegram/webhook/{integrationId}` verified by `X-Telegram-Bot-Api-Secret-Token`. Chat linking via one-time `/start <code>` generated in admin. Daily report per branch at its configured time (branch timezone). Photos never stored in Telegram.
+Per-tenant bot token (encrypted with APP_KEY, write-only in the API). `TelegramClient` port with the real `HttpTelegramClient`. Webhook `POST /telegram/webhook/{integrationPublicId}` (stateless, rate-limited) verified by `X-Telegram-Bot-Api-Secret-Token` (stored as SHA-256); the tenant comes from the integration, never from the update. Chat linking via one-time `/start <code>` (8 chars, 15 min). Commands: `/report` (today, the chat's branch or all), `/help`. Daily report per branch once its `report_time` has passed in the branch timezone (`telegram:daily-reports` every 5 min, deduplicated per branch+date). Alerts: session failed, device offline (>60 s, once per episode) / back online (`devices:monitor`). Delivery via `notifications:deliver` (log row per chat; failures recorded without the token). Photos never sent to Telegram.
 
 ## 9. Deliberate v1 exclusions
 Online payment gateway, facial recognition, any CCTV integration, native iOS, multi-currency, MQTT (adapter-ready only).

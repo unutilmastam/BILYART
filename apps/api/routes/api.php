@@ -94,6 +94,16 @@ Route::middleware('web')->group(function (): void {
                     Route::get('reports/monthly', [Admin\ReportController::class, 'monthly']);
                 });
 
+                Route::middleware('perm:telegram.manage')->group(function (): void {
+                    Route::get('telegram', [Admin\TelegramController::class, 'show']);
+                    Route::put('telegram', [Admin\TelegramController::class, 'update']);
+                    Route::delete('telegram', [Admin\TelegramController::class, 'destroy']);
+                    Route::post('telegram/link-code', [Admin\TelegramController::class, 'linkCode']);
+                    Route::patch('telegram/chats/{chat}', [Admin\TelegramController::class, 'updateChat']);
+                    Route::delete('telegram/chats/{chat}', [Admin\TelegramController::class, 'destroyChat']);
+                    Route::post('telegram/test', [Admin\TelegramController::class, 'test']);
+                });
+
                 Route::middleware('perm:tenant.settings')->group(function (): void {
                     Route::get('settings', [Admin\SettingsController::class, 'show']);
                     Route::put('settings', [Admin\SettingsController::class, 'update']);

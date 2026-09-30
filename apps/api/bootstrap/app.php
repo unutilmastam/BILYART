@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Telegram\WebhookController;
 use App\Http\Middleware\AssignRequestId;
 use App\Http\Middleware\AuthenticateDevice;
 use App\Http\Middleware\AuthenticateTablet;
@@ -25,6 +26,9 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
         then: function (): void {
             Route::middleware('api')->prefix('device/v1')->group(base_path('routes/device.php'));
+            // Telegram webhook: stateless, authenticated by Telegram's secret header (no session/CSRF).
+            Route::middleware(['api', 'throttle:telegram'])->post('telegram/webhook/{integration}', WebhookController::class)
+                ->where('integration', '[0-9A-HJKMNP-TV-Z]{26}');
         },
     )
     ->withMiddleware(function (Middleware $middleware): void {

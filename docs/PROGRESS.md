@@ -70,6 +70,12 @@ Remaining for Phase 1:
 - Tests: `DeviceSimulator` speaks the real protocol; spec §61 end-to-end (pair → 10-min session → START → warning → internet loss → local OFF → server completes → resync), §43.4, §43.10, retries/expiry, poll ≤ 6 queries, tablet pairing, OTA download rules. 160 API tests on 3 DBs.
 - web-admin: Devices page (pair ESP32 by code to a free table, pair tablet to a branch, live online status, unpair/revoke).
 
+## Phase 12 — session 4 (2026-09-30)
+- `TelegramClient`/`HttpTelegramClient`, `TelegramService` (configure → getMe + setWebhook with secret, disable, link code, webhook handling, daily reports), `NotificationService` (dedupe_key UNIQUE, in-app + per-chat Telegram logs, delivery), `DeviceMonitor` (+ migration `devices.offline_since`), session-failed alert in `SessionService::failStart`.
+- Commands: `telegram:daily-reports` (5 min), `notifications:deliver` (1 min), `devices:monitor` (1 min).
+- Tests (Telegram HTTP faked only): token encrypted at rest and absent from every API response/audit/log (§43.15), webhook secret, one-time linking, /report shows only own tenant, daily report exactly once after report_time, alerts once per episode, cross-tenant isolation. 167 API tests on 3 DBs.
+- web-admin Telegram page (token write-only, link code with deep link, chats with branch/report/alert toggles, test message, disable).
+
 ## Open questions for the owner
 1. ~~Platform domain~~ → **itcode.uz**. Still open: root domain or a subdomain (e.g. `billiard.itcode.uz`)? Its document root in cPanel → Domains?
 2. ~~First ESP32 flash method~~ → from a computer (owner, 2026-09-30).

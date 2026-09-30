@@ -13,6 +13,7 @@ import { SessionDetailPage } from './pages/client/SessionDetailPage';
 import { SessionsPage } from './pages/client/SessionsPage';
 import { StaffPage } from './pages/client/StaffPage';
 import { TablesPage } from './pages/client/TablesPage';
+import { TelegramPage } from './pages/client/TelegramPage';
 import { TenantSettingsPage } from './pages/client/TenantSettingsPage';
 import { LoginPage } from './pages/LoginPage';
 import { NotFoundPage } from './pages/NotFoundPage';
@@ -42,6 +43,7 @@ const clientNav: (NavItem & { permission?: string })[] = [
   { to: '/client/tables', label: 'nav.tables', permission: 'tables.view' },
   { to: '/client/pricing', label: 'nav.pricing', permission: 'pricing.manage' },
   { to: '/client/staff', label: 'nav.staff', permission: 'users.manage' },
+  { to: '/client/telegram', label: 'nav.telegram', permission: 'telegram.manage' },
   { to: '/client/settings', label: 'nav.clientSettings', permission: 'tenant.settings' },
 ];
 
@@ -89,6 +91,7 @@ export const routes = [
       { path: 'tables', element: <TablesPage /> },
       { path: 'pricing', element: <PricingPage /> },
       { path: 'staff', element: <StaffPage /> },
+      { path: 'telegram', element: <TelegramPage /> },
       { path: 'settings', element: <TenantSettingsPage /> },
     ],
   },
