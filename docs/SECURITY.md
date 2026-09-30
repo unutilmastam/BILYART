@@ -5,7 +5,7 @@
 |---|---|
 | SUPER_ADMIN | Laravel session cookie (Sanctum SPA), separate route group `/api/super/*`, optional TOTP 2FA (Phase 15) |
 | CLIENT_OWNER / MANAGER / OPERATOR | Same cookie auth, tenant-scoped |
-| TABLET | Sanctum personal access token issued at pairing, ability `tablet`, bound to one branch; rotatable/revocable |
+| TABLET | Random bearer token issued once at pairing, stored as SHA-256 (`tablets.token_hash`), bound to one branch; revoke = status REVOKED (re-pair issues a new row + token) |
 | DEVICE (ESP32) | Device token (hashed SHA-256 in DB), `Authorization: Device …`, see DEVICE_PROTOCOL.md |
 
 - Passwords: `Hash::make` (argon2id if available, else bcrypt cost ≥ 12). Never logged (`$hidden`, log redaction processor).

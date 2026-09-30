@@ -16,10 +16,10 @@ Each phase = one or more PRs. Owner starts a phase by writing **"Phase N ni bosh
 - [x] `docs/API.md` outline + OpenAPI file skeleton
 
 ## Phase 3 — Database schema & migrations
-- [ ] Laravel 13 app in `apps/api`, CI with MySQL 8 + MariaDB 10.6 + PostgreSQL services
-- [ ] All migrations from DATABASE.md incl. composite FKs, generated `table_lock` unique column
-- [ ] Models + `BelongsToTenant` trait + factories
-- [ ] Tests: cross-tenant FK insert fails at DB level; double active session insert fails at DB level
+- [x] Laravel 13 app in `apps/api`, CI with MySQL 8 + MariaDB 10.6 + PostgreSQL services
+- [x] All migrations from DATABASE.md incl. composite FKs, generated `table_lock` unique column (partial unique index on PostgreSQL)
+- [x] Models + `BelongsToTenant` trait + factories
+- [x] Tests: cross-tenant FK insert fails at DB level; double active session insert fails at DB level
 
 ## Phase 4 — Auth & multi-tenancy
 - [ ] Sanctum SPA auth, login/logout/me, lockout, rate limits
@@ -46,7 +46,7 @@ Each phase = one or more PRs. Owner starts a phase by writing **"Phase N ni bosh
 ## Phase 8 — Tablet app + kiosk shell
 - [ ] Tablet pairing (code on screen → admin binds to branch)
 - [ ] PWA screens, server-time offset, offline cache, countdown, warning audio (uploaded clips + TTS fallback)
-- [ ] `android-kiosk` Kotlin shell: Lock Task (Device Owner), boot auto-start, crash restart, camera permission; APK via Actions
+- [ ] ~~`android-kiosk` Kotlin shell~~ — owner chose PWA only (2026-09-30); kiosk = Android App pinning, documented limitations
 - [ ] `docs/TABLET_SETUP.md` (QR provisioning, click-by-click)
 
 ## Phase 9 — Photo capture & upload
