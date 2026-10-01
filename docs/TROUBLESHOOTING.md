@@ -22,10 +22,10 @@ Birinchi qadam har doim: Super Admin → **Tizim holati** (yoki `https://<domen>
 ## 3. Stol va chiroq
 | Belgi | Sabab / yechim |
 |---|---|
-| Qurilma "oflayn" | Quvvat, Wi-Fi (signal −75 dBm dan yaxshi), router. Qurilmadagi LED: tez miltillash = sozlanmagan, sekin = server bilan aloqa yo'q. O'yinlar baribir o'z vaqtida tugaydi |
+| Qurilma "oflayn" | Bitta ESP32 butun filialni boshqaradi — filialning barcha stollari "Aloqa yo'q" bo'ladi. Quvvat, Wi-Fi (signal −75 dBm dan yaxshi), router. Qurilmadagi LED: tez miltillash = sozlanmagan, sekin = server bilan aloqa yo'q. O'yinlar baribir o'z vaqtida tugaydi. Uzoq ta'mirda — stol yonidagi kalitli aylanma (bypass) tugma (HARDWARE.md) |
 | O'yin "FAILED" (boshlanmadi) | Qurilma buyruqni 3 urinishda tasdiqlamadi → chiroq yonmagan, pul olinmasin. Qurilmani tekshiring |
-| Chiroq o'yin tugaganda o'chmadi | Rele/kontaktor yopishib qolgan bo'lishi mumkin — elektrikka. Qurilma "OFF" deb hisobot berayotganini **Qurilmalar → Chiroq** ustunidan ko'ring |
-| Chiroq umuman yonmaydi | Kontaktor g'altagi, sug'urta, rele moduli (HARDWARE.md). Stol boshqa stolning qurilmasiga ulanmaganmi — **Stollar → Qurilma** |
+| Chiroq o'yin tugaganda o'chmadi | Rele/kontaktor yopishib qolgan bo'lishi mumkin — elektrikka. Qurilma shu kanal uchun "o'chiq" deb hisobot berayotganini **Qurilmalar** → kanallar ro'yxatidan ko'ring |
+| Chiroq umuman yonmaydi / boshqa stol chirog'i yondi | Kontaktor g'altagi, sug'urta, rele moduli (HARDWARE.md). Stolga to'g'ri kanal tanlanganmi — **Stollar → Chiroq**, elektrikning kanal yorlig'i bilan solishtiring |
 | Qurilmani qayta ulash kerak | Admin → Qurilmalar → **Uzish**; qurilmada BOOT 3 s → sozlash sahifasi → yangi kod (ESP32_FLASHING.md §5) |
 
 ## 4. Planshet

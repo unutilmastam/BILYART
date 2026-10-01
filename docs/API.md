@@ -74,8 +74,11 @@ Tenant, branch and table are **always** resolved from the principal, never from 
 | GET/POST/PATCH/DELETE | `/pricing-plans[/{plan}]` | `pricing.manage` |
 | GET/POST/PATCH | `/users[/{user}]` · POST `/users/{user}/deactivate` | `users.manage` (LimitGuard; managers cannot manage owners) |
 | GET | `/devices` | `tables.view` — real online/offline from heartbeats |
-| POST | `/devices/pair` | `{code, tableId}` · `devices.manage` · rate-limited |
-| POST | `/devices/{device}/unpair` · `/devices/{device}/ping` | `devices.manage` |
+| GET | `/devices` (response) | per device: `channelCount`, `branch`, `channels: [{channel, table, state}]` (state = lamp last reported for that channel) |
+| POST | `/devices/pair` | `{code, branchId}` · `devices.manage` · rate-limited — one ESP32 per branch |
+| PATCH | `/devices/{device}` | `{branchId}` · `devices.manage` — move to another branch (409 while tables are wired to it) |
+| POST | `/devices/{device}/unpair` · `/devices/{device}/ping` | `devices.manage` — unpair unwires its tables (409 while any of them plays) |
+| POST/PATCH | `/tables` · `/tables/{table}` wiring fields | `deviceId` (null = unwire) + `deviceChannel` (1..channelCount) — needs `tables.manage` **and** `devices.manage`; device must be PAIRED in the table's branch (422 `deviceId`), channel free (409), no running session on the table (409) |
 | GET | `/tablets` · POST `/tablets/pair` `{code, branchId, name}` · POST `/tablets/{tablet}/revoke` | `devices.manage` |
 | GET | `/sessions` (`?branchId&tableId&status&payment&from&to`) · GET `/sessions/{session}` (incl. events) | `sessions.view` |
 | POST | `/sessions/{session}/stop` | `sessions.stop` |

@@ -15,7 +15,7 @@ Xodimni faqat ayrim filiallarga bog'lash mumkin (**Xodimlar → Filiallar**; bo'
 2. Filial ichida **Ish vaqti**: har kun uchun ochilish/yopilish. `00:00–00:00` = kun bo'yi ochiq. Yarim tundan keyin yopilsa (masalan 10:00–02:00) — shunday yozing. **Dam olish kunlari** — alohida sanalar.
 3. **Narxlar → Narx rejasi qo'shish**: 1 soat narxi (so'm), yaxlitlash qadami (masalan 1000), tanlanadigan vaqtlar (daqiqada, vergul bilan: `30, 60, 90, 120`). Pastda har bir vaqt uchun hisoblangan narx ko'rinadi.
 4. **Stollar → Stol qo'shish**: raqam, nom, filial, narx rejasi.
-5. **Qurilmalar → ESP32 ulash**: qurilma Wi-Fi sahifasidagi 6 xonali kod + stol (ESP32_FLASHING.md §3).
+5. **Qurilmalar → ESP32 ulash**: qurilma Wi-Fi sahifasidagi 6 xonali kod + **filial** (har bir filialga bitta ESP32, ESP32_FLASHING.md §3). Keyin **Stollar**da har bir stolning **Chiroq** tanlovidan `ESP32-… · N-kanal` ni tanlang — elektrik qaysi kanalni shu stol chirog'iga ulagan bo'lsa.
 6. **Qurilmalar → Planshet ulash**: planshet ekranidagi kod + filial (TABLET_SETUP.md §3).
 7. **Sozlamalar**:
    - *Suratlarni saqlash muddati (kun)* — muddat o'tgach suratlar avtomatik o'chiriladi.
@@ -52,9 +52,10 @@ Egasi: **Bosh sahifa → ⬇ Ma'lumotlarni yuklab olish (JSON)** — zalingiznin
 ## 7. Tez-tez uchraydigan holatlar
 | Holat | Nima qilish kerak |
 |---|---|
-| Planshetda stol "Aloqa yo'q" | Shu stol qurilmasi oflayn: **Qurilmalar**da oxirgi aloqa vaqtini ko'ring, qurilma quvvati va Wi-Fi ni tekshiring |
+| Planshetda stol "Aloqa yo'q" | Filial ESP32 si oflayn (unda filialning barcha stollari "Aloqa yo'q" bo'ladi) yoki stolga kanal tanlanmagan (**Stollar → Chiroq**). **Qurilmalar**da oxirgi aloqa vaqtini ko'ring, qurilma quvvati va Wi-Fi ni tekshiring |
 | Mijoz ketib qoldi, chiroq yonib turibdi | **Sessiyalar** → sessiya → **To'xtatish** |
 | "Litsenziya limitiga yetdingiz" | Filial/stol/qurilma/xodim limiti tugagan — platforma administratori bilan bog'laning |
 | Xodim parolini unutdi | **Xodimlar** → xodim → yangi parol (uning 2FA si ham o'chadi) |
 | Planshetni almashtirish | **Qurilmalar → Planshetlar → O'chirish**, yangi planshetni ulash |
-| ESP32 ni boshqa stolga ko'chirish | **Qurilmalar** → qurilma → **Uzish**, keyin qayta ulash |
+| Stol chirog'ini boshqa kanalga o'tkazish | **Stollar** → stol → **Chiroq** → yangi kanal (o'yin ketayotganda o'zgartirib bo'lmaydi) |
+| ESP32 ni boshqa filialga ko'chirish | Avval uning stollarini **Stollar**da "Ulanmagan" qiling → **Qurilmalar** → qurilma → **Boshqa filialga ko'chirish** |

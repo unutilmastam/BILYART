@@ -34,9 +34,9 @@ Engine: portable — MySQL 8.0 / MariaDB ≥ 10.6 (InnoDB, utf8mb4) **or** Postg
 | `branches` | id, public_id, tenant_id, name, address, timezone, is_active, report_time (e.g. 23:30), settings JSON · UNIQUE(tenant_id,id) |
 | `working_hours` | tenant_id, branch_id, weekday **1–7 (ISO, 1 = Monday)**, opens_at TIME, closes_at TIME, is_closed, crosses_midnight (derived) |
 | `branch_closed_days` | tenant_id, branch_id, date, reason |
-| `billiard_tables` | id, public_id, tenant_id, branch_id, number, name, is_active, pricing_plan_id · UNIQUE(tenant_id,branch_id,number) · UNIQUE(tenant_id,id) · UNIQUE(tenant_id,branch_id,id) (target of 3-column FKs so a session/device can never mix branch and table) |
+| `billiard_tables` | id, public_id, tenant_id, branch_id, number, name, is_active, pricing_plan_id, device_id NULL, device_channel NULL (1..8, both or neither — CHECK) · UNIQUE(device_id, device_channel) (one table per relay channel) · FK (tenant_id, branch_id, device_id) → devices(tenant_id, branch_id, id) (lamp driven by an ESP32 of the same branch and tenant) · UNIQUE(tenant_id,branch_id,number) · UNIQUE(tenant_id,id) · UNIQUE(tenant_id,branch_id,id) (target of 3-column FKs so a session/device can never mix branch and table) |
 | `pricing_plans` | id, tenant_id, branch_id NULL, name, type ENUM('HOURLY', …future), price_per_hour, rounding_step, rules JSON (future models), allowed_durations JSON (e.g. [30,60,90,120]), is_active |
-| `game_sessions` | id, public_id, tenant_id, branch_id, table_id (3-column FK), device_id NULL, tablet_id NULL, pricing_plan_id NULL, rounding_step_snapshot, stopped_by, status ENUM(RESERVED,STARTING,ACTIVE,COMPLETING,COMPLETED,CANCELLED,FAILED), duration_minutes, reserved_until, start_at, end_at, ended_at, ended_early, warned_at, price_per_hour_snapshot, amount, payment_status ENUM(UNPAID,PAID,WAIVED), payment_marked_by, payment_marked_at, failure_reason, created_at |
+| `game_sessions` | id, public_id, tenant_id, branch_id, table_id (3-column FK), device_id NULL, device_channel NULL (relay channel at start; STOP goes to the same one), tablet_id NULL, pricing_plan_id NULL, rounding_step_snapshot, stopped_by, status ENUM(RESERVED,STARTING,ACTIVE,COMPLETING,COMPLETED,CANCELLED,FAILED), duration_minutes, reserved_until, start_at, end_at, ended_at, ended_early, warned_at, price_per_hour_snapshot, amount, payment_status ENUM(UNPAID,PAID,WAIVED), payment_marked_by, payment_marked_at, failure_reason, created_at |
 | `session_photos` | id, public_id, tenant_id, session_id UNIQUE, storage_path, mime_type, size, width, height, sha256, created_at, deleted_at, deleted_by |
 | `session_events` | tenant_id, session_id, from_status, to_status, actor_type, actor_id, reason, created_at (state-machine history) |
 
@@ -46,7 +46,7 @@ Engine: portable — MySQL 8.0 / MariaDB ≥ 10.6 (InnoDB, utf8mb4) **or** Postg
 ### Devices & tablets
 | table | key columns |
 |---|---|
-| `devices` | **registration row**: id, public_id, hardware_id (eFuse MAC), active_hardware_id NULL UNIQUE, device_code (ESP32-XXXXXX), tenant_id NULL until paired then **immutable**, branch_id, table_id, active_table_id NULL UNIQUE, status (UNPAIRED/PAIRED/REVOKED, CHECK-enforced consistency), token_hash, firmware_version, last_seen_at, last_state JSON, last_ip, registered/paired/revoked at+by. Unpair = REVOKED (actives cleared); re-pairing creates a new row, so FKs from old sessions/commands stay valid. FK (tenant_id, branch_id, table_id) → billiard_tables |
+| `devices` | **registration row**: id, public_id, hardware_id (eFuse MAC), active_hardware_id NULL UNIQUE, device_code (ESP32-XXXXXX), tenant_id NULL until paired then **immutable**, branch_id, channel_count (1..8, CHECK), status (UNPAIRED/PAIRED/REVOKED, CHECK-enforced consistency), token_hash, firmware_version, last_seen_at, last_state JSON, last_ip, registered/paired/revoked at+by. Unpair = REVOKED (actives cleared); re-pairing creates a new row, so FKs from old sessions/commands stay valid. FK (tenant_id, branch_id) → branches(tenant_id, id) · UNIQUE(tenant_id, branch_id, id) (target of the tables' FK). One device per branch drives several tables (migration `2026_10_05_000001_multi_channel_devices`; older 1:1 pairings became channel 1) |
 | `device_pairings` | id, device_id, code_hash (HMAC of the 6-digit code), poll_token_hash UNIQUE, expires_at, used_at, used_by, tenant_id NULL, token_delivered_at. Brute force is limited by rate limits per tenant/IP (a wrong code identifies no pairing) |
 | `device_heartbeats` | device_id, tenant_id, received_at, state, session_public_id, rssi, uptime, fw — **rolled up**: keep 7 days raw, pruned by cron |
 | `device_commands` | id, public_id (= commandId), tenant_id, device_id, session_id NULL, type (START_SESSION/STOP_SESSION/WARNING/SYNC/PING/CONFIG_UPDATE/OTA), payload JSON, status (PENDING/SENT/ACKNOWLEDGED/FAILED/EXPIRED), attempts, created_at, sent_at, acked_at, expires_at · INDEX(device_id,status) |
@@ -68,7 +68,8 @@ Engine: portable — MySQL 8.0 / MariaDB ≥ 10.6 (InnoDB, utf8mb4) **or** Postg
 - Enum-like columns are strings with named **CHECK** constraints (portable, no native ENUM).
 - `users_role_tenant_chk`: SUPER_ADMIN ⇔ tenant_id IS NULL.
 - `game_sessions`: status/payment CHECKs, duration 1–720, `end_at > start_at`, started statuses require `start_at`.
-- `devices_paired_chk`: PAIRED ⇒ tenant/branch/table set and active_table_id = table_id; UNPAIRED ⇒ no tenant; REVOKED ⇒ actives cleared.
+- `devices_paired_chk`: PAIRED ⇒ tenant/branch set and active_hardware_id set; UNPAIRED ⇒ no tenant; REVOKED ⇒ active_hardware_id cleared.
+- `devices_channel_count_chk`: 1 ≤ channel_count ≤ 8. `billiard_tables_device_chk`: device_id and device_channel both NULL, or channel 1..8 (the upper bound per device — channel_count — is checked by `DeviceRegistry::assignChannel`).
 - All timestamps are `DATETIME`/`timestamp without time zone` holding **UTC** (app timezone is UTC); no 2038 limit.
 
 ## 3. Ownership chains (spec §49)
