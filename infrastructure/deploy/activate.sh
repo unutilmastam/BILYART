@@ -29,7 +29,9 @@ done
 [ -z "$missing" ] || die "PHP kengaytmalari yetishmaydi:$missing (cPanel → Select PHP Version → Extensions)"
 
 mkdir -p "$BASE/releases" "$BASE/shared"
-chmod 700 "$BASE"
+# 711: the web server (another user on cPanel) must traverse into current/apps/api/public;
+# no listing for others. Secrets stay private: shared/.env is 600 and storage is go-rwx.
+chmod 711 "$BASE"
 
 # 2. Shared storage (first run: seeded from the package skeleton).
 if [ ! -d "$BASE/shared/storage" ]; then

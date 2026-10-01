@@ -150,8 +150,14 @@ Remaining for Phase 1:
 - Tablet kiosk: felt background, glass cards, available tables as lit felt with a brass rail, busy/warning tables with countdown + progress bar (warning glows), step badges (1/3…3/3), gold prices, countdown ring after start, restyled pairing/photo screens. Latin Inter files are precached for offline use.
 - Verified visually in Chromium (desktop 1280×800, phone 390×844, kiosk 1280×800) against the real API with demo data; all admin (25) and tablet (17) tests green.
 
+## First install on the hosting (2026-10-01)
+- Owner set up `nbx.itcode.uz` (AutoSSL), CloudLinux PHP Selector 8.3 with pdo_pgsql/pgsql/mbstring/gd/zip/fileinfo/intl, PostgreSQL 13.23 (db `itcode_nbx`), release 1.0.0 built by Actions and activated (migrations ran), document root → `billiard/current/apps/api/public`, cron added.
+- Found: `activate.sh` made `~/billiard` 700 → Apache could not read `.htaccess` (403). Fixed to 711 (+ deploy test asserts that others can traverse to `public/`). Hot-fix on the server: `chmod 711 ~/billiard`.
+- DEPLOY_UZ.md updated for the real setup (PHP Selector per domain, pgsql, no trailing `/` in APP_URL, copy-paste commands).
+- Owner to do: rotate the DB password and APP_KEY (both were visible in a screenshot) **before** creating the Super Admin / Telegram; then `admin:create-super`.
+
 ## Open questions for the owner
-1. ~~Platform domain~~ → **itcode.uz**. Still open: root domain or a subdomain (e.g. `billiard.itcode.uz`)? Its document root in cPanel → Domains?
+1. ~~Platform domain~~ → **nbx.itcode.uz** (subdomain, PostgreSQL).
 2. ~~First ESP32 flash method~~ → from a computer (owner, 2026-09-30).
 3. Tablet model and Android version for kiosk testing? Can it be factory-reset (needed for Device Owner QR provisioning)?
 4. How many halls/tables for the pilot, and the lamp **power in watts** per table (for contactor/breaker sizing)? The owner confirmed 220 V lamps (voltage); wattage still open.
