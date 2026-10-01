@@ -28,6 +28,12 @@ class SpaShellTest extends TestCase
     }
 
     #[Test]
+    public function the_bare_domain_redirects_to_the_admin_panel(): void
+    {
+        $this->get('/')->assertRedirect('/admin/');
+    }
+
+    #[Test]
     public function without_a_build_the_admin_path_is_a_plain_404(): void
     {
         if (is_file(public_path('admin/index.html'))) {
