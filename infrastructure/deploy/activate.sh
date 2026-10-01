@@ -21,11 +21,14 @@ say "Bilyart $VERSION → $BASE"
 # 1. PHP requirements (Laravel 13).
 "$PHP" -r 'exit(version_compare(PHP_VERSION, "8.3.0", ">=") ? 0 : 1);' || die "PHP >= 8.3 kerak (cPanel → Select PHP Version). Hozir: $("$PHP" -r 'echo PHP_VERSION;')"
 missing=""
+# Read the module list once: `php -m | grep -q` under pipefail fails at random when grep exits
+# early and php gets SIGPIPE (seen on the hosting as a false "json missing").
+modules="$("$PHP" -m)"
 # From composer.lock (ext-*) + what the app itself uses: gd (photo re-encode), zip (backups).
 for ext in pdo openssl mbstring fileinfo ctype tokenizer dom filter hash json session zip gd; do
-  "$PHP" -m | grep -qi "^$ext\$" || missing="$missing $ext"
+  grep -qi "^$ext\$" <<<"$modules" || missing="$missing $ext"
 done
-"$PHP" -m | grep -qiE '^(pdo_mysql|pdo_pgsql)$' || missing="$missing pdo_mysql"
+grep -qiE '^(pdo_mysql|pdo_pgsql)$' <<<"$modules" || missing="$missing pdo_mysql"
 [ -z "$missing" ] || die "PHP kengaytmalari yetishmaydi:$missing (cPanel → Select PHP Version → Extensions)"
 
 mkdir -p "$BASE/releases" "$BASE/shared"
