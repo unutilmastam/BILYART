@@ -165,6 +165,14 @@ Remaining for Phase 1:
 - Tests: API 216 on MySQL/MariaDB/PostgreSQL (incl. cross-tenant, one-pending lock, never-approve-twice), admin 29.
 - Later: Payme/Click automatic payments once the owner has a YaTT (would replace the manual approval step, same recordPayment path).
 
+## Owner decisions after go-live (2026-10-01)
+- Releases 1.0.3–1.0.5 installed on the hosting: subscription payment requests live; `activate.sh` extension check fixed (SIGPIPE under pipefail gave a false "json missing"); product shown as **NBX**. Price per branch and payment instructions set by the owner.
+- Considered and **declined** for now (keep the current design):
+  - wired LAN for tablet/ESP32 (stay on Wi-Fi);
+  - native kiosk APK / Device Owner (stay on PWA + App pinning, TABLET_SETUP.md);
+  - commercial Android panel instead of a tablet (cost);
+  - cash bill acceptor for game payment (payment stays at the cashier; QR payments via Payme/Click/Uzum once the owner has a YaTT).
+
 ## Open questions for the owner
 1. ~~Platform domain~~ → **nbx.itcode.uz** (subdomain, PostgreSQL).
 2. ~~First ESP32 flash method~~ → from a computer (owner, 2026-09-30).
