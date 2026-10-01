@@ -1,6 +1,6 @@
 import type { TabletDurationQuote, TabletTable } from '@bilyart/protocol';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Banner, Centered, Spinner } from './components/ui';
+import { BallMark, Banner, Centered, Spinner } from './components/ui';
 import { useKiosk } from './features/kiosk';
 import { sessionApi, waitForDevice, type Session } from './features/session';
 import { useServerNow } from './features/useNow';
@@ -88,7 +88,7 @@ export function Kiosk({ onUnpaired, photoDeps }: { onUnpaired: () => void; photo
     return (
       <Centered>
         <p className="text-5xl font-bold">{t('suspended.title')}</p>
-        <p className="text-2xl text-slate-300">{t('suspended.body')}</p>
+        <p className="text-2xl text-white/70">{t('suspended.body')}</p>
       </Centered>
     );
   }
@@ -188,18 +188,22 @@ export function Kiosk({ onUnpaired, photoDeps }: { onUnpaired: () => void; photo
 
   return (
     <div className="flex h-full flex-col">
-      <header className="flex items-center justify-between bg-slate-900 px-6 py-3 text-xl">
-        <span className="font-semibold">
-          {branch.tenantName} · {branch.name}
+      <header className="flex items-center justify-between gap-4 border-b border-white/10 bg-black/20 px-6 py-3 backdrop-blur lg:px-8">
+        <span className="flex min-w-0 items-center gap-3">
+          <BallMark />
+          <span className="min-w-0 leading-tight">
+            <span className="block truncate text-xl font-bold tracking-tight">{branch.tenantName}</span>
+            <span className="block truncate text-base text-brand-200/80">{branch.name}</span>
+          </span>
         </span>
-        <span className="font-mono text-2xl">{formatClock(now, branch.timezone)}</span>
+        <span className="glass tabular rounded-full px-5 py-1.5 text-2xl font-semibold">{formatClock(now, branch.timezone)}</span>
       </header>
       {!online && <Banner tone="warn">{t('offline.banner')}</Banner>}
       <main className="relative flex-1 overflow-hidden">
         {!branch.isOpenNow && flow.step === 'tables' ? (
           <Centered>
             <p className="text-5xl font-bold">{t('closed.title')}</p>
-            <p className="text-2xl text-slate-300">{t('closed.body')}</p>
+            <p className="text-2xl text-white/70">{t('closed.body')}</p>
           </Centered>
         ) : (
           screen

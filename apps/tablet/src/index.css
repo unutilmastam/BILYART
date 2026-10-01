@@ -1,12 +1,60 @@
 @import "tailwindcss";
 
+/* Kiosk look: dark billiard felt, glass cards, brass accent. Shares the brand palette with the admin panel. */
 @theme {
-  --color-brand-400: #34d399;
-  --color-brand-500: #10b981;
-  --color-brand-600: #059669;
-  --color-brand-700: #047857;
+  --font-sans: "Inter Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+
+  --color-brand-200: #aaefd2;
+  --color-brand-300: #72e0b8;
+  --color-brand-400: #38c999;
+  --color-brand-500: #14ae80;
+  --color-brand-600: #098d68;
+  --color-brand-700: #087156;
+  --color-brand-800: #0a5a46;
+  --color-brand-900: #0a4a3b;
+  --color-brand-950: #032a22;
+
+  --color-accent-200: #ffe088;
+  --color-accent-300: #ffcb4a;
+  --color-accent-400: #ffb520;
+  --color-accent-500: #f99307;
+
+  --color-ink: #021c17;
 }
 
 html, body, #root { height: 100%; }
 html { -webkit-text-size-adjust: 100%; touch-action: manipulation; overscroll-behavior: none; }
-body { -webkit-tap-highlight-color: transparent; }
+body {
+  -webkit-tap-highlight-color: transparent;
+  color: #f1f5f4;
+  background-color: var(--color-ink);
+  background-image:
+    radial-gradient(90% 70% at 50% 0%, rgb(20 174 128 / 0.20), transparent 70%),
+    radial-gradient(70% 60% at 100% 100%, rgb(249 147 7 / 0.07), transparent 70%),
+    linear-gradient(180deg, #04342a 0%, #021c17 100%);
+  background-attachment: fixed;
+  -webkit-font-smoothing: antialiased;
+  font-feature-settings: "cv11", "ss01";
+}
+
+@utility tabular { font-variant-numeric: tabular-nums; }
+
+/* Frosted card on the felt. */
+@utility glass {
+  background-color: rgb(255 255 255 / 0.06);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.08), 0 10px 30px -12px rgb(0 0 0 / 0.6);
+  border: 1px solid rgb(255 255 255 / 0.10);
+  backdrop-filter: blur(10px);
+}
+
+/* An available table: lit felt with a brass rail. */
+@utility felt-card {
+  background-image: radial-gradient(120% 90% at 50% 20%, #19c08f 0%, #0b8a65 55%, #076449 100%);
+  box-shadow: inset 0 0 0 6px rgb(255 255 255 / 0.06), inset 0 0 0 8px rgb(3 42 34 / 0.55), 0 0 0 3px rgb(255 181 32 / 0.55), 0 18px 40px -14px rgb(0 0 0 / 0.7);
+}
+
+@keyframes glow {
+  0%, 100% { box-shadow: 0 0 0 3px rgb(255 181 32 / 0.65), 0 0 28px 2px rgb(255 181 32 / 0.25); }
+  50% { box-shadow: 0 0 0 3px rgb(255 181 32 / 0.95), 0 0 46px 8px rgb(255 181 32 / 0.45); }
+}
+@utility glow-warning { animation: glow 1.6s ease-in-out infinite; }

@@ -1,19 +1,23 @@
 import type { TabletDurationQuote, TabletTable } from '@bilyart/protocol';
-import { BigButton } from '../components/ui';
+import { BigButton, ScreenTitle } from '../components/ui';
 import { formatDuration, formatUzs } from '../lib/format';
 import { t } from '../i18n';
 
 export function DurationScreen({ table, onPick, onBack }: { table: TabletTable; onPick: (q: TabletDurationQuote) => void; onBack: () => void }) {
   const quotes = table.pricing?.durations ?? [];
   return (
-    <div className="flex h-full flex-col gap-6 p-6">
-      <h1 className="text-4xl font-bold">{t('duration.title', { table: table.name })}</h1>
-      <ul className="grid flex-1 auto-rows-fr grid-cols-2 gap-5 md:grid-cols-3">
+    <div className="flex h-full flex-col gap-6 p-6 lg:p-8">
+      <ScreenTitle step="1 / 3">{t('duration.title', { table: table.name })}</ScreenTitle>
+      <ul className="grid flex-1 auto-rows-[minmax(10rem,1fr)] content-center grid-cols-2 gap-5 md:grid-cols-3">
         {quotes.map((q) => (
-          <li key={q.minutes}>
-            <button type="button" onClick={() => onPick(q)} className="flex h-full min-h-32 w-full flex-col items-center justify-center gap-2 rounded-3xl bg-slate-800 ring-4 ring-slate-600 active:bg-slate-700">
-              <span className="text-4xl font-bold">{formatDuration(q.minutes)}</span>
-              <span className="text-2xl text-brand-400">{formatUzs(q.amount)}</span>
+          <li key={q.minutes} className="max-h-60">
+            <button
+              type="button"
+              onClick={() => onPick(q)}
+              className="glass group flex size-full flex-col items-center justify-center gap-3 rounded-[28px] transition active:scale-[0.98] active:bg-white/15"
+            >
+              <span className="px-4 text-center text-4xl font-extrabold tracking-tight xl:text-5xl">{formatDuration(q.minutes)}</span>
+              <span className="tabular rounded-full bg-accent-400/15 px-5 py-1.5 text-2xl font-bold text-accent-300 ring-1 ring-accent-400/30">{formatUzs(q.amount)}</span>
             </button>
           </li>
         ))}

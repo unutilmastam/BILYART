@@ -53,7 +53,7 @@ export default defineConfig({
       workbox: {
         // App shell + face model precached; the ~11 MB WASM is cached on first use. API data is never cached here
         // (the app keeps its own read-only IndexedDB cache for offline display).
-        globPatterns: ['**/*.{js,css,html,svg,tflite,webmanifest}'],
+        globPatterns: ['**/*.{js,css,html,svg,tflite,webmanifest}', 'assets/inter-latin-*.woff2'],
         globIgnores: ['mediapipe/**'],
         navigateFallback: '/tablet/index.html',
         navigateFallbackDenylist: [/^\/api\//, /^\/device\//, /^\/admin\//],
