@@ -158,6 +158,13 @@ Remaining for Phase 1:
 - Next for the owner: first client (hall) → branch → tablet pairing (a tablet pairs to a client's branch, not to the Super Admin).
 - Polish after go-live: health detail labels in Uzbek; pairing code no longer clipped on phone-width screens.
 
+## Owner request — monthly subscription payment from the app (2026-10-01)
+- Owner: clients should pay the **monthly subscription** from the app; no YaTT/LLC yet (no Payme/Click merchant), price **per branch**.
+- Semi-automatic, no fake verification: the owner (client) picks 1/3/6/12 months, sees `active branches × price_per_branch × months`, transfers to the card in the payment instructions and uploads the receipt (re-encoded to JPEG, private storage). The Super Admin checks the bank account and taps **Tasdiqlash** (optional amount/method correction) → `SubscriptionService::recordPayment` (+30 days per month) or **Rad etish** with a reason. Both sides get notifications; everything is audited.
+- New: table `subscription_payment_requests`, permission `billing.manage` (owner only), setting `pricePerBranch` (0 = off), routes under `/api/admin/payment-requests` (allowed while expired) and `/api/super/payment-requests`, admin pages **Obuna** (client) and **To'lov so'rovlari** (Super Admin), included in backups.
+- Tests: API 216 on MySQL/MariaDB/PostgreSQL (incl. cross-tenant, one-pending lock, never-approve-twice), admin 29.
+- Later: Payme/Click automatic payments once the owner has a YaTT (would replace the manual approval step, same recordPayment path).
+
 ## Open questions for the owner
 1. ~~Platform domain~~ → **nbx.itcode.uz** (subdomain, PostgreSQL).
 2. ~~First ESP32 flash method~~ → from a computer (owner, 2026-09-30).

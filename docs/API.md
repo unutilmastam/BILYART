@@ -56,14 +56,22 @@ Tenant, branch and table are **always** resolved from the principal, never from 
 | POST | `/tenants/{tenant}/owner/reset-password` | issues a temporary password (shown once) |
 | GET | `/audit-logs` | filter by tenant/action/date |
 | GET | `/payments` | all recorded platform payments |
-| GET/PUT | `/settings` | `{supportContact, paymentInstructions, defaultBranchLimit, reminderDays}` (whitelisted keys) |
+| GET | `/payment-requests` | `?status=PENDING\|APPROVED\|REJECTED\|CANCELLED` · client "I paid" reports with `tenant {id,name}`, pending first (max 100) · `platform.payments` |
+| GET | `/payment-requests/{paymentRequest}/receipt` | receipt JPEG (private, `no-store`) |
+| POST | `/payment-requests/{paymentRequest}/approve` | `Idempotency-Key` · `{amount?, method?}` (defaults: requested amount, CARD_TRANSFER) → records the payment and extends by months × 30 days (same path as `/tenants/{tenant}/payments`); 409 `INVALID_STATE_TRANSITION` unless PENDING |
+| POST | `/payment-requests/{paymentRequest}/reject` | `Idempotency-Key` · `{reason}` (3–500 chars, shown to the client) |
+| GET/PUT | `/settings` | `{supportContact, paymentInstructions, defaultBranchLimit, reminderDays, pricePerBranch}` (`pricePerBranch`: monthly UZS per active branch; 0 = in-app payment off) (whitelisted keys) |
 | GET/POST | `/firmware` · POST `/firmware/{release}/publish` · POST `/firmware/{release}/rollout` | firmware releases: multipart upload of the app `.bin` (sha256 computed server-side; the embedded `BLYFWVER:` marker must equal `version`), publish, rollout = OTA commands to idle paired devices on another version → `{queued, skippedBusy, alreadyCurrent}` (409 if not published) |
 | GET | `/health` | detailed health (db, storage, queue, cron heartbeat, backups) |
 
 ### 3.3 Client Admin (`/api/admin`, tenant roles; `subscription.active` except where noted)
 | Method | Path | Permission |
 |---|---|---|
-| GET | `/subscription` | any (allowed when inactive) → status, expiresAt, daysLeft, limits, supportContact, paymentInstructions |
+| GET | `/subscription` | any (allowed when inactive) → status, expiresAt, daysLeft, limits, supportContact, paymentInstructions, `billing {pricePerBranch, branchCount, monthlyAmount, monthOptions[1,3,6,12], pending}` (branchCount = active branches, min 1) |
+| GET | `/payment-requests` | `billing.manage` (owner), allowed when inactive · latest 20 of the tenant's requests |
+| POST | `/payment-requests` | `billing.manage`, allowed when inactive, `throttle:uploads` (20/h) · `Idempotency-Key` · multipart `{months ∈ 1,3,6,12, receipt (image ≤ 8 MB), note?}` → 201 PENDING; amount = monthlyAmount × months snapshotted; 422 `BILLING_NOT_CONFIGURED` if price is 0; 409 `PAYMENT_REQUEST_PENDING` if one is already open; receipt re-encoded to JPEG |
+| POST | `/payment-requests/{paymentRequest}/cancel` | `billing.manage` · PENDING → CANCELLED |
+| GET | `/payment-requests/{paymentRequest}/receipt` | `billing.manage` · own receipt JPEG |
 | GET | `/dashboard?branchId=` | `sessions.view` |
 | GET/POST | `/branches` | view: any · create: `branches.manage` (LimitGuard) |
 | GET/PATCH/DELETE | `/branches/{branch}` | `branches.manage` (DELETE = disable) |

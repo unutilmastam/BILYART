@@ -94,12 +94,39 @@ export interface PlatformSettings {
   paymentInstructions: string;
   defaultBranchLimit: number;
   reminderDays: number[];
+  pricePerBranch: number;
 }
 
 export interface ClientSubscription extends SubscriptionInfo {
   limits: Limits;
   supportContact: string;
   paymentInstructions: string;
+  billing: Billing;
+}
+
+export type PaymentRequestStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELLED';
+
+/** A client's "I paid" report with a receipt photo; the Super Admin approves or rejects it. */
+export interface PaymentRequest {
+  id: string;
+  status: PaymentRequestStatus;
+  months: number;
+  branchCount: number;
+  pricePerBranch: number;
+  amount: number;
+  note: string | null;
+  rejectReason: string | null;
+  createdAt: string;
+  reviewedAt: string | null;
+  tenant?: { id: string; name: string };
+}
+
+export interface Billing {
+  pricePerBranch: number;
+  branchCount: number;
+  monthlyAmount: number;
+  monthOptions: number[];
+  pending: PaymentRequest | null;
 }
 
 export interface Branch {

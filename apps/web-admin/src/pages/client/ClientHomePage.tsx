@@ -1,18 +1,19 @@
-import { useQuery } from '@tanstack/react-query';
 import { AlertCircle, CircleDollarSign, Clock3, Cpu, Download, ListChecks, PlayCircle, Square } from 'lucide-react';
+import { Link } from 'react-router';
 import { useMe } from '../../auth/useMe';
 import { Card, Stat } from '../../components/Card';
 import { TableStatusChip } from '../../components/Chips';
 import { ErrorBanner, Spinner } from '../../components/Feedback';
 import { DaysLeft, StatusBadge } from '../../components/StatusBadge';
+import { useClientSubscription } from '../../features/billing/api';
 import { useClientDashboard } from '../../features/client/sessions';
 import { t } from '../../i18n';
-import { api } from '../../lib/api';
 import { formatDate, formatMinutes, formatMoney, formatTime } from '../../lib/format';
-import type { ClientDashboard, ClientSubscription, TableStatusValue } from '../../types/api';
+import type { ClientDashboard, TableStatusValue } from '../../types/api';
 
 function SubscriptionCard() {
-  const q = useQuery({ queryKey: ['client', 'subscription'], queryFn: () => api<ClientSubscription>('/admin/subscription') });
+  const q = useClientSubscription();
+  const canPay = useMe().data?.permissions.includes('billing.manage') ?? false;
   if (q.isPending) return <Spinner />;
   if (q.isError) return <ErrorBanner error={q.error} onRetry={() => q.refetch()} />;
   const s = q.data;
@@ -28,6 +29,11 @@ function SubscriptionCard() {
           {s.paymentInstructions && <p className="whitespace-pre-line">{s.paymentInstructions}</p>}
           {s.supportContact && <p>{t('client.contact')}: {s.supportContact}</p>}
         </div>
+      )}
+      {canPay && (inactive || s.status === 'EXPIRING_SOON') && (
+        <Link to="/client/subscription" className="mt-3 inline-flex min-h-11 items-center rounded-xl bg-gradient-to-b from-brand-600 to-brand-700 px-4 text-sm font-semibold text-white shadow-sm">
+          {s.billing.pending ? t('billing.pendingShort') : t('billing.payNow')}
+        </Link>
       )}
     </Card>
   );

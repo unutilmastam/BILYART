@@ -36,7 +36,14 @@ Xodimni faqat ayrim filiallarga bog'lash mumkin (**Xodimlar → Filiallar**; bo'
 - **Hisobotlar → Kunlik / Oylik**: sessiyalar soni, o'yin vaqti, summa, to'lanmagan, stollar bandligi (filial bo'yicha).
 
 ## 4. Obuna
-Bosh sahifada obuna holati va tugash sanasi. Tugashidan 5, 3, 1 kun oldin va tugash kuni eslatma keladi. Muddat tugasa: ma'lumotlar saqlanadi, lekin yangi o'yin boshlanmaydi — **Bog'lanish**dagi kontaktga murojaat qiling va to'lov qiling.
+Bosh sahifada obuna holati va tugash sanasi. Tugashidan 5, 3, 1 kun oldin va tugash kuni eslatma keladi. Muddat tugasa: ma'lumotlar saqlanadi, lekin yangi o'yin boshlanmaydi.
+
+**Ilovadan to'lash (faqat zal egasi):** menyu → **Obuna**.
+1. Narx: faol filiallar soni × 1 filial narxi (oyiga). Muddatni tanlang: 1, 3, 6 yoki 12 oy.
+2. Ko'rsatilgan summani ko'rsatmadagi kartaga o'tkazing.
+3. Chek rasmini (skrinshot) tanlang → **To'lov qildim — yuborish**.
+4. Administrator tekshiradi. Tasdiqlansa obuna avtomatik uzayadi va xabar keladi; rad etilsa sababi ko'rinadi va yangi so'rov yuborish mumkin.
+Bir vaqtda faqat bitta so'rov tekshiriladi. Xato yuborgan bo'lsangiz — **So'rovni bekor qilish**.
 
 ## 5. Telegram hisobotlari
 **Telegram** bo'limi:
