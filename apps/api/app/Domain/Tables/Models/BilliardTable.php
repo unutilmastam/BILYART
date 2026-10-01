@@ -12,7 +12,6 @@ use Illuminate\Database\Eloquent\Attributes\UseFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasOne;
 
 #[UseFactory(BilliardTableFactory::class)]
 class BilliardTable extends Model
@@ -30,6 +29,7 @@ class BilliardTable extends Model
         return [
             'number' => 'integer',
             'is_active' => 'boolean',
+            'device_channel' => 'integer',
         ];
     }
 
@@ -45,9 +45,9 @@ class BilliardTable extends Model
         return $this->belongsTo(PricingPlan::class);
     }
 
-    /** Currently paired ESP32. @return HasOne<Device, $this> */
-    public function device(): HasOne
+    /** ESP32 whose relay channel `device_channel` switches this table's lamp. @return BelongsTo<Device, $this> */
+    public function device(): BelongsTo
     {
-        return $this->hasOne(Device::class, 'active_table_id');
+        return $this->belongsTo(Device::class, 'device_id');
     }
 }

@@ -18,10 +18,20 @@ final class DeviceResource extends JsonResource
             'online' => $this->isOnline(),
             'lastSeenAt' => $this->last_seen_at?->toIso8601ZuluString(),
             'firmwareVersion' => $this->firmware_version,
-            'state' => $this->last_state['state'] ?? null,
             'rssi' => $this->last_state['rssi'] ?? null,
+            'channelCount' => $this->channel_count,
             'branch' => $this->whenLoaded('branch', fn () => $this->branch ? ['id' => $this->branch->public_id, 'name' => $this->branch->name] : null),
-            'table' => $this->whenLoaded('table', fn () => $this->table ? ['id' => $this->table->public_id, 'number' => $this->table->number, 'name' => $this->table->name] : null),
+            // One row per relay channel: which table it drives and the lamp state the device last reported.
+            'channels' => $this->whenLoaded('tables', function () {
+                $reported = collect($this->last_state['channels'] ?? [])->keyBy('channel');
+                $byChannel = $this->tables->keyBy('device_channel');
+
+                return collect(range(1, $this->channel_count))->map(fn (int $ch) => [
+                    'channel' => $ch,
+                    'table' => ($t = $byChannel->get($ch)) ? ['id' => $t->public_id, 'number' => $t->number, 'name' => $t->name] : null,
+                    'state' => $reported->get($ch)['state'] ?? null,
+                ])->all();
+            }),
             'pairedAt' => $this->paired_at?->toIso8601ZuluString(),
         ];
     }

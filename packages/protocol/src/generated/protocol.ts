@@ -66,6 +66,13 @@ export type SessionStatus =
 export type TableStatus =
   'AVAILABLE' | 'RESERVED' | 'STARTING' | 'BUSY' | 'WARNING' | 'DISABLED' | 'DEVICE_OFFLINE' | 'CLOSED';
 /**
+ * Relay channel on the device (1-based). One channel = one table lamp.
+ *
+ * This interface was referenced by `ProtocolRoot`'s JSON-Schema
+ * via the `definition` "Channel".
+ */
+export type Channel = number;
+/**
  * Command delivered in /poll responses. Device ignores commands with expiresAt < serverTime and deduplicates by commandId.
  *
  * This interface was referenced by `ProtocolRoot`'s JSON-Schema
@@ -115,6 +122,7 @@ export interface DeviceAck {
   result: 'OK' | 'ERROR' | 'IGNORED';
   error?: string | null;
   state?: LightState;
+  channel?: Channel;
 }
 /**
  * This interface was referenced by `ProtocolRoot`'s JSON-Schema
@@ -129,6 +137,7 @@ export interface StartSessionCommand {
   expiresAt: EpochSeconds;
   type: 'START_SESSION';
   payload: {
+    channel: Channel;
     sessionId: PublicId;
     startAt: EpochSeconds;
     endAt: EpochSeconds;
@@ -141,6 +150,7 @@ export interface StopSessionCommand {
   expiresAt: EpochSeconds;
   type: 'STOP_SESSION';
   payload: {
+    channel: Channel;
     sessionId: PublicId;
   };
 }
@@ -149,6 +159,7 @@ export interface WarningCommand {
   expiresAt: EpochSeconds;
   type: 'WARNING';
   payload: {
+    channel: Channel;
     sessionId: PublicId;
     flashCount: number;
   };
@@ -202,7 +213,7 @@ export interface DevicePairingStatusResponse {
   serverTime: EpochSeconds;
 }
 /**
- * POST /device/v1/poll — also the heartbeat. ts is the device clock (informational only). Tenant/branch/table are never accepted from the device.
+ * POST /device/v1/poll — also the heartbeat. ts is the device clock (informational only). One entry per relay channel. Tenant/branch/table are never accepted from the device.
  *
  * This interface was referenced by `ProtocolRoot`'s JSON-Schema
  * via the `definition` "DevicePollRequest".
@@ -210,13 +221,21 @@ export interface DevicePairingStatusResponse {
 export interface DevicePollRequest {
   ts: EpochSeconds;
   fw: SemVer;
-  state: LightState;
-  sessionId?: PublicId | null;
-  endAt?: EpochSeconds | null;
+  /**
+   * @minItems 1
+   * @maxItems 8
+   */
+  channels: DeviceChannelState[];
   rssi?: number;
   uptime?: number;
   bootReason?: string;
   lastAppliedCommandId?: PublicId | null;
+}
+export interface DeviceChannelState {
+  channel: Channel;
+  state: LightState;
+  sessionId?: PublicId | null;
+  endAt?: EpochSeconds | null;
 }
 /**
  * This interface was referenced by `ProtocolRoot`'s JSON-Schema
@@ -243,6 +262,10 @@ export interface DeviceRegisterRequest {
   hardwareId: string;
   firmwareVersion: SemVer;
   registrationSecret: string;
+  /**
+   * Number of relay channels this device drives (default 1).
+   */
+  channelCount?: number;
 }
 /**
  * This interface was referenced by `ProtocolRoot`'s JSON-Schema
@@ -266,10 +289,16 @@ export interface DeviceRegisterResponse {
  */
 export interface DeviceStateResponse {
   serverTime: EpochSeconds;
-  session: null | DeviceStateSession;
+  /**
+   * Running sessions of this device, at most one per channel.
+   *
+   * @maxItems 8
+   */
+  sessions: DeviceStateSession[];
   config: DeviceConfig;
 }
 export interface DeviceStateSession {
+  channel: Channel;
   sessionId: PublicId;
   startAt: EpochSeconds;
   endAt: EpochSeconds;

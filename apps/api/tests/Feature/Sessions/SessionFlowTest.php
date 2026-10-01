@@ -47,7 +47,8 @@ class SessionFlowTest extends TestCase
 
         $command = $this->asSystem(fn () => DeviceCommand::query()->where('device_id', $h['device']->id)->sole());
         $this->assertSame('START_SESSION', $command->type->value);
-        $this->assertEquals(['sessionId' => $id, 'startAt' => 1791194400, 'endAt' => 1791198000, 'warnBeforeSec' => 300, 'flashCount' => 3], $command->payload);
+        $this->assertEquals(['sessionId' => $id, 'startAt' => 1791194400, 'endAt' => 1791198000, 'warnBeforeSec' => 300, 'flashCount' => 3, 'channel' => 1], $command->payload);
+        $this->assertSame(1, $command->channel);
 
         $session = $this->asSystem(fn () => GameSession::query()->where('public_id', $id)->sole());
         $this->asSystem(fn () => app(SessionService::class)->confirmStarted($session, $h['device']->id));
@@ -117,7 +118,7 @@ class SessionFlowTest extends TestCase
         $this->asSystem(fn () => $h['device']->forceFill(['last_seen_at' => now()->subMinute()])->save());
         $prep()->assertStatus(422)->assertJsonPath('error.code', 'DEVICE_OFFLINE');
 
-        $this->asSystem(fn () => $h['device']->forceFill(['status' => 'REVOKED', 'active_table_id' => null, 'active_hardware_id' => null])->save());
+        $this->wire($h['table'], null, null);
         $prep()->assertStatus(422)->assertJsonPath('error.code', 'DEVICE_NOT_ASSIGNED');
 
         $this->asSystem(fn () => $h['table']->forceFill(['pricing_plan_id' => null])->save());

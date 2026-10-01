@@ -1,1 +1,1 @@
-{ "commandId": "01J9ZQ3K8M4N5P6Q7R8S9T0V2X", "type": "START_SESSION", "expiresAt": 1790000030, "payload": { "sessionId": "01J9ZQ3K8M4N5P6Q7R8S9T0V1W", "startAt": 1790000000, "warnBeforeSec": 300, "flashCount": 3 } }
+{ "commandId": "01J9ZQ3K8M4N5P6Q7R8S9T0V2X", "type": "START_SESSION", "expiresAt": 1790000030, "payload": { "channel": 1, "sessionId": "01J9ZQ3K8M4N5P6Q7R8S9T0V1W", "startAt": 1790000000, "warnBeforeSec": 300, "flashCount": 3 } }

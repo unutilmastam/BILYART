@@ -5,7 +5,9 @@
   "description": "POST /device/v1/ack",
   "type": "object",
   "additionalProperties": false,
-  "required": ["acks"],
+  "required": [
+    "acks"
+  ],
   "properties": {
     "acks": {
       "type": "array",
@@ -15,12 +17,39 @@
         "title": "DeviceAck",
         "type": "object",
         "additionalProperties": false,
-        "required": ["commandId", "result"],
+        "required": [
+          "commandId",
+          "result"
+        ],
         "properties": {
-          "commandId": { "$ref": "common.schema.json#/definitions/PublicId" },
-          "result": { "type": "string", "enum": ["OK", "ERROR", "IGNORED"] },
-          "error": { "oneOf": [{ "type": "string", "maxLength": 200 }, { "type": "null" }] },
-          "state": { "$ref": "common.schema.json#/definitions/LightState" }
+          "commandId": {
+            "$ref": "common.schema.json#/definitions/PublicId"
+          },
+          "result": {
+            "type": "string",
+            "enum": [
+              "OK",
+              "ERROR",
+              "IGNORED"
+            ]
+          },
+          "error": {
+            "oneOf": [
+              {
+                "type": "string",
+                "maxLength": 200
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "state": {
+            "$ref": "common.schema.json#/definitions/LightState"
+          },
+          "channel": {
+            "$ref": "common.schema.json#/definitions/Channel"
+          }
         }
       }
     }

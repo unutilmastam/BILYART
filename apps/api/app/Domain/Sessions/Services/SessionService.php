@@ -87,6 +87,7 @@ final class SessionService
                     'branch_id' => $table->branch_id,
                     'table_id' => $table->id,
                     'device_id' => $device->id,
+                    'device_channel' => $table->device_channel,
                     'tablet_id' => $tablet->id,
                     'pricing_plan_id' => $plan->id,
                     'status' => SessionStatus::RESERVED,
@@ -142,6 +143,7 @@ final class SessionService
 
             $locked->forceFill([
                 'device_id' => $device->id,
+                'device_channel' => $table->device_channel, // the wiring at start time; STOP goes to the same relay
                 'start_at' => $now,
                 'end_at' => $now->addMinutes($locked->duration_minutes),
                 'reserved_until' => null,
@@ -291,8 +293,8 @@ final class SessionService
 
     private function onlineDeviceFor(BilliardTable $table, CarbonImmutable $now): Device
     {
-        $device = Device::query()->where('active_table_id', $table->id)->where('status', 'PAIRED')->first();
-        if ($device === null) {
+        $device = $table->device_id ? Device::query()->whereKey($table->device_id)->where('status', 'PAIRED')->first() : null;
+        if ($device === null || $table->device_channel === null) {
             throw ApiException::of(ErrorCode::DEVICE_NOT_ASSIGNED);
         }
         $maxAge = (int) config('devices.start_max_last_seen_sec', 20);

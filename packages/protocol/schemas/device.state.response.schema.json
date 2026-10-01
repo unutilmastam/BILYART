@@ -5,26 +5,55 @@
   "description": "GET /device/v1/state — authoritative state after boot/reconnect (SYNC).",
   "type": "object",
   "additionalProperties": false,
-  "required": ["serverTime", "session", "config"],
+  "required": [
+    "serverTime",
+    "sessions",
+    "config"
+  ],
   "properties": {
-    "serverTime": { "$ref": "common.schema.json#/definitions/EpochSeconds" },
-    "session": {
-      "oneOf": [
-        { "type": "null" },
-        {
-          "title": "DeviceStateSession",
-          "type": "object",
-          "additionalProperties": false,
-          "required": ["sessionId", "startAt", "endAt", "status"],
-          "properties": {
-            "sessionId": { "$ref": "common.schema.json#/definitions/PublicId" },
-            "startAt": { "$ref": "common.schema.json#/definitions/EpochSeconds" },
-            "endAt": { "$ref": "common.schema.json#/definitions/EpochSeconds" },
-            "status": { "type": "string", "enum": ["STARTING", "ACTIVE"] }
+    "serverTime": {
+      "$ref": "common.schema.json#/definitions/EpochSeconds"
+    },
+    "sessions": {
+      "type": "array",
+      "maxItems": 8,
+      "description": "Running sessions of this device, at most one per channel.",
+      "items": {
+        "title": "DeviceStateSession",
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "channel",
+          "sessionId",
+          "startAt",
+          "endAt",
+          "status"
+        ],
+        "properties": {
+          "channel": {
+            "$ref": "common.schema.json#/definitions/Channel"
+          },
+          "sessionId": {
+            "$ref": "common.schema.json#/definitions/PublicId"
+          },
+          "startAt": {
+            "$ref": "common.schema.json#/definitions/EpochSeconds"
+          },
+          "endAt": {
+            "$ref": "common.schema.json#/definitions/EpochSeconds"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "STARTING",
+              "ACTIVE"
+            ]
           }
         }
-      ]
+      }
     },
-    "config": { "$ref": "device.command.schema.json#/definitions/DeviceConfig" }
+    "config": {
+      "$ref": "device.command.schema.json#/definitions/DeviceConfig"
+    }
   }
 }

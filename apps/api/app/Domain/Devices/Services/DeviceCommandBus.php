@@ -11,7 +11,8 @@ use App\Domain\Sessions\Models\GameSession;
 /**
  * Queues authenticated commands for a device (spec §34). v1 transport is HTTPS
  * polling: the device fetches PENDING/SENT commands on /device/v1/poll
- * (DEVICE_PROTOCOL.md). A newer START/STOP for the same device supersedes
+ * (DEVICE_PROTOCOL.md). Session commands carry the relay channel the session was
+ * started on. A newer START/STOP for the same device channel supersedes
  * older undelivered ones, so a late command can never flip the light.
  */
 final class DeviceCommandBus
@@ -22,6 +23,7 @@ final class DeviceCommandBus
     public function startSession(Device $device, GameSession $session, int $warnBeforeSec, int $flashCount): DeviceCommand
     {
         return $this->queue($device, CommandType::START_SESSION, [
+            'channel' => $session->device_channel,
             'sessionId' => $session->public_id,
             'startAt' => $session->start_at->getTimestamp(),
             'endAt' => $session->end_at->getTimestamp(),
@@ -35,7 +37,7 @@ final class DeviceCommandBus
         // STOP stays valid until the session would have ended anyway (+ margin): the device ignores it afterwards.
         $ttl = max(60, ($session->end_at?->getTimestamp() ?? now()->getTimestamp()) - now()->getTimestamp() + 300);
 
-        return $this->queue($device, CommandType::STOP_SESSION, ['sessionId' => $session->public_id], $session, $ttl);
+        return $this->queue($device, CommandType::STOP_SESSION, ['channel' => $session->device_channel, 'sessionId' => $session->public_id], $session, $ttl);
     }
 
     public function queue(Device $device, CommandType $type, array $payload, ?GameSession $session, int $ttlSec): DeviceCommand
@@ -43,6 +45,7 @@ final class DeviceCommandBus
         if (in_array($type, [CommandType::START_SESSION, CommandType::STOP_SESSION], true) && $session !== null) {
             DeviceCommand::query()
                 ->where('device_id', $device->id)
+                ->where('channel', $session->device_channel) // other tables on the same device are independent
                 ->whereIn('type', [CommandType::START_SESSION->value, CommandType::STOP_SESSION->value])
                 ->where('session_id', '!=', $session->id)
                 ->whereIn('status', [CommandStatus::PENDING->value, CommandStatus::SENT->value])
@@ -61,6 +64,7 @@ final class DeviceCommandBus
         $command = new DeviceCommand([
             'device_id' => $device->id,
             'session_id' => $session?->id,
+            'channel' => $session?->device_channel,
             'type' => $type,
             'payload' => $payload,
             'expires_at' => now()->addSeconds($ttlSec),

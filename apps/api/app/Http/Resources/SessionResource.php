@@ -30,7 +30,7 @@ final class SessionResource extends JsonResource
             'effectiveStatus' => $effective->value,
             'branch' => $this->whenLoaded('branch', fn () => ['id' => $this->branch->public_id, 'name' => $this->branch->name]),
             'table' => $this->whenLoaded('table', fn () => ['id' => $this->table->public_id, 'number' => $this->table->number, 'name' => $this->table->name]),
-            'device' => $this->whenLoaded('device', fn () => $this->device ? ['code' => $this->device->device_code, 'online' => $this->device->isOnline()] : null),
+            'device' => $this->whenLoaded('device', fn () => $this->device ? ['code' => $this->device->device_code, 'channel' => $this->device_channel, 'online' => $this->device->isOnline()] : null),
             'durationMinutes' => $this->duration_minutes,
             'startAt' => $this->start_at?->toIso8601ZuluString(),
             'endAt' => $this->end_at?->toIso8601ZuluString(),

@@ -32,7 +32,7 @@ final class TableStatusResolver
         $sessions = GameSession::query()->whereIn('table_id', $ids)
             ->whereIn('status', array_map(fn ($s) => $s->value, SessionStatus::occupying()))
             ->get()->filter(fn (GameSession $s) => self::stillOccupying($s, $now))->keyBy('table_id');
-        $devices = Device::query()->whereIn('active_table_id', $ids)->where('status', 'PAIRED')->get()->keyBy('active_table_id');
+        $devices = Device::query()->whereIn('id', $tables->pluck('device_id')->filter()->unique()->all())->where('status', 'PAIRED')->get()->keyBy('id');
         $branchOpen = [];
 
         $out = [];
@@ -42,7 +42,7 @@ final class TableStatusResolver
             /** @var GameSession|null $session */
             $session = $sessions->get($table->id);
             /** @var Device|null $device */
-            $device = $devices->get($table->id);
+            $device = $table->device_id !== null && $table->device_channel !== null ? $devices->get($table->device_id) : null;
 
             $status = match (true) {
                 ! $table->is_active => 'DISABLED',

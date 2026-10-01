@@ -37,18 +37,28 @@ trait BuildsSessionFixtures
         });
     }
 
-    protected function pairedDevice(Tenant $tenant, Branch $branch, BilliardTable $table, bool $online = true): Device
+    /** A paired branch ESP32 (4 relay channels) with $table wired to channel 1. */
+    protected function pairedDevice(Tenant $tenant, Branch $branch, ?BilliardTable $table, bool $online = true, int $channelCount = 4): Device
     {
         $hw = strtoupper(bin2hex(random_bytes(6)));
         $device = new Device(['firmware_version' => '1.0.0']);
         $device->forceFill([
-            'tenant_id' => $tenant->id, 'branch_id' => $branch->id, 'table_id' => $table->id, 'active_table_id' => $table->id,
+            'tenant_id' => $tenant->id, 'branch_id' => $branch->id, 'channel_count' => $channelCount,
             'hardware_id' => $hw, 'active_hardware_id' => $hw, 'device_code' => Device::codeFor($hw),
             'status' => 'PAIRED', 'registered_at' => now(), 'paired_at' => now(),
             'last_seen_at' => $online ? now() : now()->subMinutes(5),
         ])->save();
+        if ($table !== null) {
+            $this->wire($table, $device, 1);
+        }
 
         return $device;
+    }
+
+    /** Wires a table's lamp to a relay channel of a device (bypasses the admin API). */
+    protected function wire(BilliardTable $table, ?Device $device, ?int $channel): void
+    {
+        $this->asSystem(fn () => $table->forceFill(['device_id' => $device?->id, 'device_channel' => $device ? $channel : null])->save());
     }
 
     /** Keeps the fake device "online" (as if it polled just now). */

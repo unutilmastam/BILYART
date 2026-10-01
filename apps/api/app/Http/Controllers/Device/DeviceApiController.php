@@ -27,6 +27,7 @@ final class DeviceApiController extends Controller
             'hardwareId' => ['required', 'string', 'regex:/^[0-9A-Fa-f]{12}$/'],
             'firmwareVersion' => ['required', 'string', 'max:32', 'regex:/^\d+\.\d+\.\d+(-[0-9A-Za-z.-]+)?$/'],
             'registrationSecret' => ['required', 'string', 'min:16', 'max:128'],
+            'channelCount' => ['sometimes', 'integer', 'between:1,'.Device::MAX_CHANNELS],
         ]);
         $expected = (string) config('devices.registration_secret');
         // Not an ownership proof — only keeps random internet clients from spamming registrations.
@@ -34,7 +35,7 @@ final class DeviceApiController extends Controller
             throw ApiException::of(ErrorCode::DEVICE_UNAUTHORIZED);
         }
 
-        return $this->registry->register($data['hardwareId'], $data['firmwareVersion'], (string) $request->ip());
+        return $this->registry->register($data['hardwareId'], $data['firmwareVersion'], (string) $request->ip(), (int) ($data['channelCount'] ?? 1));
     }
 
     public function pairingStatus(Request $request): array
@@ -52,9 +53,11 @@ final class DeviceApiController extends Controller
         $data = $request->validate([
             'ts' => ['required', 'integer', 'min:0'],
             'fw' => ['required', 'string', 'max:32'],
-            'state' => ['required', 'in:ON,OFF,WARNING'],
-            'sessionId' => ['nullable', 'string', 'size:26'],
-            'endAt' => ['nullable', 'integer', 'min:0'],
+            'channels' => ['required', 'array', 'min:1', 'max:'.Device::MAX_CHANNELS],
+            'channels.*.channel' => ['required', 'integer', 'distinct', 'between:1,'.Device::MAX_CHANNELS],
+            'channels.*.state' => ['required', 'in:ON,OFF,WARNING'],
+            'channels.*.sessionId' => ['nullable', 'string', 'size:26'],
+            'channels.*.endAt' => ['nullable', 'integer', 'min:0'],
             'rssi' => ['nullable', 'integer', 'between:-127,0'],
             'uptime' => ['nullable', 'integer', 'min:0'],
             'bootReason' => ['nullable', 'string', 'max:32'],
@@ -72,6 +75,7 @@ final class DeviceApiController extends Controller
             'acks.*.result' => ['required', 'in:OK,ERROR,IGNORED'],
             'acks.*.error' => ['nullable', 'string', 'max:200'],
             'acks.*.state' => ['nullable', 'in:ON,OFF,WARNING'],
+            'acks.*.channel' => ['nullable', 'integer', 'between:1,'.Device::MAX_CHANNELS],
         ]);
 
         return $this->gateway->ack($this->device($request), $data['acks']);

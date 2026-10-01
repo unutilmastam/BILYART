@@ -57,7 +57,7 @@ class TenantIsolationConstraintsTest extends TestCase
     }
 
     #[Test]
-    public function a_device_cannot_be_paired_to_another_tenants_table(): void
+    public function a_device_cannot_be_paired_to_another_tenants_branch(): void
     {
         $a = $this->tenantWithTable();
         $b = $this->tenantWithTable();
@@ -70,13 +70,26 @@ class TenantIsolationConstraintsTest extends TestCase
             'device_code' => 'ESP32-B2D3E4',
             'tenant_id' => $a['tenant']->id,
             'branch_id' => $b['branch']->id,
-            'table_id' => $b['table']->id,
-            'active_table_id' => $b['table']->id,
             'status' => 'PAIRED',
             'registered_at' => now(),
             'created_at' => now(),
             'updated_at' => now(),
         ]);
+    }
+
+    #[Test]
+    public function a_table_cannot_be_wired_to_a_device_of_another_branch_or_tenant(): void
+    {
+        $a = $this->tenantWithTable();
+        $b = $this->tenantWithTable();
+        $deviceB = DB::table('devices')->insertGetId([
+            'public_id' => (string) Str::ulid(), 'hardware_id' => 'A8F4C1B2D3E4', 'active_hardware_id' => 'A8F4C1B2D3E4',
+            'device_code' => 'ESP32-B2D3E4', 'tenant_id' => $b['tenant']->id, 'branch_id' => $b['branch']->id, 'channel_count' => 4,
+            'status' => 'PAIRED', 'registered_at' => now(), 'created_at' => now(), 'updated_at' => now(),
+        ]);
+
+        $this->expectException(QueryException::class);
+        DB::table('billiard_tables')->where('id', $a['table']->id)->update(['device_id' => $deviceB, 'device_channel' => 1]);
     }
 
     #[Test]
@@ -146,12 +159,12 @@ class TenantIsolationConstraintsTest extends TestCase
             'public_id' => (string) Str::ulid(), 'tenant_id' => $a['tenant']->id, 'branch_id' => $a['branch']->id,
             'number' => 7, 'name' => '7-stol', 'is_active' => true, 'created_at' => now(), 'updated_at' => now(),
         ]);
-        DB::table('devices')->insert([
+        $device = DB::table('devices')->insertGetId([
             'public_id' => (string) Str::ulid(), 'hardware_id' => 'A8F4C1B2D3E4', 'active_hardware_id' => 'A8F4C1B2D3E4',
-            'device_code' => 'ESP32-B2D3E4', 'tenant_id' => $a['tenant']->id, 'branch_id' => $a['branch']->id,
-            'table_id' => $a['table']->id, 'active_table_id' => $a['table']->id, 'status' => 'PAIRED',
-            'registered_at' => now(), 'created_at' => now(), 'updated_at' => now(),
+            'device_code' => 'ESP32-B2D3E4', 'tenant_id' => $a['tenant']->id, 'branch_id' => $a['branch']->id, 'channel_count' => 4,
+            'status' => 'PAIRED', 'registered_at' => now(), 'created_at' => now(), 'updated_at' => now(),
         ]);
+        DB::table('billiard_tables')->where('id', $a['table']->id)->update(['device_id' => $device, 'device_channel' => 2]);
         $session = $this->insertSession($a['tenant']->id, $a['branch']->id, $a['table']->id, 'COMPLETED');
         DB::table('session_photos')->insert([
             'public_id' => (string) Str::ulid(), 'tenant_id' => $a['tenant']->id, 'session_id' => $session,

@@ -17,7 +17,7 @@ class DeviceCommand extends Model
 
     public const UPDATED_AT = null;
 
-    protected $fillable = ['device_id', 'session_id', 'type', 'payload', 'expires_at'];
+    protected $fillable = ['device_id', 'session_id', 'channel', 'type', 'payload', 'expires_at'];
 
     protected $attributes = ['status' => 'PENDING', 'attempts' => 0];
 
@@ -28,6 +28,7 @@ class DeviceCommand extends Model
             'status' => CommandStatus::class,
             'payload' => 'array',
             'attempts' => 'integer',
+            'channel' => 'integer',
             'created_at' => 'immutable_datetime',
             'sent_at' => 'immutable_datetime',
             'acked_at' => 'immutable_datetime',

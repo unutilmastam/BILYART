@@ -52,6 +52,7 @@
           "type": "object",
           "additionalProperties": false,
           "required": [
+            "channel",
             "sessionId",
             "startAt",
             "endAt",
@@ -59,6 +60,9 @@
             "flashCount"
           ],
           "properties": {
+            "channel": {
+              "$ref": "common.schema.json#/definitions/Channel"
+            },
             "sessionId": {
               "$ref": "common.schema.json#/definitions/PublicId"
             },
@@ -106,9 +110,13 @@
           "type": "object",
           "additionalProperties": false,
           "required": [
+            "channel",
             "sessionId"
           ],
           "properties": {
+            "channel": {
+              "$ref": "common.schema.json#/definitions/Channel"
+            },
             "sessionId": {
               "$ref": "common.schema.json#/definitions/PublicId"
             }
@@ -140,10 +148,14 @@
           "type": "object",
           "additionalProperties": false,
           "required": [
+            "channel",
             "sessionId",
             "flashCount"
           ],
           "properties": {
+            "channel": {
+              "$ref": "common.schema.json#/definitions/Channel"
+            },
             "sessionId": {
               "$ref": "common.schema.json#/definitions/PublicId"
             },

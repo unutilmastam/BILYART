@@ -23,8 +23,8 @@ final class BackupService
     public const TABLES = [
         'tenants', 'users', 'subscription_payments', 'subscriptions', 'subscription_events', 'system_settings', 'firmware_releases',
         'branches', 'working_hours', 'branch_closed_days', 'user_branch_access',
-        'pricing_plans', 'billiard_tables',
-        'devices', 'device_pairings', 'tablets', 'tablet_pairings',
+        'pricing_plans', 'devices', 'billiard_tables', // tables point to their ESP32 (device_id)
+        'device_pairings', 'tablets', 'tablet_pairings',
         'game_sessions', 'session_photos', 'session_events',
         'device_commands', 'device_heartbeats',
         'telegram_integrations', 'telegram_chats', 'notifications', 'notification_logs',

@@ -10,10 +10,13 @@ use App\Support\Concerns\HasPublicId;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
- * ESP32 registration row (see migration 000006 for the lifecycle).
- * Online status is derived from last_seen_at — never stored or faked.
+ * ESP32 registration row (see migrations 000006 + 2026_10_05 for the lifecycle).
+ * One device belongs to a branch and drives channel_count relay channels; each
+ * table points to (device_id, device_channel). Online status is derived from
+ * last_seen_at — never stored or faked.
  */
 class Device extends Model
 {
@@ -29,6 +32,7 @@ class Device extends Model
     {
         return [
             'status' => DeviceStatus::class,
+            'channel_count' => 'integer',
             'last_state' => 'array',
             'last_seen_at' => 'immutable_datetime',
             'offline_since' => 'immutable_datetime',
@@ -57,9 +61,11 @@ class Device extends Model
         return $this->belongsTo(Branch::class);
     }
 
-    /** @return BelongsTo<BilliardTable, $this> */
-    public function table(): BelongsTo
+    /** Tables wired to this device's relay channels. @return HasMany<BilliardTable, $this> */
+    public function tables(): HasMany
     {
-        return $this->belongsTo(BilliardTable::class, 'table_id');
+        return $this->hasMany(BilliardTable::class, 'device_id')->orderBy('device_channel');
     }
+
+    public const MAX_CHANNELS = 8;
 }

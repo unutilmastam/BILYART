@@ -12,6 +12,7 @@ use App\Domain\Devices\Services\DeviceCommandBus;
 use App\Domain\Platform\Models\FirmwareRelease;
 use App\Domain\Sessions\Enums\SessionStatus;
 use App\Domain\Sessions\Models\GameSession;
+use App\Domain\Tables\Models\BilliardTable;
 use App\Domain\Tenancy\TenantContext;
 use App\Http\Controllers\Controller;
 use App\Support\Http\ApiException;
@@ -85,7 +86,10 @@ final class FirmwareController extends Controller
 
                     return;
                 }
-                $playing = GameSession::query()->where('table_id', $device->table_id)->whereIn('status', SessionStatus::occupying())->exists();
+                // Busy while any of its tables is occupied (sessions remember their device; wired tables cover the rest).
+                $playing = GameSession::query()->whereIn('status', SessionStatus::occupying())
+                    ->where(fn ($q) => $q->where('device_id', $device->id)->orWhereIn('table_id', BilliardTable::query()->select('id')->where('device_id', $device->id)))
+                    ->exists();
                 $pending = DeviceCommand::query()->where('device_id', $device->id)->where('type', CommandType::OTA->value)
                     ->whereIn('status', [CommandStatus::PENDING->value, CommandStatus::SENT->value])->exists();
                 if ($playing || $pending) {
