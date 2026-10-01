@@ -1,12 +1,77 @@
 @import "tailwindcss";
 
+/*
+ * Bilyart design tokens. Brand = deep billiard-felt green, accent = brass/gold (cue ball ring),
+ * neutrals = slate. Every page uses these through Tailwind utilities (bg-brand-700, text-accent-600 …).
+ */
 @theme {
-  --color-brand-50: #ecfdf5;
-  --color-brand-100: #d1fae5;
-  --color-brand-600: #059669;
-  --color-brand-700: #047857;
-  --color-brand-800: #065f46;
+  --font-sans: "Inter Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+
+  --color-brand-50: #edfcf5;
+  --color-brand-100: #d3f8e6;
+  --color-brand-200: #aaefd2;
+  --color-brand-300: #72e0b8;
+  --color-brand-400: #38c999;
+  --color-brand-500: #14ae80;
+  --color-brand-600: #098d68;
+  --color-brand-700: #087156;
+  --color-brand-800: #0a5a46;
+  --color-brand-900: #0a4a3b;
+  --color-brand-950: #032a22;
+
+  --color-accent-50: #fffaeb;
+  --color-accent-100: #fff0c6;
+  --color-accent-200: #ffe088;
+  --color-accent-300: #ffcb4a;
+  --color-accent-400: #ffb520;
+  --color-accent-500: #f99307;
+  --color-accent-600: #dd6b02;
+
+  --color-canvas: #f4f6f5;
+
+  --shadow-card: 0 1px 2px rgb(16 24 40 / 0.04), 0 1px 3px rgb(16 24 40 / 0.06);
+  --shadow-pop: 0 12px 32px -8px rgb(3 42 34 / 0.25);
 }
 
-html { -webkit-text-size-adjust: 100%; }
-body { padding-bottom: env(safe-area-inset-bottom); }
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    @apply bg-canvas text-slate-800 antialiased;
+    font-feature-settings: "cv11", "ss01", "ss03";
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-brand-500;
+  }
+  ::selection {
+    @apply bg-brand-200 text-brand-950;
+  }
+}
+
+/* Money, counters and times line up in columns. */
+@utility tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Felt texture used on the sidebar and the login hero. */
+@utility felt {
+  background-color: var(--color-brand-950);
+  background-image:
+    radial-gradient(120% 80% at 0% 0%, rgb(20 174 128 / 0.22), transparent 60%),
+    radial-gradient(90% 70% at 100% 100%, rgb(249 147 7 / 0.10), transparent 60%),
+    linear-gradient(180deg, #053b30 0%, #032a22 100%);
+}
+
+/* Native selects get the same look as inputs, with our own chevron. */
+@layer base {
+  select:not([multiple]) {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%2364748b'%3E%3Cpath fill-rule='evenodd' d='M5.23 7.21a.75.75 0 0 1 1.06.02L10 11.17l3.71-3.94a.75.75 0 1 1 1.08 1.04l-4.25 4.5a.75.75 0 0 1-1.08 0l-4.25-4.5a.75.75 0 0 1 .02-1.06z' clip-rule='evenodd'/%3E%3C/svg%3E");
+    background-position: right 0.6rem center;
+    background-repeat: no-repeat;
+    background-size: 1.15rem;
+    padding-right: 2.25rem !important;
+  }
+}

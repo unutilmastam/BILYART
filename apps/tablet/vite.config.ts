@@ -43,8 +43,8 @@ export default defineConfig({
         scope: '/tablet/',
         display: 'fullscreen',
         orientation: 'landscape',
-        background_color: '#0f172a',
-        theme_color: '#0f172a',
+        background_color: '#021c17',
+        theme_color: '#021c17',
         icons: [
           { src: 'icon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any' },
           { src: 'icon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'maskable' },
@@ -53,7 +53,7 @@ export default defineConfig({
       workbox: {
         // App shell + face model precached; the ~11 MB WASM is cached on first use. API data is never cached here
         // (the app keeps its own read-only IndexedDB cache for offline display).
-        globPatterns: ['**/*.{js,css,html,svg,tflite,webmanifest}'],
+        globPatterns: ['**/*.{js,css,html,svg,tflite,webmanifest}', 'assets/inter-latin-*.woff2'],
         globIgnores: ['mediapipe/**'],
         navigateFallback: '/tablet/index.html',
         navigateFallbackDenylist: [/^\/api\//, /^\/device\//, /^\/admin\//],

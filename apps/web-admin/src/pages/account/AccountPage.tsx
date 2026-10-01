@@ -102,7 +102,7 @@ function TwoFactorCard() {
         <form className="space-y-3 text-sm text-slate-700" noValidate onSubmit={(e) => { e.preventDefault(); confirm.mutate(code); }}>
           <p>{t('account.step1')}</p>
           <p>{t('account.step2')}</p>
-          <a href={setup.data.uri} className="inline-flex min-h-11 items-center rounded-lg bg-brand-700 px-4 font-semibold text-white">{t('account.openApp')}</a>
+          <a href={setup.data.uri} className="inline-flex min-h-11 items-center rounded-xl bg-gradient-to-b from-brand-600 to-brand-700 shadow-sm px-4 font-semibold text-white">{t('account.openApp')}</a>
           <QrCode text={setup.data.uri} label={t('account.twoFactor')} />
           <p>
             {t('account.secret')}: <span className="select-all break-all font-mono">{setup.data.secret.match(/.{1,4}/g)?.join(' ')}</span>

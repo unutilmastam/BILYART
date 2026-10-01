@@ -46,7 +46,7 @@ function Channels({ d }: { d: DeviceInfo }) {
   return (
     <ul className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4" aria-label={t('dev.channels')}>
       {(d.channels ?? []).map((c) => (
-        <li key={c.channel} className="rounded-lg border border-slate-200 px-2 py-1.5 text-xs">
+        <li key={c.channel} className="rounded-xl border border-slate-200 bg-slate-50/60 px-2.5 py-2 text-xs">
           <p className="text-slate-500">{t('dev.channel', { n: c.channel })}</p>
           <p className="flex items-center justify-between gap-1 font-medium">
             <span className="truncate">{c.table?.name ?? <span className="text-slate-400">{t('dev.channelFree')}</span>}</span>
@@ -70,7 +70,7 @@ function MoveDevice({ d }: { d: DeviceInfo }) {
         aria-label={t('dev.move')}
         title={wired ? t('dev.moveHint') : undefined}
         disabled={wired || m.isPending}
-        className="min-h-11 rounded-lg border border-slate-300 px-2 text-sm disabled:opacity-50"
+        className="min-h-11 rounded-xl border border-slate-300 bg-white px-3 shadow-sm outline-none focus:border-brand-500 focus:ring-4 focus:ring-brand-500/15 text-sm disabled:opacity-50"
         value=""
         onChange={(e) => e.target.value && m.mutate({ branchId: e.target.value })}
       >

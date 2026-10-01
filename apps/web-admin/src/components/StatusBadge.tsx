@@ -2,15 +2,15 @@ import { t, tDynamic } from '../i18n';
 import type { SubscriptionStatus } from '../types/api';
 
 const tones: Record<SubscriptionStatus, string> = {
-  ACTIVE: 'bg-emerald-100 text-emerald-800',
-  EXPIRING_SOON: 'bg-amber-100 text-amber-800',
-  EXPIRED: 'bg-red-100 text-red-800',
-  SUSPENDED: 'bg-slate-200 text-slate-800',
-  DEACTIVATED: 'bg-slate-800 text-white',
+  ACTIVE: 'bg-emerald-50 text-emerald-700 ring-emerald-600/20',
+  EXPIRING_SOON: 'bg-amber-50 text-amber-800 ring-amber-600/25',
+  EXPIRED: 'bg-red-50 text-red-700 ring-red-600/20',
+  SUSPENDED: 'bg-slate-100 text-slate-700 ring-slate-500/20',
+  DEACTIVATED: 'bg-slate-800 text-white ring-slate-900',
 };
 
 export function StatusBadge({ status }: { status: SubscriptionStatus }) {
-  return <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold ${tones[status]}`}>{tDynamic('status', status)}</span>;
+  return <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ring-inset ${tones[status]}`}>{tDynamic('status', status)}</span>;
 }
 
 export function DaysLeft({ days, status }: { days: number; status: SubscriptionStatus }) {

@@ -20,7 +20,7 @@ export function ClientsPage() {
     <Card
       title={t('nav.clients')}
       actions={
-        <Link to="/super/clients/new" className="inline-flex min-h-11 items-center rounded-lg bg-brand-700 px-4 text-sm font-semibold text-white">
+        <Link to="/super/clients/new" className="inline-flex min-h-11 items-center rounded-xl bg-gradient-to-b from-brand-600 to-brand-700 shadow-sm px-4 text-sm font-semibold text-white">
           + {t('clients.new')}
         </Link>
       }

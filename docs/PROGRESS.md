@@ -141,7 +141,14 @@ Remaining for Phase 1:
 - Admin: Devices page pairs by branch and shows channels → table + lamp state; Tables page has a "Chiroq" select (free channels of the branch's devices).
 - Firmware: per-channel timers/flashers, `BAD_CHANNEL` for channels the board lacks, poll/ack per channel, `RELAY_CHANNELS` build flag (default 4), relay pins 26/27/25/33/32/23/22/21, per-channel NVS + one checkpoint blob, legacy NVS session → channel 1. 19 host tests.
 - Docs: HARDWARE (4-channel high-trigger relay module + contactors, single-point-of-failure note, bypass switches), DEVICE_PROTOCOL, ESP32_FLASHING, CLIENT_ADMIN_GUIDE, TROUBLESHOOTING, DATABASE, ARCHITECTURE, API, openapi.
-- Tests: 211 API tests on 3 DBs (new `MultiChannelDeviceTest`: independent channels end to end, wiring rules, cross-tenant wiring refused by API and DB, running-session conflicts, unwired table, BAD_CHANNEL fails the start); 27 web-admin tests.
+- Tests: 211 API tests on 3 DBs (new `MultiChannelDeviceTest`: independent channels end to end, wiring rules, cross-tenant wiring refused by API and DB, running-session conflicts, unwired table, BAD_CHANNEL fails the start); 25 web-admin tests.
+
+## Owner request — modern professional design (2026-10-01)
+- Owner: "the apps must be very beautiful, professional, with modern colours".
+- Shared brand: deep billiard-felt green + brass/gold accent, Inter Variable (self-hosted, CSP `font-src 'self'`), new cue-ball logo and app icons, theme colours.
+- Admin: design tokens in `index.css`; dark felt sidebar with icons (lucide) and user card on desktop/iPad, felt top bar + slide-in menu on phones; restyled buttons, inputs, custom select chevron, cards, KPI tiles with icon chips, status pills with dots, empty state; dashboard table tiles with status stripe; split login with SVG billiard balls.
+- Tablet kiosk: felt background, glass cards, available tables as lit felt with a brass rail, busy/warning tables with countdown + progress bar (warning glows), step badges (1/3…3/3), gold prices, countdown ring after start, restyled pairing/photo screens. Latin Inter files are precached for offline use.
+- Verified visually in Chromium (desktop 1280×800, phone 390×844, kiosk 1280×800) against the real API with demo data; all admin (25) and tablet (17) tests green.
 
 ## Open questions for the owner
 1. ~~Platform domain~~ → **itcode.uz**. Still open: root domain or a subdomain (e.g. `billiard.itcode.uz`)? Its document root in cPanel → Domains?

@@ -116,20 +116,30 @@ export function PhotoScreen(props: { uploading: boolean; error: string | null; o
             : t('photo.lookingForFace');
 
   return (
-    <div className="flex h-full flex-col items-center justify-center gap-6 p-6">
-      <h1 className="text-4xl font-bold">{t('photo.title')}</h1>
-      <div className={`relative aspect-video w-full max-w-3xl overflow-hidden rounded-3xl bg-black ring-8 ${phase === 'holding' ? 'ring-brand-500' : 'ring-slate-700'}`}>
-        <video ref={video} className="size-full -scale-x-100 object-cover" playsInline muted aria-label={t('photo.title')} />
-        <div className="pointer-events-none absolute inset-[15%_30%] rounded-[50%] border-4 border-dashed border-white/60" aria-hidden />
+    <div className="flex h-full flex-col items-center justify-center gap-5 p-6">
+      <div className="flex w-full max-w-3xl items-center justify-between gap-4">
+        <h1 className="text-4xl font-bold tracking-tight">{t('photo.title')}</h1>
+        <span className="glass rounded-full px-4 py-1.5 text-lg font-semibold text-brand-200">3 / 3</span>
       </div>
-      <p className="text-xl text-slate-300">{t('photo.hint')}</p>
-      <p className="text-lg text-slate-400">{t('photo.required')}</p>
+      <div
+        className={`relative aspect-video w-full max-w-3xl overflow-hidden rounded-[32px] bg-black ring-4 transition ${
+          phase === 'holding' ? 'ring-brand-400 shadow-[0_0_60px_-10px_rgb(56_201_153/0.8)]' : 'ring-white/15'
+        }`}
+      >
+        <video ref={video} className="size-full -scale-x-100 object-cover" playsInline muted aria-label={t('photo.title')} />
+        <div
+          className={`pointer-events-none absolute inset-[14%_31%] rounded-[50%] border-4 transition ${phase === 'holding' ? 'border-brand-300' : 'border-dashed border-white/60'}`}
+          aria-hidden
+        />
+      </div>
+      <p className="text-xl text-white/75">{t('photo.hint')}</p>
+      <p className="text-lg text-white/55">{t('photo.required')}</p>
       <p role="status" className="flex items-center gap-3 text-2xl font-semibold">
         {(props.uploading || phase === 'opening' || phase === 'captured') && <Spinner />}
         {status}
       </p>
       {props.error && (
-        <p role="alert" className="rounded-xl bg-red-600 px-6 py-3 text-2xl font-semibold">
+        <p role="alert" className="rounded-2xl bg-red-600/90 px-6 py-3 text-2xl font-semibold">
           {props.error}
         </p>
       )}

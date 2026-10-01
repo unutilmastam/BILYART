@@ -80,7 +80,7 @@ function ChatRow({ chat, onChange }: { chat: TelegramChatInfo; onChange: () => v
     <li className="flex flex-col gap-2 py-3 sm:flex-row sm:items-center sm:justify-between">
       <span className="font-medium">{chat.title ?? chat.id}</span>
       <div className="flex flex-wrap items-center gap-3 text-sm">
-        <select aria-label={t('table.branch')} className="min-h-11 rounded-lg border border-slate-300 px-2" value={chat.branchId ?? ''} onChange={(e) => update.mutate({ branchId: e.target.value || null })}>
+        <select aria-label={t('table.branch')} className="min-h-11 rounded-xl border border-slate-300 bg-white px-3 shadow-sm outline-none focus:border-brand-500 focus:ring-4 focus:ring-brand-500/15" value={chat.branchId ?? ''} onChange={(e) => update.mutate({ branchId: e.target.value || null })}>
           <option value="">{t('tg.allBranches')}</option>
           {branches.data?.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
         </select>

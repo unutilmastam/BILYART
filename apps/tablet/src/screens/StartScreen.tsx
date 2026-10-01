@@ -1,4 +1,4 @@
-import { BigButton, Centered, Spinner } from '../components/ui';
+import { BigButton, Centered, Ring, Spinner } from '../components/ui';
 import type { Session } from '../features/session';
 import { formatClock, formatCountdown } from '../lib/format';
 import { t } from '../i18n';
@@ -7,7 +7,7 @@ export function StartScreen({ session, now, timezone, error, onDone }: { session
   if (error || session?.status === 'FAILED' || session?.status === 'CANCELLED') {
     return (
       <Centered>
-        <p role="alert" className="text-4xl font-bold text-red-400">
+        <p role="alert" className="max-w-3xl text-4xl font-bold text-red-300">
           {error ?? t('start.failed')}
         </p>
         <BigButton onClick={onDone}>{t('common.done')}</BigButton>
@@ -23,12 +23,18 @@ export function StartScreen({ session, now, timezone, error, onDone }: { session
     );
   }
   const end = Date.parse(session.endAt);
+  const start = session.startAt ? Date.parse(session.startAt) : end - session.durationMinutes * 60_000;
+  const fraction = end > start ? (end - now) / (end - start) : 0;
   return (
     <Centered>
-      <p className="text-5xl font-extrabold text-brand-400">{t('start.started')}</p>
-      <p className="font-mono text-8xl font-bold">{formatCountdown(end - now)}</p>
-      <p className="text-3xl">{t('start.endsAt', { time: formatClock(end, timezone) })}</p>
-      <BigButton onClick={onDone}>{t('common.done')}</BigButton>
+      <p className="text-5xl font-extrabold tracking-tight text-brand-300">{t('start.started')}</p>
+      <Ring fraction={fraction}>
+        <span className="tabular text-7xl font-bold">{formatCountdown(end - now)}</span>
+        <span className="mt-2 text-xl text-white/70">{t('start.endsAt', { time: formatClock(end, timezone) })}</span>
+      </Ring>
+      <BigButton onClick={onDone} className="min-w-72">
+        {t('common.done')}
+      </BigButton>
     </Centered>
   );
 }

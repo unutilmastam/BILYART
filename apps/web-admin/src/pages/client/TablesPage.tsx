@@ -72,7 +72,7 @@ function TableRow({ table, plans, devices, canManage }: { table: Table; plans?: 
         <div className="flex flex-wrap items-center gap-2">
           <select
             aria-label={t('table.plan')}
-            className="min-h-11 rounded-lg border border-slate-300 px-2 text-sm"
+            className="min-h-11 rounded-xl border border-slate-300 bg-white px-3 shadow-sm outline-none focus:border-brand-500 focus:ring-4 focus:ring-brand-500/15 text-sm"
             value={table.pricingPlan?.id ?? ''}
             onChange={(e) => m.mutate({ pricingPlanId: e.target.value || null })}
           >
@@ -81,7 +81,7 @@ function TableRow({ table, plans, devices, canManage }: { table: Table; plans?: 
           {devices && (
             <select
               aria-label={t('table.wiring')}
-              className="min-h-11 rounded-lg border border-slate-300 px-2 text-sm"
+              className="min-h-11 rounded-xl border border-slate-300 bg-white px-3 shadow-sm outline-none focus:border-brand-500 focus:ring-4 focus:ring-brand-500/15 text-sm"
               value={table.device ? `${table.device.id}:${table.device.channel}` : ''}
               onChange={(e) => wire(e.target.value)}
             >
