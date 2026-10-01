@@ -66,8 +66,8 @@ function HoursEditor({ branchId, canEdit }: { branchId: string; canEdit: boolean
             <input type="checkbox" className="size-5" disabled={!canEdit} checked={d.isClosed} onChange={(e) => update(i, { isClosed: e.target.checked, opensAt: e.target.checked ? null : '10:00', closesAt: e.target.checked ? null : '02:00' })} />
             {t('branch.dayClosed')}
           </label>
-          <input aria-label={t('branch.opens')} type="time" disabled={!canEdit || d.isClosed} value={d.opensAt ?? ''} onChange={(e) => update(i, { opensAt: e.target.value })} className="min-h-11 rounded-lg border border-slate-300 px-2" />
-          <input aria-label={t('branch.closes')} type="time" disabled={!canEdit || d.isClosed} value={d.closesAt ?? ''} onChange={(e) => update(i, { closesAt: e.target.value })} className="min-h-11 rounded-lg border border-slate-300 px-2" />
+          <input aria-label={t('branch.opens')} type="time" disabled={!canEdit || d.isClosed} value={d.opensAt ?? ''} onChange={(e) => update(i, { opensAt: e.target.value })} className="min-h-11 rounded-xl border border-slate-300 bg-white px-3 shadow-sm outline-none focus:border-brand-500 focus:ring-4 focus:ring-brand-500/15" />
+          <input aria-label={t('branch.closes')} type="time" disabled={!canEdit || d.isClosed} value={d.closesAt ?? ''} onChange={(e) => update(i, { closesAt: e.target.value })} className="min-h-11 rounded-xl border border-slate-300 bg-white px-3 shadow-sm outline-none focus:border-brand-500 focus:ring-4 focus:ring-brand-500/15" />
         </div>
       ))}
       {m.isError && <ErrorBanner error={m.error} />}

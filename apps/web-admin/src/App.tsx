@@ -1,3 +1,20 @@
+import {
+  Activity,
+  BadgeDollarSign,
+  BarChart3,
+  Building2,
+  Cpu,
+  LayoutDashboard,
+  MessageCircle,
+  ScrollText,
+  Settings,
+  SlidersHorizontal,
+  Table2,
+  Timer,
+  UserRound,
+  Users,
+  Wallet,
+} from 'lucide-react';
 import { createBrowserRouter, RouterProvider } from 'react-router';
 import { HomeRedirect, RequireAuth } from './auth/guards';
 import { Layout, type NavItem } from './components/Layout';
@@ -31,29 +48,29 @@ import { PaymentsPage } from './pages/super/PaymentsPage';
 import { SettingsPage } from './pages/super/SettingsPage';
 
 const superNav: NavItem[] = [
-  { to: '/super', label: 'nav.dashboard', end: true },
-  { to: '/super/clients', label: 'nav.clients' },
-  { to: '/super/payments', label: 'nav.payments' },
-  { to: '/super/audit', label: 'nav.audit' },
-  { to: '/super/health', label: 'nav.health' },
-  { to: '/super/firmware', label: 'nav.firmware' },
-  { to: '/super/settings', label: 'nav.settings' },
-  { to: '/super/account', label: 'nav.account' },
+  { to: '/super', label: 'nav.dashboard', icon: LayoutDashboard, end: true },
+  { to: '/super/clients', label: 'nav.clients', icon: Users },
+  { to: '/super/payments', label: 'nav.payments', icon: Wallet },
+  { to: '/super/audit', label: 'nav.audit', icon: ScrollText },
+  { to: '/super/health', label: 'nav.health', icon: Activity },
+  { to: '/super/firmware', label: 'nav.firmware', icon: Cpu },
+  { to: '/super/settings', label: 'nav.settings', icon: Settings },
+  { to: '/super/account', label: 'nav.account', icon: UserRound },
 ];
 
 /** Client nav items are shown only when the user's role has the permission (the API enforces it anyway). */
 const clientNav: (NavItem & { permission?: string })[] = [
-  { to: '/client', label: 'nav.dashboard', end: true },
-  { to: '/client/sessions', label: 'nav.sessions', permission: 'sessions.view' },
-  { to: '/client/reports', label: 'nav.reports', permission: 'reports.view' },
-  { to: '/client/devices', label: 'nav.devices', permission: 'tables.view' },
-  { to: '/client/branches', label: 'nav.branches' },
-  { to: '/client/tables', label: 'nav.tables', permission: 'tables.view' },
-  { to: '/client/pricing', label: 'nav.pricing', permission: 'pricing.manage' },
-  { to: '/client/staff', label: 'nav.staff', permission: 'users.manage' },
-  { to: '/client/telegram', label: 'nav.telegram', permission: 'telegram.manage' },
-  { to: '/client/settings', label: 'nav.clientSettings', permission: 'tenant.settings' },
-  { to: '/client/account', label: 'nav.account' },
+  { to: '/client', label: 'nav.dashboard', icon: LayoutDashboard, end: true },
+  { to: '/client/sessions', label: 'nav.sessions', icon: Timer, permission: 'sessions.view' },
+  { to: '/client/reports', label: 'nav.reports', icon: BarChart3, permission: 'reports.view' },
+  { to: '/client/devices', label: 'nav.devices', icon: Cpu, permission: 'tables.view' },
+  { to: '/client/branches', label: 'nav.branches', icon: Building2 },
+  { to: '/client/tables', label: 'nav.tables', icon: Table2, permission: 'tables.view' },
+  { to: '/client/pricing', label: 'nav.pricing', icon: BadgeDollarSign, permission: 'pricing.manage' },
+  { to: '/client/staff', label: 'nav.staff', icon: Users, permission: 'users.manage' },
+  { to: '/client/telegram', label: 'nav.telegram', icon: MessageCircle, permission: 'telegram.manage' },
+  { to: '/client/settings', label: 'nav.clientSettings', icon: SlidersHorizontal, permission: 'tenant.settings' },
+  { to: '/client/account', label: 'nav.account', icon: UserRound },
 ];
 
 function ClientShell() {

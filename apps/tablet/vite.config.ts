@@ -43,8 +43,8 @@ export default defineConfig({
         scope: '/tablet/',
         display: 'fullscreen',
         orientation: 'landscape',
-        background_color: '#0f172a',
-        theme_color: '#0f172a',
+        background_color: '#021c17',
+        theme_color: '#021c17',
         icons: [
           { src: 'icon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any' },
           { src: 'icon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'maskable' },

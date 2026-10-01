@@ -1,36 +1,53 @@
 import { tDynamic } from '../i18n';
 import type { PaymentStatusValue, SessionStatusValue, TableStatusValue } from '../types/api';
 
-const tableTone: Record<TableStatusValue, string> = {
-  AVAILABLE: 'bg-emerald-100 text-emerald-800 ring-emerald-300',
-  RESERVED: 'bg-sky-100 text-sky-800 ring-sky-300',
-  STARTING: 'bg-sky-100 text-sky-800 ring-sky-300',
-  BUSY: 'bg-red-100 text-red-800 ring-red-300',
-  WARNING: 'bg-amber-100 text-amber-900 ring-amber-400',
-  DISABLED: 'bg-slate-100 text-slate-500 ring-slate-200',
-  DEVICE_OFFLINE: 'bg-slate-200 text-slate-700 ring-slate-300',
-  CLOSED: 'bg-slate-100 text-slate-600 ring-slate-200',
+/** Soft pill with a status dot — one look for every status in the panel. */
+function Pill({ tone, dot, children }: { tone: string; dot: string; children: React.ReactNode }) {
+  return (
+    <span className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ring-inset ${tone}`}>
+      <span className={`size-1.5 rounded-full ${dot}`} aria-hidden />
+      {children}
+    </span>
+  );
+}
+
+const tableTone: Record<TableStatusValue, [string, string]> = {
+  AVAILABLE: ['bg-emerald-50 text-emerald-700 ring-emerald-600/20', 'bg-emerald-500'],
+  RESERVED: ['bg-sky-50 text-sky-700 ring-sky-600/20', 'bg-sky-500'],
+  STARTING: ['bg-sky-50 text-sky-700 ring-sky-600/20', 'bg-sky-500 animate-pulse'],
+  BUSY: ['bg-rose-50 text-rose-700 ring-rose-600/20', 'bg-rose-500'],
+  WARNING: ['bg-amber-50 text-amber-800 ring-amber-600/25', 'bg-amber-500 animate-pulse'],
+  DISABLED: ['bg-slate-50 text-slate-500 ring-slate-500/15', 'bg-slate-400'],
+  DEVICE_OFFLINE: ['bg-slate-100 text-slate-700 ring-slate-500/20', 'bg-slate-500'],
+  CLOSED: ['bg-slate-50 text-slate-600 ring-slate-500/15', 'bg-slate-400'],
 };
 
 export function TableStatusChip({ status }: { status: TableStatusValue }) {
-  return <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ring-1 ${tableTone[status]}`}>{tDynamic('tstatus', status)}</span>;
+  const [tone, dot] = tableTone[status];
+  return <Pill tone={tone} dot={dot}>{tDynamic('tstatus', status)}</Pill>;
 }
 
-const sessionTone: Record<SessionStatusValue, string> = {
-  RESERVED: 'bg-sky-100 text-sky-800',
-  STARTING: 'bg-sky-100 text-sky-800',
-  ACTIVE: 'bg-red-100 text-red-800',
-  COMPLETING: 'bg-amber-100 text-amber-800',
-  COMPLETED: 'bg-slate-100 text-slate-700',
-  CANCELLED: 'bg-slate-100 text-slate-500',
-  FAILED: 'bg-red-600 text-white',
+const sessionTone: Record<SessionStatusValue, [string, string]> = {
+  RESERVED: ['bg-sky-50 text-sky-700 ring-sky-600/20', 'bg-sky-500'],
+  STARTING: ['bg-sky-50 text-sky-700 ring-sky-600/20', 'bg-sky-500 animate-pulse'],
+  ACTIVE: ['bg-rose-50 text-rose-700 ring-rose-600/20', 'bg-rose-500'],
+  COMPLETING: ['bg-amber-50 text-amber-800 ring-amber-600/25', 'bg-amber-500'],
+  COMPLETED: ['bg-slate-50 text-slate-700 ring-slate-500/15', 'bg-slate-400'],
+  CANCELLED: ['bg-slate-50 text-slate-500 ring-slate-500/15', 'bg-slate-300'],
+  FAILED: ['bg-red-600 text-white ring-red-700', 'bg-white'],
 };
 
 export function SessionStatusChip({ status }: { status: SessionStatusValue }) {
-  return <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${sessionTone[status]}`}>{tDynamic('sstatus', status)}</span>;
+  const [tone, dot] = sessionTone[status];
+  return <Pill tone={tone} dot={dot}>{tDynamic('sstatus', status)}</Pill>;
 }
 
 export function PaymentChip({ status }: { status: PaymentStatusValue }) {
-  const tone = status === 'PAID' ? 'bg-emerald-100 text-emerald-800' : status === 'WAIVED' ? 'bg-slate-100 text-slate-700' : 'bg-amber-100 text-amber-900';
-  return <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${tone}`}>{tDynamic('pay', status)}</span>;
+  const [tone, dot] =
+    status === 'PAID'
+      ? ['bg-emerald-50 text-emerald-700 ring-emerald-600/20', 'bg-emerald-500']
+      : status === 'WAIVED'
+        ? ['bg-slate-50 text-slate-600 ring-slate-500/15', 'bg-slate-400']
+        : ['bg-amber-50 text-amber-800 ring-amber-600/25', 'bg-amber-500'];
+  return <Pill tone={tone} dot={dot}>{tDynamic('pay', status)}</Pill>;
 }
