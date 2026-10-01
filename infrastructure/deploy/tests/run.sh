@@ -46,6 +46,11 @@ HOME="$home" bash "$home/bilyart-0.0.1-test/activate.sh" > "$work/a2.log" 2>&1 |
 [ "$(cat "$base/current/VERSION")" = 0.0.1-test ] || fail "current → 0.0.1"
 [ -L "$base/current/apps/api/storage" ] && [ -L "$base/current/apps/api/.env" ] || fail "shared links"
 [ -f "$base/current/apps/api/bootstrap/cache/config.php" ] || fail "config cached"
+# cPanel's web server is another user: it must traverse to public/ and read .htaccess + index.php.
+[ "$(stat -c %a "$base")" = 711 ] || fail "base dir must be 711 (was $(stat -c %a "$base"))"
+pub="$(readlink -f "$base/current/apps/api/public")"
+d="$pub"; while [ "$d" != "$base" ] && [ "$d" != / ]; do [ $((0$(stat -c %a "$d") & 1)) -eq 1 ] || fail "others cannot traverse $d"; d="$(dirname "$d")"; done
+for f in .htaccess index.php; do [ $((0$(stat -c %a "$pub/$f") & 4)) -eq 4 ] || fail "others cannot read public/$f"; done
 
 echo "== serve + health (db, storage)"
 (cd "$base/current/apps/api/public" && exec php -S 127.0.0.1:8199 ../vendor/laravel/framework/src/Illuminate/Foundation/resources/server.php > "$work/serve.log" 2>&1) & server_pid=$!
