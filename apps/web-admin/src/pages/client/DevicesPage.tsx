@@ -5,38 +5,81 @@ import { Button } from '../../components/Button';
 import { Card } from '../../components/Card';
 import { Empty, ErrorBanner, Spinner, SuccessBanner } from '../../components/Feedback';
 import { SelectField, TextField } from '../../components/Field';
-import { useBranches, useClientMutation, useTables } from '../../features/client/api';
-import { t } from '../../i18n';
+import { useBranches, useClientMutation, useDevices } from '../../features/client/api';
+import { t, tDynamic } from '../../i18n';
 import { api, ApiError } from '../../lib/api';
 import { formatDateTime } from '../../lib/format';
 import type { DeviceInfo, TabletInfo } from '../../types/api';
 
-const useDevices = () => useQuery({ queryKey: ['client', 'devices'], queryFn: async () => (await api<{ data: DeviceInfo[] }>('/admin/devices')).data, refetchInterval: 10_000 });
 const useTablets = () => useQuery({ queryKey: ['client', 'tablets'], queryFn: async () => (await api<{ data: TabletInfo[] }>('/admin/tablets')).data, refetchInterval: 30_000 });
 
 function OnlineDot({ online }: { online: boolean }) {
   return <span className={`inline-block size-2.5 rounded-full ${online ? 'bg-emerald-500' : 'bg-red-500'}`} aria-label={online ? t('table.online') : t('table.offline')} />;
 }
 
+/** The device is paired to a branch; tables are wired to its relay channels on the Tables page. */
 function PairEsp() {
-  const tables = useTables();
+  const branches = useBranches();
   const [code, setCode] = useState('');
-  const [tableId, setTableId] = useState('');
-  const m = useClientMutation<{ code: string; tableId: string }>('/admin/devices/pair', 'POST');
-  const free = (tables.data ?? []).filter((tb) => tb.isActive && !tb.device);
+  const [branchId, setBranchId] = useState('');
+  const m = useClientMutation<{ code: string; branchId: string }>('/admin/devices/pair', 'POST');
+  const selected = branchId || branches.data?.find((b) => b.isActive)?.id || '';
   const err = (f: string) => (m.error instanceof ApiError ? m.error.fieldError(f) : undefined);
-  const submit = (e: FormEvent) => { e.preventDefault(); m.mutate({ code, tableId: tableId || free[0]?.id || '' }, { onSuccess: () => setCode('') }); };
+  const submit = (e: FormEvent) => { e.preventDefault(); m.mutate({ code, branchId: selected }, { onSuccess: () => setCode('') }); };
   return (
     <form onSubmit={submit} className="space-y-3" noValidate>
       <p className="text-xs text-slate-500">{t('dev.espHint')}</p>
       <div className="grid gap-3 sm:grid-cols-[10rem_1fr_auto] sm:items-end">
         <TextField label={t('dev.code')} inputMode="numeric" maxLength={6} value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))} error={err('code')} />
-        <SelectField label={t('sess.table')} value={tableId || free[0]?.id || ''} onChange={(e) => setTableId(e.target.value)} options={free.map((tb) => ({ value: tb.id, label: tb.name }))} error={err('tableId')} />
-        <Button type="submit" disabled={code.length !== 6 || free.length === 0} loading={m.isPending}>{t('dev.pair')}</Button>
+        <SelectField label={t('table.branch')} value={selected} onChange={(e) => setBranchId(e.target.value)} options={(branches.data ?? []).filter((b) => b.isActive).map((b) => ({ value: b.id, label: b.name }))} error={err('branchId')} />
+        <Button type="submit" disabled={code.length !== 6 || !selected} loading={m.isPending}>{t('dev.pair')}</Button>
       </div>
-      {m.isError && !err('code') && !err('tableId') && <ErrorBanner error={m.error} />}
+      {m.isError && !err('code') && !err('branchId') && <ErrorBanner error={m.error} />}
       {m.isSuccess && <SuccessBanner>{t('actions.done')}</SuccessBanner>}
     </form>
+  );
+}
+
+const lampTone: Record<string, string> = { ON: 'bg-emerald-100 text-emerald-800', WARNING: 'bg-amber-100 text-amber-800', OFF: 'bg-slate-100 text-slate-600' };
+
+function Channels({ d }: { d: DeviceInfo }) {
+  return (
+    <ul className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4" aria-label={t('dev.channels')}>
+      {(d.channels ?? []).map((c) => (
+        <li key={c.channel} className="rounded-lg border border-slate-200 px-2 py-1.5 text-xs">
+          <p className="text-slate-500">{t('dev.channel', { n: c.channel })}</p>
+          <p className="flex items-center justify-between gap-1 font-medium">
+            <span className="truncate">{c.table?.name ?? <span className="text-slate-400">{t('dev.channelFree')}</span>}</span>
+            {c.state && <span className={`rounded px-1.5 py-0.5 ${lampTone[c.state] ?? ''}`}>{tDynamic('dev.lamp', c.state)}</span>}
+          </p>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+function MoveDevice({ d }: { d: DeviceInfo }) {
+  const branches = useBranches();
+  const m = useClientMutation<{ branchId: string }>(`/admin/devices/${d.id}`, 'PATCH');
+  const others = (branches.data ?? []).filter((b) => b.isActive && b.id !== d.branch?.id);
+  if (others.length === 0) return null;
+  const wired = (d.channels ?? []).some((c) => c.table);
+  return (
+    <div className="mt-2">
+      <select
+        aria-label={t('dev.move')}
+        title={wired ? t('dev.moveHint') : undefined}
+        disabled={wired || m.isPending}
+        className="min-h-11 rounded-lg border border-slate-300 px-2 text-sm disabled:opacity-50"
+        value=""
+        onChange={(e) => e.target.value && m.mutate({ branchId: e.target.value })}
+      >
+        <option value="">{t('dev.move')}…</option>
+        {others.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
+      </select>
+      {wired && <p className="mt-1 text-xs text-slate-500">{t('dev.moveHint')}</p>}
+      {m.isError && <ErrorBanner error={m.error} />}
+    </div>
   );
 }
 
@@ -66,15 +109,19 @@ function PairTablet() {
 function DeviceRow({ d, canManage }: { d: DeviceInfo; canManage: boolean }) {
   const unpair = useClientMutation(`/admin/devices/${d.id}/unpair`, 'POST');
   return (
-    <li className="flex flex-wrap items-center justify-between gap-2 py-3">
-      <div>
-        <p className="flex items-center gap-2 font-medium"><OnlineDot online={d.online} /> {d.code} · {d.table?.name ?? '—'}</p>
-        <p className="text-xs text-slate-500">
-          {d.branch?.name} · {t('dev.lastSeen')}: {formatDateTime(d.lastSeenAt)} · {t('dev.fw')}: {d.firmwareVersion ?? '—'} · {t('dev.light')}: {d.state ?? '—'}
-          {d.rssi !== null && ` · ${d.rssi} dBm`}
-        </p>
+    <li className="py-3">
+      <div className="flex flex-wrap items-start justify-between gap-2">
+        <div>
+          <p className="flex items-center gap-2 font-medium"><OnlineDot online={d.online} /> {d.code} · {d.branch?.name ?? '—'}</p>
+          <p className="text-xs text-slate-500">
+            {t('dev.lastSeen')}: {formatDateTime(d.lastSeenAt)} · {t('dev.fw')}: {d.firmwareVersion ?? '—'}
+            {d.rssi !== null && ` · ${d.rssi} dBm`}
+          </p>
+        </div>
+        {canManage && <Button variant="secondary" loading={unpair.isPending} onClick={() => window.confirm(t('dev.confirmUnpair')) && unpair.mutate()}>{t('dev.unpair')}</Button>}
       </div>
-      {canManage && <Button variant="secondary" loading={unpair.isPending} onClick={() => window.confirm(t('dev.confirmUnpair')) && unpair.mutate()}>{t('dev.unpair')}</Button>}
+      <Channels d={d} />
+      {canManage && <MoveDevice d={d} />}
       {unpair.isError && <ErrorBanner error={unpair.error} />}
     </li>
   );

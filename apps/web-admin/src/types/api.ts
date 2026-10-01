@@ -144,7 +144,8 @@ export interface Table {
   name: string;
   isActive: boolean;
   pricingPlan: { id: string; name: string; pricePerHour: number } | null;
-  device: { id: string; code: string; online: boolean; lastSeenAt: string | null } | null;
+  /** The ESP32 relay channel that switches this table's lamp (null = not wired). */
+  device: { id: string; code: string; channel: number; online: boolean; lastSeenAt: string | null } | null;
 }
 
 export interface StaffUser extends User {
@@ -229,11 +230,19 @@ export interface DeviceInfo {
   online: boolean;
   lastSeenAt: string | null;
   firmwareVersion: string | null;
-  state: 'ON' | 'OFF' | 'WARNING' | null;
   rssi: number | null;
+  /** One ESP32 per branch; each relay channel drives one table lamp. */
+  channelCount: number;
   branch?: { id: string; name: string } | null;
-  table?: { id: string; number: number; name: string } | null;
+  channels?: DeviceChannel[];
   pairedAt: string | null;
+}
+
+export interface DeviceChannel {
+  channel: number;
+  table: { id: string; number: number; name: string } | null;
+  /** Lamp state last reported by the device for this channel. */
+  state: 'ON' | 'OFF' | 'WARNING' | null;
 }
 
 export interface TabletInfo {
