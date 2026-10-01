@@ -44,7 +44,7 @@ void page() {
   String h;
   h.reserve(2600);
   h += F("<!doctype html><html lang='uz'><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1'>"
-         "<title>Bilyart qurilma</title><style>body{font-family:sans-serif;margin:16px;max-width:520px}input,button{font-size:18px;width:100%;padding:10px;margin:6px 0;box-sizing:border-box}"
+         "<title>NBX qurilma</title><style>body{font-family:sans-serif;margin:16px;max-width:520px}input,button{font-size:18px;width:100%;padding:10px;margin:6px 0;box-sizing:border-box}"
          ".code{font-size:44px;font-weight:bold;letter-spacing:6px}.box{border:2px solid #047857;border-radius:12px;padding:12px;margin:12px 0}</style>");
   h += "<h2>Qurilma: " + esc(code) + "</h2>";
   h += "<p>Wi-Fi: " + esc(wifi) + "<br>Server: " + esc(srv) + "<br>Dastur: " FW_VERSION "<br>Kanallar: " + String(kChannels) + "</p>";

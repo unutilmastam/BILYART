@@ -385,7 +385,7 @@ void setup() {
   g.deviceCode = store::deviceCode().length() ? store::deviceCode() : "ESP32-" + hardwareId.substring(6);
 
   Serial.print(kFirmwareMarker);  // also keeps the marker in the linked image
-  Serial.printf("\nBilyart ESP32 %s | hardwareId %s | device %s | %d channels | boot %s\n", FW_VERSION, hardwareId.c_str(), g.deviceCode.c_str(), kChannels, bootReason());
+  Serial.printf("\nNBX ESP32 %s | hardwareId %s | device %s | %d channels | boot %s\n", FW_VERSION, hardwareId.c_str(), g.deviceCode.c_str(), kChannels, bootReason());
   Serial.printf("Setup Wi-Fi: BILLIARD-%s  password: %s  (write this on the device label)\n", g.deviceCode.substring(g.deviceCode.length() - 4).c_str(), store::portalPassword().c_str());
   if (strlen(DEVICE_REGISTRATION_SECRET) < 16) Serial.println("WARNING: firmware built without DEVICE_REGISTRATION_SECRET — registration will be refused.");
 
