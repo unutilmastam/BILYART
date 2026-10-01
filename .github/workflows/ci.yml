@@ -245,7 +245,8 @@ jobs:
       - uses: shivammathur/setup-php@v2
         with:
           php-version: '8.3'
-          extensions: pdo_mysql, gd, zip
+          # Everything activate.sh requires, explicitly: the runner image's default set changes over time.
+          extensions: pdo_mysql, gd, zip, dom, mbstring, fileinfo, ctype, tokenizer, xml
           coverage: none
           tools: composer:v2
       - name: Shell syntax
