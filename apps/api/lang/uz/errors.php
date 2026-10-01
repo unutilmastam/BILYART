@@ -21,6 +21,8 @@ return [
     'DEVICE_OFFLINE' => 'Stol qurilmasi bilan aloqa yo\'q. Xodimga murojaat qiling.',
     'DEVICE_NOT_ASSIGNED' => 'Bu stolga qurilma ulanmagan.',
     'PRICING_NOT_CONFIGURED' => 'Bu stol uchun narx belgilanmagan.',
+    'BILLING_NOT_CONFIGURED' => "Obuna narxi hali belgilanmagan. Platforma administratori bilan bog'laning.",
+    'PAYMENT_REQUEST_PENDING' => "Oldingi to'lov so'rovingiz hali ko'rib chiqilmoqda.",
     'DURATION_NOT_ALLOWED' => 'Bu davomiylikni tanlab bo\'lmaydi.',
     'PHOTO_REQUIRED' => 'Avval surat olinishi kerak.',
     'PHOTO_INVALID' => 'Surat qabul qilinmadi. Qayta urinib ko\'ring.',

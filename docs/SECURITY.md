@@ -34,7 +34,7 @@ Permissions are explicit strings mapped to roles in `config/permissions.php` (si
 | reports.view | ✓ | ✓ | – |
 | tables.manage, pricing.manage, working_hours.manage, devices.manage | ✓ | ✓ | – |
 | users.manage | ✓ | ✓ (not owners) | – |
-| branches.manage, telegram.manage, tenant.settings | ✓ | – | – |
+| branches.manage, telegram.manage, tenant.settings, tenant.export, billing.manage | ✓ | – | – |
 
 SUPER_ADMIN has only `platform.*` permissions — it does **not** automatically see tenant session photos (spec §41). Support access, if ever added, must be explicit, time-limited and audited.
 

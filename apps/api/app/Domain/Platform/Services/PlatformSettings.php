@@ -14,6 +14,7 @@ final class PlatformSettings
         'payment_instructions' => '',     // shown to clients whose subscription is inactive (spec §29)
         'default_branch_limit' => 1,
         'reminder_days' => [5, 3, 1, 0],  // subscription reminders (spec §40)
+        'price_per_branch' => 0,          // UZS per active branch per month; 0 = payment requests off
     ];
 
     public function all(): array

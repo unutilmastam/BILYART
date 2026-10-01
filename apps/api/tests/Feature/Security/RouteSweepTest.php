@@ -87,12 +87,21 @@ class RouteSweepTest extends TestCase
                 'dedupe_key' => 'sweep:'.Str::uuid(), 'payload' => json_encode(['text' => 'x']), 'created_at' => now(),
             ]);
             $user = $this->tenantUser('CLIENT_MANAGER', $h['tenant']);
+            $ids['paymentRequest'] = (string) Str::ulid();
+            $receiptPath = "tenants/$t/receipts/".strtoupper((string) Str::ulid()).'.jpg';
+            Storage::disk('local')->put($receiptPath, 'jpeg-bytes');
+            DB::table('subscription_payment_requests')->insert([
+                'public_id' => $ids['paymentRequest'], 'tenant_id' => $t, 'months' => 1, 'branch_count' => 1, 'price_per_branch' => 100000,
+                'amount' => 100000, 'status' => 'PENDING', 'receipt_path' => $receiptPath, 'receipt_sha256' => str_repeat('0', 64),
+                'created_by' => $user->id, 'created_at' => now(), 'updated_at' => now(),
+            ]);
 
             return [
                 'branch' => $h['branch']->public_id, 'table' => $h['table']->public_id, 'plan' => $h['plan']->public_id,
                 'device' => $h['device']->public_id, 'tablet' => $h['tablet']->public_id, 'user' => $user->public_id,
                 'session' => $sessionPublicId,
                 'photo' => $ids['photo'], 'day' => $ids['day'], 'chat' => $ids['chat'], 'notification' => $ids['notification'],
+                'paymentRequest' => $ids['paymentRequest'],
             ];
         });
     }
@@ -100,7 +109,7 @@ class RouteSweepTest extends TestCase
     /** Row counts + update stamps of tenant B, to prove nothing was changed by A's requests. */
     private function fingerprint(int $tenantId): array
     {
-        $tables = ['branches', 'branch_closed_days', 'pricing_plans', 'billiard_tables', 'devices', 'tablets', 'users', 'game_sessions', 'session_photos', 'telegram_chats', 'notifications'];
+        $tables = ['branches', 'branch_closed_days', 'pricing_plans', 'billiard_tables', 'devices', 'tablets', 'users', 'game_sessions', 'session_photos', 'telegram_chats', 'notifications', 'subscription_payment_requests'];
 
         return $this->asSystem(fn () => collect($tables)->mapWithKeys(fn ($t) => [$t => DB::table($t)->where('tenant_id', $tenantId)->get()->map(fn ($r) => json_encode($r))->sort()->values()->all()])->all());
     }
@@ -160,7 +169,7 @@ class RouteSweepTest extends TestCase
     #[Test]
     public function guests_get_401_on_every_admin_super_and_account_route(): void
     {
-        $keys = array_fill_keys(['branch', 'table', 'plan', 'user', 'session', 'photo', 'device', 'tablet', 'day', 'chat', 'notification', 'tenant', 'release'], (string) Str::ulid());
+        $keys = array_fill_keys(['branch', 'table', 'plan', 'user', 'session', 'photo', 'device', 'tablet', 'day', 'chat', 'notification', 'tenant', 'release', 'paymentRequest'], (string) Str::ulid());
         $public = ['api/auth/csrf', 'api/auth/login'];
 
         $checked = 0;
@@ -182,7 +191,7 @@ class RouteSweepTest extends TestCase
     {
         $h = $this->hall();
         $owner = $this->tenantUser('CLIENT_OWNER', $h['tenant']);
-        $keys = ['tenant' => $h['tenant']->public_id, 'release' => (string) Str::ulid(), 'notification' => (string) Str::ulid()];
+        $keys = ['tenant' => $h['tenant']->public_id, 'release' => (string) Str::ulid(), 'notification' => (string) Str::ulid(), 'paymentRequest' => (string) Str::ulid()];
 
         foreach ($this->routes('api/super/') as $r) {
             $uri = '/'.$this->fill($r['uri'], $keys);

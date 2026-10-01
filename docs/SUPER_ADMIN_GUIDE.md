@@ -4,7 +4,7 @@ Manzil: `https://<domen>/admin/` → login. Super Admin **mijozlarning** (billia
 
 ## 1. Birinchi kirishdan keyin
 1. **Hisobim → Ikki bosqichli kirish → Yoqish** — telefondagi autentifikator ilovasi bilan. 8 ta zaxira kodni yozib, xavfsiz joyda saqlang.
-2. **Sozlamalar**: qo'llab-quvvatlash kontakti (telefon/Telegram), to'lov bo'yicha ko'rsatma (muddati tugagan mijoz shuni ko'radi), standart filial limiti.
+2. **Sozlamalar**: qo'llab-quvvatlash kontakti (telefon/Telegram), to'lov bo'yicha ko'rsatma (karta raqami va kimning nomiga — mijoz to'lov sahifasida shuni ko'radi), standart filial limiti, **1 filial uchun oylik narx** (0 bo'lsa ilovadan to'lov o'chiq).
 3. **Tizim holati** — 4 ta band (baza, fayllar, cron va xabarlar, zaxira nusxalar) yashil bo'lishi kerak.
 
 ## 2. Yangi mijoz (zal) qo'shish
@@ -18,6 +18,13 @@ Manzil: `https://<domen>/admin/` → login. Super Admin **mijozlarning** (billia
 Mijoz sahifasida:
 - **To'lov qayd etish** — summa (butun so'm), turi (naqd / bank / karta / boshqa), kunlar. Obuna faol bo'lsa — joriy tugash sanasidan, tugagan bo'lsa — bugundan uzaytiriladi.
 - **Muddat qo'shish** — to'lovsiz (bonus, kompensatsiya).
+
+### To'lov so'rovlari (mijoz ilovadan to'laganda)
+1. Mijoz o'z panelida muddatni tanlaydi (1/3/6/12 oy). Summa = faol filiallar × 1 filial narxi × oylar. Pulni kartangizga o'tkazadi va chek rasmini yuboradi.
+2. Sizga xabar keladi (qo'ng'iroqcha). **To'lov so'rovlari** bo'limini oching → **Tekshirish** → **Chekni ko'rish**.
+3. **Avval pul hisobingizga tushganini bank ilovangizda tekshiring.** Chekning o'zi — dalil emas.
+4. Tushgan bo'lsa: kerak bo'lsa summani to'g'rilang → **Tasdiqlash**. Obuna avtomatik uzayadi (1 oy = 30 kun), to'lov **To'lovlar** ro'yxatiga yoziladi, mijozga xabar boradi.
+5. Tushmagan bo'lsa: **Rad etish** → sababni yozing (mijoz ko'radi).
 - **Tugash sanasini belgilash** — xato to'g'rilash uchun.
 - Hammasi **Audit jurnali**ga yoziladi (kim, qachon, eski → yangi qiymat).
 - Tizim muddat tugashidan 5, 3, 1 kun oldin va tugash kuni mijozga va sizga eslatma yuboradi (panel 🔔; mijozning Telegram chatiga ham).

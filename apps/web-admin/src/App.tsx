@@ -4,8 +4,10 @@ import {
   BarChart3,
   Building2,
   Cpu,
+  CreditCard,
   LayoutDashboard,
   MessageCircle,
+  ReceiptText,
   ScrollText,
   Settings,
   SlidersHorizontal,
@@ -29,6 +31,7 @@ import { ReportsPage } from './pages/client/ReportsPage';
 import { SessionDetailPage } from './pages/client/SessionDetailPage';
 import { SessionsPage } from './pages/client/SessionsPage';
 import { StaffPage } from './pages/client/StaffPage';
+import { SubscriptionPage } from './pages/client/SubscriptionPage';
 import { TablesPage } from './pages/client/TablesPage';
 import { TelegramPage } from './pages/client/TelegramPage';
 import { TenantSettingsPage } from './pages/client/TenantSettingsPage';
@@ -44,12 +47,14 @@ import { ClientsPage } from './pages/super/ClientsPage';
 import { DashboardPage } from './pages/super/DashboardPage';
 import { FirmwarePage } from './pages/super/FirmwarePage';
 import { HealthPage } from './pages/super/HealthPage';
+import { PaymentRequestsPage } from './pages/super/PaymentRequestsPage';
 import { PaymentsPage } from './pages/super/PaymentsPage';
 import { SettingsPage } from './pages/super/SettingsPage';
 
 const superNav: NavItem[] = [
   { to: '/super', label: 'nav.dashboard', icon: LayoutDashboard, end: true },
   { to: '/super/clients', label: 'nav.clients', icon: Users },
+  { to: '/super/payment-requests', label: 'nav.paymentRequests', icon: ReceiptText },
   { to: '/super/payments', label: 'nav.payments', icon: Wallet },
   { to: '/super/audit', label: 'nav.audit', icon: ScrollText },
   { to: '/super/health', label: 'nav.health', icon: Activity },
@@ -70,6 +75,7 @@ const clientNav: (NavItem & { permission?: string })[] = [
   { to: '/client/staff', label: 'nav.staff', icon: Users, permission: 'users.manage' },
   { to: '/client/telegram', label: 'nav.telegram', icon: MessageCircle, permission: 'telegram.manage' },
   { to: '/client/settings', label: 'nav.clientSettings', icon: SlidersHorizontal, permission: 'tenant.settings' },
+  { to: '/client/subscription', label: 'nav.subscription', icon: CreditCard, permission: 'billing.manage' },
   { to: '/client/account', label: 'nav.account', icon: UserRound },
 ];
 
@@ -100,6 +106,7 @@ export const routes = [
       { path: 'clients', element: <ClientsPage /> },
       { path: 'clients/new', element: <ClientCreatePage /> },
       { path: 'clients/:id', element: <ClientDetailPage /> },
+      { path: 'payment-requests', element: <PaymentRequestsPage /> },
       { path: 'payments', element: <PaymentsPage /> },
       { path: 'audit', element: <AuditLogPage /> },
       { path: 'settings', element: <SettingsPage /> },
@@ -129,6 +136,7 @@ export const routes = [
       { path: 'staff', element: <StaffPage /> },
       { path: 'telegram', element: <TelegramPage /> },
       { path: 'settings', element: <TenantSettingsPage /> },
+      { path: 'subscription', element: <SubscriptionPage /> },
       { path: 'notifications', element: <NotificationsPage area="client" /> },
       { path: 'account', element: <AccountPage /> },
     ],

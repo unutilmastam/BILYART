@@ -14,6 +14,7 @@ final class SettingsController extends Controller
         'paymentInstructions' => 'payment_instructions',
         'defaultBranchLimit' => 'default_branch_limit',
         'reminderDays' => 'reminder_days',
+        'pricePerBranch' => 'price_per_branch',
     ];
 
     public function show(PlatformSettings $settings): array
@@ -26,7 +27,7 @@ final class SettingsController extends Controller
         $values = [];
         foreach (self::MAP as $in => $key) {
             if ($request->has($in)) {
-                $values[$key] = $request->input($in) ?? '';
+                $values[$key] = $key === 'price_per_branch' ? (int) $request->input($in) : ($request->input($in) ?? '');
             }
         }
         $all = $settings->update($values, $request->user());

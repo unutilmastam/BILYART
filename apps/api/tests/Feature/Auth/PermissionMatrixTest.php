@@ -15,7 +15,7 @@ class PermissionMatrixTest extends TestCase
     {
         $operator = ['tables.view', 'sessions.view', 'sessions.create', 'sessions.stop', 'sessions.mark_payment'];
         $manager = array_merge($operator, ['photos.view', 'photos.delete', 'reports.view', 'tables.manage', 'pricing.manage', 'working_hours.manage', 'devices.manage', 'users.manage']);
-        $owner = array_merge($manager, ['branches.manage', 'telegram.manage', 'tenant.settings', 'tenant.export']);
+        $owner = array_merge($manager, ['branches.manage', 'telegram.manage', 'tenant.settings', 'tenant.export', 'billing.manage']);
 
         $this->assertEqualsCanonicalizing($operator, Permissions::forRole(Role::CLIENT_OPERATOR));
         $this->assertEqualsCanonicalizing($manager, Permissions::forRole(Role::CLIENT_MANAGER));

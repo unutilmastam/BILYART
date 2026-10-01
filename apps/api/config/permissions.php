@@ -15,7 +15,7 @@ $manager = array_merge($operator, [
 ]);
 
 $owner = array_merge($manager, [
-    'branches.manage', 'telegram.manage', 'tenant.settings', 'tenant.export',
+    'branches.manage', 'telegram.manage', 'tenant.settings', 'tenant.export', 'billing.manage',
 ]);
 
 return [

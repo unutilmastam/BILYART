@@ -16,6 +16,7 @@ Engine: portable — MySQL 8.0 / MariaDB ≥ 10.6 (InnoDB, utf8mb4) **or** Postg
 | `tenants` | id, public_id, name, contact_phone, status_flag (ACTIVE/SUSPENDED/DEACTIVATED), subscription_expires_at, branch_limit, table_limit NULL, device_limit NULL, user_limit NULL, timezone default 'Asia/Tashkent', created_at |
 | `subscriptions` | id, tenant_id, starts_at, expires_at, days, source (PAYMENT/MANUAL_ADJUST), payment_id NULL, created_by |
 | `subscription_payments` | id, tenant_id, amount, currency 'UZS', method (CASH/BANK_TRANSFER/CARD_TRANSFER/OTHER), note, paid_at, recorded_by |
+| `subscription_payment_requests` | id, public_id, tenant_id, months (1–12), branch_count, price_per_branch, amount (snapshot, UZS), status (PENDING/APPROVED/REJECTED/CANCELLED), receipt_path (private JPEG `tenants/{id}/receipts/{ULID}.jpg`), receipt_sha256, note, reject_reason, created_by (tenant FK), reviewed_by, reviewed_at, payment_id UNIQUE → subscription_payments. CHECK: APPROVED ⇔ payment_id and reviewed_by set. One PENDING per tenant (checked under the tenant row lock) |
 | `subscription_events` | id, tenant_id, type (ACTIVATED/EXTENDED/SUSPENDED/RESUMED/EXPIRED/LIMIT_CHANGED), old_value JSON, new_value JSON, actor_user_id, created_at |
 | `system_settings` | key PK, value JSON, updated_by |
 | `firmware_releases` | id, version (semver, unique), sha256, file_path, size, notes, is_published, created_by |
