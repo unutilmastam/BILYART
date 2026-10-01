@@ -49,10 +49,10 @@ export function TablesScreen({ tables, now, online, onChoose }: { tables: Tablet
                 className={`relative flex size-full flex-col justify-between overflow-hidden rounded-[28px] p-5 text-left transition active:scale-[0.98] ${look.card}`}
               >
                 <div className="flex items-start justify-between gap-3">
-                  <span className="grid size-16 place-items-center rounded-full bg-gradient-to-br from-white to-slate-200 text-3xl font-extrabold text-ink shadow-lg tabular">
+                  <span className="grid size-16 shrink-0 place-items-center rounded-full bg-gradient-to-br from-white to-slate-200 text-3xl font-extrabold text-ink shadow-lg tabular">
                     {table.number}
                   </span>
-                  <span className={`rounded-full px-3 py-1 text-lg font-bold ${look.badge}`}>{t(look.label)}</span>
+                  <span className={`rounded-full px-3 py-1 text-center text-lg font-bold leading-tight ${look.badge}`}>{t(look.label)}</span>
                 </div>
                 <div>
                   <span className="block text-2xl font-bold tracking-tight">{table.name}</span>

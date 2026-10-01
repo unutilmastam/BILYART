@@ -3,7 +3,7 @@ name: Deploy to hosting
 # Optional one-click deploy over SSH (docs/DEPLOYMENT.md §3). Disabled until the owner adds the secrets:
 #   DEPLOY_HOST, DEPLOY_USER, DEPLOY_SSH_KEY (private key, its public half in cPanel → SSH Access),
 #   DEPLOY_KNOWN_HOSTS (output of `ssh-keyscan -p <port> <host>`), optional DEPLOY_PORT;
-# and repository variable DEPLOY_URL (e.g. https://itcode.uz). The first install is done by hand (docs/DEPLOY_UZ.md).
+# and repository variable DEPLOY_URL (e.g. https://nbx.itcode.uz). The first install is done by hand (docs/DEPLOY_UZ.md).
 on:
   workflow_dispatch:
     inputs:

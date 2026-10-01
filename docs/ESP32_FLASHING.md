@@ -36,7 +36,7 @@ Qurilmalar serverga faqat shu sir bilan ro'yxatdan o'ta oladi (begona qurilmalar
 Har bir **filialga bitta ESP32** — u filialdagi stollarning chiroqlarini boshqaradi (har bir stolga bitta rele kanali; standart buildda 4 ta kanal, ko'pi bilan 8 ta). Filialda 8 tadan ko'p stol bo'lsa — ikkinchi ESP32.
 1. Qurilmani HARDWARE.md bo'yicha elektrik o'rnatadi va quvvat beradi. Ko'k LED tez miltillaydi.
 2. Telefon: **Wi-Fi → BILLIARD-XXXX** → yorliqdagi parol. Sozlash sahifasi o'zi ochiladi (ochilmasa brauzerda `http://192.168.4.1`).
-3. Zal Wi-Fi nomi va parolini kiriting. **Server manzili**: `https://itcode.uz` (subdomen tanlansa — o'sha manzil). **Saqlash**.
+3. Zal Wi-Fi nomi va parolini kiriting. **Server manzili**: `https://nbx.itcode.uz` (odatda o'zi yozilgan bo'ladi, o'zgartirmang). **Saqlash**.
 4. 10–20 soniyadan keyin sahifani yangilang: **Ulash kodi** (6 raqam) chiqadi.
 5. Admin panel → **Qurilmalar → ESP32 ulash** → kod, **filial** → **Ulash**.
 6. LED doimiy yonib qoladi. Admin panelda qurilma "onlayn" ko'rinadi, ostida kanallar ro'yxati (hammasi "bo'sh"). Telefon Wi-Fi'ni avvalgi tarmoqqa qaytaring.

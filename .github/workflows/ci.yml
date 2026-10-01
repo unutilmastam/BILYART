@@ -187,7 +187,7 @@ jobs:
         working-directory: devices/esp32
     env:
       FW_VERSION: ${{ inputs.firmware_version || format('1.0.0-ci.{0}', github.run_number) }}
-      DEFAULT_API_BASE: https://itcode.uz
+      DEFAULT_API_BASE: https://nbx.itcode.uz
       # Set in GitHub → Settings → Secrets and variables → Actions (docs/ESP32_FLASHING.md). Same value as the server's .env.
       DEVICE_REGISTRATION_SECRET: ${{ secrets.DEVICE_REGISTRATION_SECRET }}
     steps:
