@@ -444,8 +444,23 @@ paths:
   /api/admin/devices/pair:
     post:
       tags: [Admin]
-      summary: "Pair ESP32 by code"
+      summary: "Pair ESP32 to a branch by code: {code, branchId} (one ESP32 per branch; tables are wired to its channels via PATCH /api/admin/tables/{table} {deviceId, deviceChannel})"
       security: [{"cookieAuth": []}]
+      responses:
+        '201':
+          description: Created
+        default:
+          description: Error
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiError' }
+  /api/admin/devices/{device}:
+    patch:
+      tags: [Admin]
+      summary: "Move a paired ESP32 to another branch: {branchId} (409 while tables are wired to it)"
+      security: [{"cookieAuth": []}]
+      parameters:
+        - { name: device, in: path, required: true, schema: { type: string } }
       responses:
         '200':
           description: OK

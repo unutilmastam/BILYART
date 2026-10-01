@@ -83,10 +83,11 @@ class TabletPairingAndFirmwareTest extends TestCase
             ->assertStatus(422)->assertJsonStructure(['error' => ['fields' => ['file']]]);
 
         $h = $this->hall();
-        $this->asSystem(fn () => $h['device']->forceFill(['status' => 'REVOKED', 'active_table_id' => null, 'active_hardware_id' => null])->save());
+        $this->wire($h['table'], null, null);
+        $this->asSystem(fn () => $h['device']->forceFill(['status' => 'REVOKED', 'active_hardware_id' => null])->save());
         $sim = new DeviceSimulator($this);
         $sim->register()->assertOk();
-        $this->actingAs($this->tenantUser('CLIENT_OWNER', $h['tenant']))->postJson('/api/admin/devices/pair', ['code' => $sim->pairingCode, 'tableId' => $h['table']->public_id])->assertCreated();
+        $this->actingAs($this->tenantUser('CLIENT_OWNER', $h['tenant']))->postJson('/api/admin/devices/pair', ['code' => $sim->pairingCode, 'branchId' => $h['branch']->public_id])->assertCreated();
         $this->app['auth']->forgetGuards();
         $sim->pairingStatus();
 

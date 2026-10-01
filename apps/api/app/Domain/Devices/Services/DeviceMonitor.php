@@ -48,10 +48,11 @@ final class DeviceMonitor
 
     private function notify(Device $device, string $type, Severity $severity): void
     {
-        $table = BilliardTable::query()->find($device->table_id);
+        // One device drives several tables: name them all so staff know which lamps are affected.
+        $tables = BilliardTable::query()->where('device_id', $device->id)->orderBy('device_channel')->pluck('name')->implode(', ');
         $branch = Branch::query()->find($device->branch_id);
         $this->notifications->notify($device->tenant_id, $type, "{$type}:{$device->id}:".$device->offline_since?->getTimestamp(), [
-            'text' => __("notifications.{$type}", ['device' => $device->device_code, 'table' => $table?->name ?? '—', 'branch' => $branch?->name ?? '—']),
+            'text' => __("notifications.{$type}", ['device' => $device->device_code, 'table' => $tables !== '' ? $tables : '—', 'branch' => $branch?->name ?? '—']),
             'branchId' => $device->branch_id,
             'deviceId' => $device->public_id,
         ], $severity);

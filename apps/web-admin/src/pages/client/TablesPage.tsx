@@ -4,17 +4,30 @@ import { Button } from '../../components/Button';
 import { Card } from '../../components/Card';
 import { Empty, ErrorBanner, Spinner } from '../../components/Feedback';
 import { SelectField, TextField } from '../../components/Field';
-import { useBranches, useClientMutation, usePlans, useTables } from '../../features/client/api';
+import { useBranches, useClientMutation, useDevices, usePlans, useTables } from '../../features/client/api';
 import { t } from '../../i18n';
 import { ApiError } from '../../lib/api';
 import { formatMoney } from '../../lib/format';
-import type { PricingPlan, Table } from '../../types/api';
+import type { DeviceInfo, PricingPlan, Table } from '../../types/api';
 
 function planOptions(plans: PricingPlan[] | undefined, branchId: string) {
   return [
     { value: '', label: t('table.noPlan') },
     ...(plans ?? []).filter((p) => p.isActive && (p.branchId === null || p.branchId === branchId)).map((p) => ({ value: p.id, label: `${p.name} — ${formatMoney(p.pricePerHour)}/soat` })),
   ];
+}
+
+/** "deviceId:channel" options: free relay channels of the branch's devices plus the table's current one. */
+function wiringOptions(devices: DeviceInfo[] | undefined, table: Table) {
+  const options = [{ value: '', label: t('table.noDevice') }];
+  for (const d of devices ?? []) {
+    if (d.branch?.id !== table.branchId) continue;
+    for (const c of d.channels ?? []) {
+      if (c.table && c.table.id !== table.id) continue;
+      options.push({ value: `${d.id}:${c.channel}`, label: `${d.code} · ${t('dev.channel', { n: c.channel })}` });
+    }
+  }
+  return options;
 }
 
 function CreateTable({ branchId, plans }: { branchId: string; plans?: PricingPlan[] }) {
@@ -36,8 +49,12 @@ function CreateTable({ branchId, plans }: { branchId: string; plans?: PricingPla
   );
 }
 
-function TableRow({ table, plans, canManage }: { table: Table; plans?: PricingPlan[]; canManage: boolean }) {
-  const m = useClientMutation<{ pricingPlanId?: string | null; isActive?: boolean }>(`/admin/tables/${table.id}`, 'PATCH');
+function TableRow({ table, plans, devices, canManage }: { table: Table; plans?: PricingPlan[]; devices?: DeviceInfo[]; canManage: boolean }) {
+  const m = useClientMutation<{ pricingPlanId?: string | null; isActive?: boolean; deviceId?: string | null; deviceChannel?: number | null }>(`/admin/tables/${table.id}`, 'PATCH');
+  const wire = (value: string) => {
+    const [deviceId, channel] = value.split(':');
+    m.mutate(deviceId ? { deviceId, deviceChannel: Number(channel) } : { deviceId: null });
+  };
   return (
     <li className="flex flex-col gap-2 py-3 sm:flex-row sm:items-center sm:justify-between">
       <div className="min-w-0">
@@ -46,7 +63,7 @@ function TableRow({ table, plans, canManage }: { table: Table; plans?: PricingPl
           {t('table.device')}:{' '}
           {table.device ? (
             <span className={table.device.online ? 'text-emerald-700' : 'text-red-700'}>
-              {table.device.code} · {table.device.online ? t('table.online') : t('table.offline')}
+              {table.device.code} · {t('dev.channel', { n: table.device.channel })} · {table.device.online ? t('table.online') : t('table.offline')}
             </span>
           ) : t('table.noDevice')}
         </p>
@@ -61,6 +78,16 @@ function TableRow({ table, plans, canManage }: { table: Table; plans?: PricingPl
           >
             {planOptions(plans, table.branchId).map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
           </select>
+          {devices && (
+            <select
+              aria-label={t('table.wiring')}
+              className="min-h-11 rounded-lg border border-slate-300 px-2 text-sm"
+              value={table.device ? `${table.device.id}:${table.device.channel}` : ''}
+              onChange={(e) => wire(e.target.value)}
+            >
+              {wiringOptions(devices, table).map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+            </select>
+          )}
           <Button variant="secondary" loading={m.isPending} onClick={() => m.mutate({ isActive: !table.isActive })}>
             {table.isActive ? t('branch.disable') : t('branch.enable')}
           </Button>
@@ -81,6 +108,8 @@ export function TablesPage() {
   const tables = useTables(selected || undefined);
   const canManage = !!me.data?.permissions.includes('tables.manage');
   const plans = usePlans(!!me.data?.permissions.includes('pricing.manage'));
+  const canWire = canManage && !!me.data?.permissions.includes('devices.manage');
+  const devices = useDevices(canWire);
 
   if (branches.isPending) return <Spinner />;
   if (branches.isError) return <ErrorBanner error={branches.error} />;
@@ -95,7 +124,7 @@ export function TablesPage() {
       <Card title={t('nav.tables')}>
         {tables.isPending ? <Spinner /> : tables.isError ? <ErrorBanner error={tables.error} /> : tables.data.length === 0 ? <Empty /> : (
           <ul className="divide-y divide-slate-100">
-            {tables.data.map((tb) => <TableRow key={tb.id} table={tb} plans={plans.data} canManage={canManage} />)}
+            {tables.data.map((tb) => <TableRow key={tb.id} table={tb} plans={plans.data} devices={canWire ? devices.data : undefined} canManage={canManage} />)}
           </ul>
         )}
       </Card>

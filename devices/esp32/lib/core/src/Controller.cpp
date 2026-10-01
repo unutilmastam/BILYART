@@ -17,15 +17,29 @@ bool sessionFrom(JsonObjectConst p, const Config& cfg, Session& s) {
   s.flashCount = p["flashCount"] | cfg.flashCount;
   return true;
 }
+
+int channelOf(JsonObjectConst p) { return p["channel"].is<int>() ? p["channel"].as<int>() : 0; }
 }  // namespace
 
-bool Controller::startFrom(JsonObjectConst payload, int64_t now, const char*& error) {
+bool Controller::anyActive() const {
+  for (int i = 0; i < channels_; i++)
+    if (timers_[i].active()) return true;
+  return false;
+}
+
+Light Controller::light(int channel) const {
+  const SessionTimer& t = timers_[channel - 1];
+  if (!t.active()) return Light::Off;
+  return t.warned() ? Light::Warning : Light::On;
+}
+
+bool Controller::startFrom(int channel, JsonObjectConst payload, int64_t now, const char*& error) {
   Session s;
   if (!sessionFrom(payload, cfg_, s)) {
     error = "BAD_PAYLOAD";
     return false;
   }
-  switch (timer_.start(s, now, cfg_.maxSessionSec)) {
+  switch (timers_[channel - 1].start(s, now, cfg_.maxSessionSec)) {
     case SessionTimer::StartResult::Invalid:
       error = "BAD_PAYLOAD";
       return false;
@@ -33,8 +47,15 @@ bool Controller::startFrom(JsonObjectConst payload, int64_t now, const char*& er
       error = "ALREADY_ENDED";
       return false;
     default:
-      flasher_.cancel();
+      flashers_[channel - 1].cancel();
       return true;
+  }
+}
+
+void Controller::stopChannel(int channel, Effects& fx) {
+  if (timers_[channel - 1].stop(nullptr)) {
+    flashers_[channel - 1].cancel();
+    fx.persist(channel);
   }
 }
 
@@ -44,27 +65,39 @@ Ack Controller::handle(JsonObjectConst cmd, int64_t serverNow, int64_t now, uint
   std::strncpy(ack.commandId, id, kIdLen);
   const char* type = cmd["type"] | "";
   const int64_t expiresAt = cmd["expiresAt"] | static_cast<int64_t>(0);
+  JsonObjectConst p = cmd["payload"];
+  const bool perChannel = std::strcmp(type, "START_SESSION") == 0 || std::strcmp(type, "STOP_SESSION") == 0 || std::strcmp(type, "WARNING") == 0;
+  const int ch = perChannel ? channelOf(p) : 0;
+  ack.channel = ch;
 
   if (!validId(id)) {
     ack.result = "ERROR";
     ack.error = "BAD_COMMAND_ID";
     return ack;
   }
+  if (perChannel && !validChannel(ch)) {  // a channel this board does not have: never touch another relay
+    ack.channel = 0;
+    ack.result = "ERROR";
+    ack.error = "BAD_CHANNEL";
+    log_.add(id);
+    return ack;
+  }
   if (log_.contains(id)) {  // re-delivery after a lost ACK
     ack.result = "IGNORED";
+    if (ch) ack.light = light(ch);
     return ack;
   }
   if (expiresAt != 0 && expiresAt < serverNow) {  // stale command: never act on it
     log_.add(id);
     ack.result = "IGNORED";
+    if (ch) ack.light = light(ch);
     return ack;
   }
 
-  JsonObjectConst p = cmd["payload"];
   if (std::strcmp(type, "START_SESSION") == 0) {
     const char* err = nullptr;
-    if (startFrom(p, now, err)) {
-      fx.persistSession = true;
+    if (startFrom(ch, p, now, err)) {
+      fx.persist(ch);
     } else if (std::strcmp(err, "ALREADY_ENDED") == 0) {
       ack.result = "IGNORED";
     } else {
@@ -73,13 +106,14 @@ Ack Controller::handle(JsonObjectConst cmd, int64_t serverNow, int64_t now, uint
     }
   } else if (std::strcmp(type, "STOP_SESSION") == 0) {
     const char* sid = p["sessionId"] | static_cast<const char*>(nullptr);
-    if (timer_.stop(sid)) {
-      flasher_.cancel();
-      fx.persistSession = true;
+    if (timers_[ch - 1].stop(sid)) {
+      flashers_[ch - 1].cancel();
+      fx.persist(ch);
     }
   } else if (std::strcmp(type, "WARNING") == 0) {
     const char* sid = p["sessionId"] | static_cast<const char*>(nullptr);
-    if (timer_.active() && (!sid || timer_.session().is(sid))) flasher_.start(timer_.session().flashCount > 0 ? timer_.session().flashCount : 3, monoMs);
+    const SessionTimer& t = timers_[ch - 1];
+    if (t.active() && (!sid || t.session().is(sid))) flashers_[ch - 1].start(t.session().flashCount > 0 ? t.session().flashCount : 3, monoMs);
     else ack.result = "IGNORED";
   } else if (std::strcmp(type, "SYNC") == 0) {
     fx.syncState = true;
@@ -94,9 +128,9 @@ Ack Controller::handle(JsonObjectConst cmd, int64_t serverNow, int64_t now, uint
     if (!*ver || std::strlen(sha) != 64 || !p["size"].is<int64_t>()) {
       ack.result = "ERROR";
       ack.error = "BAD_PAYLOAD";
-    } else if (timer_.active()) {
+    } else if (anyActive()) {
       ack.result = "ERROR";
-      ack.error = "SESSION_ACTIVE";  // never update during a game
+      ack.error = "SESSION_ACTIVE";  // never update while any table is playing
     } else {
       fx.ota = true;
       std::strncpy(fx.otaVersion, ver, sizeof(fx.otaVersion) - 1);
@@ -108,28 +142,32 @@ Ack Controller::handle(JsonObjectConst cmd, int64_t serverNow, int64_t now, uint
     ack.error = "UNKNOWN_COMMAND";
   }
 
+  if (ch) ack.light = light(ch);
   log_.add(id);
   return ack;
 }
 
 void Controller::applyState(JsonObjectConst state, int64_t now, Effects& fx) {
-  JsonObjectConst s = state["session"];
-  if (s.isNull()) {
-    if (timer_.stop(nullptr)) {
-      flasher_.cancel();
-      fx.persistSession = true;
+  JsonArrayConst sessions = state["sessions"];
+  for (int ch = 1; ch <= channels_; ch++) {
+    JsonObjectConst s;
+    for (JsonObjectConst e : sessions)
+      if (channelOf(e) == ch) s = e;
+    if (s.isNull()) {  // nothing runs on this channel (e.g. stopped early while we were offline)
+      stopChannel(ch, fx);
+      continue;
     }
-  } else {
     const char* status = s["status"] | "";
     const bool running = std::strcmp(status, "ACTIVE") == 0 || std::strcmp(status, "STARTING") == 0;
     const char* sid = s["sessionId"] | "";
+    SessionTimer& t = timers_[ch - 1];
     if (!running) {
-      if (timer_.stop(nullptr)) fx.persistSession = true;
-    } else if (!timer_.session().is(sid) || timer_.session().endAt != (s["endAt"] | static_cast<int64_t>(0))) {
-      timer_.stop(nullptr);
+      stopChannel(ch, fx);
+    } else if (!t.session().is(sid) || t.session().endAt != (s["endAt"] | static_cast<int64_t>(0))) {
+      t.stop(nullptr);
       const char* err = nullptr;
-      startFrom(s, now, err);
-      fx.persistSession = true;
+      startFrom(ch, s, now, err);
+      fx.persist(ch);
     }
   }
   JsonObjectConst c = state["config"];
@@ -148,15 +186,23 @@ void Controller::applyConfig(JsonObjectConst c) {
   if (in(c["flashCount"], 0, 10)) cfg_.flashCount = c["flashCount"];
 }
 
-void Controller::restore(const Session& s, bool warned, int64_t now) {
-  if (timer_.start(s, now, cfg_.maxSessionSec) == SessionTimer::StartResult::Started) timer_.setWarned(warned || timer_.warned());
+void Controller::restore(int channel, const Session& s, bool warned, int64_t now) {
+  if (!validChannel(channel)) return;
+  SessionTimer& t = timers_[channel - 1];
+  if (t.start(s, now, cfg_.maxSessionSec) == SessionTimer::StartResult::Started) t.setWarned(warned || t.warned());
 }
 
 Controller::Output Controller::tick(int64_t now, uint64_t monoMs) {
-  const SessionTimer::Tick t = timer_.tick(now);
-  if (t.warnNow) flasher_.start(timer_.session().flashCount, monoMs);
-  if (!t.relayOn) flasher_.cancel();
-  return Output{t.relayOn && flasher_.relayOn(monoMs), t.light, t.ended};
+  Output out;
+  for (int i = 0; i < channels_; i++) {
+    const SessionTimer::Tick t = timers_[i].tick(now);
+    if (t.warnNow) flashers_[i].start(timers_[i].session().flashCount, monoMs);
+    if (!t.relayOn) flashers_[i].cancel();
+    out.relayOn[i] = t.relayOn && flashers_[i].relayOn(monoMs);
+    out.light[i] = t.light;
+    if (t.ended) out.ended |= static_cast<uint8_t>(1u << i);
+  }
+  return out;
 }
 
 }  // namespace bl

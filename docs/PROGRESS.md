@@ -10,7 +10,7 @@ Updated by Claude Code at the end of every session.
 | 8. Tablet PWA | DONE | kiosk PWA + TABLET_SETUP.md (App pinning) |
 | 9. Photos | DONE | server + tablet camera (face detection, one photo) |
 | 10, 12, 13, 14 | DONE | devices/tablets server side, Telegram, notifications/subscriptions, monitoring/backups |
-| 11. ESP32 firmware | DONE (code) | builds in CI; on-hardware test pending (owner's bench, HARDWARE.md §5) |
+| 11. ESP32 firmware | DONE (code) | one ESP32 per branch, up to 8 lamps; builds in CI; on-hardware test pending (owner's bench, HARDWARE.md §5) |
 | 15. Security testing | DONE | see below, TESTING.md, SECURITY_REVIEW.md |
 | 16. Deployment | TOOLING READY | package + scripts + guides done; installing on the hosting waits for the owner |
 
@@ -133,11 +133,21 @@ Remaining for Phase 1:
 - `npm audit` (prod deps, high+) in CI for web-admin and protocol. `docs/TESTING.md` maps spec §43 items 1–15 to tests; `docs/SECURITY_REVIEW.md` manual checklist.
 - 199 API tests green on MySQL 8, MariaDB 10.6, PostgreSQL 13; 20 web-admin tests.
 
+## Owner request — one ESP32 per branch (2026-10-01)
+- Owner: "one ESP32 per branch, e.g. 4 tables → one ESP32 controls the four lamps; lamps are 220 V".
+- DB (migration `2026_10_05_000001_multi_channel_devices`, verified up/down/up on MySQL, MariaDB, PostgreSQL): `devices.channel_count` (1..8), device belongs to a branch (new FK (tenant, branch) → branches); `billiard_tables.device_id` + `device_channel` with UNIQUE(device, channel) and FK (tenant, branch, device) → devices; `game_sessions.device_channel`, `device_commands.channel`; old 1:1 pairings became channel 1; backup order devices → tables.
+- Protocol: `register.channelCount`, `poll.channels[]`, START/STOP/WARNING `payload.channel`, `state.sessions[]`, ack `channel`.
+- Server: pair to a branch, move between branches, wire a table to a channel (table form; needs `devices.manage`), running games block rewiring/moving/unpairing; superseding scoped per channel; rollout "busy" if any of the device's tables plays; offline alerts name all tables of the device.
+- Admin: Devices page pairs by branch and shows channels → table + lamp state; Tables page has a "Chiroq" select (free channels of the branch's devices).
+- Firmware: per-channel timers/flashers, `BAD_CHANNEL` for channels the board lacks, poll/ack per channel, `RELAY_CHANNELS` build flag (default 4), relay pins 26/27/25/33/32/23/22/21, per-channel NVS + one checkpoint blob, legacy NVS session → channel 1. 19 host tests.
+- Docs: HARDWARE (4-channel high-trigger relay module + contactors, single-point-of-failure note, bypass switches), DEVICE_PROTOCOL, ESP32_FLASHING, CLIENT_ADMIN_GUIDE, TROUBLESHOOTING, DATABASE, ARCHITECTURE, API, openapi.
+- Tests: 211 API tests on 3 DBs (new `MultiChannelDeviceTest`: independent channels end to end, wiring rules, cross-tenant wiring refused by API and DB, running-session conflicts, unwired table, BAD_CHANNEL fails the start); 27 web-admin tests.
+
 ## Open questions for the owner
 1. ~~Platform domain~~ → **itcode.uz**. Still open: root domain or a subdomain (e.g. `billiard.itcode.uz`)? Its document root in cPanel → Domains?
 2. ~~First ESP32 flash method~~ → from a computer (owner, 2026-09-30).
 3. Tablet model and Android version for kiosk testing? Can it be factory-reset (needed for Device Owner QR provisioning)?
-4. How many halls/tables for the pilot, and the lamp power per table (for relay/contactor sizing)?
+4. How many halls/tables for the pilot, and the lamp **power in watts** per table (for contactor/breaker sizing)? The owner confirmed 220 V lamps (voltage); wattage still open.
 5. Repository is **public**. Recommend making it private (GitHub → Settings → Danger Zone → Change visibility). Note: private repos have a monthly free Actions-minutes limit.
 6. Hostmaster plan name (for LVE limits) — visible in the Hostmaster client area.
 

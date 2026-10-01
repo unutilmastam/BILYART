@@ -25,6 +25,7 @@ final class TableResource extends JsonResource
             'device' => $this->whenLoaded('device', fn () => $this->device ? [
                 'id' => $this->device->public_id,
                 'code' => $this->device->device_code,
+                'channel' => $this->device_channel,
                 'online' => $this->device->isOnline(),
                 'lastSeenAt' => $this->device->last_seen_at?->toIso8601ZuluString(),
             ] : null),

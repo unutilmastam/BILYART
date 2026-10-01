@@ -32,20 +32,24 @@ Qurilmalar serverga faqat shu sir bilan ro'yxatdan o'ta oladi (begona qurilmalar
    `Setup Wi-Fi: BILLIARD-3F2A  password: 48213907  (write this on the device label)`
    Qurilma kodi (`device ESP32-...`) va shu parolni qutiga yozib qo'ying (HARDWARE.md §6).
 
-## 3. Zalda ulash (telefondan)
+## 3. Filialda ulash (telefondan)
+Har bir **filialga bitta ESP32** — u filialdagi stollarning chiroqlarini boshqaradi (har bir stolga bitta rele kanali; standart buildda 4 ta kanal, ko'pi bilan 8 ta). Filialda 8 tadan ko'p stol bo'lsa — ikkinchi ESP32.
 1. Qurilmani HARDWARE.md bo'yicha elektrik o'rnatadi va quvvat beradi. Ko'k LED tez miltillaydi.
 2. Telefon: **Wi-Fi → BILLIARD-XXXX** → yorliqdagi parol. Sozlash sahifasi o'zi ochiladi (ochilmasa brauzerda `http://192.168.4.1`).
 3. Zal Wi-Fi nomi va parolini kiriting. **Server manzili**: `https://itcode.uz` (subdomen tanlansa — o'sha manzil). **Saqlash**.
 4. 10–20 soniyadan keyin sahifani yangilang: **Ulash kodi** (6 raqam) chiqadi.
-5. Admin panel → **Qurilmalar → ESP32 ulash** → kod, **stol** → **Ulash**.
-6. LED doimiy yonib qoladi. Admin panelda qurilma "onlayn" ko'rinadi. Telefon Wi-Fi'ni avvalgi tarmoqqa qaytaring.
+5. Admin panel → **Qurilmalar → ESP32 ulash** → kod, **filial** → **Ulash**.
+6. LED doimiy yonib qoladi. Admin panelda qurilma "onlayn" ko'rinadi, ostida kanallar ro'yxati (hammasi "bo'sh"). Telefon Wi-Fi'ni avvalgi tarmoqqa qaytaring.
+7. Admin panel → **Stollar** → har bir stol qatoridagi **Chiroq** tanlovida: `ESP32-XXXXXX · 1-kanal` (elektrik qaysi kanalni qaysi stol kontaktoriga ulagan bo'lsa — o'sha). Bitta kanalga faqat bitta stol.
+8. **Qurilmalar** sahifasida har bir kanal yonida stol nomi ko'rinadi — elektrikning yorlig'i bilan solishtiring.
 
 ## 4. Tekshirish
-HARDWARE.md §5 dagi 5 ta sinovni bajaring (yoqish, 5 daqiqa ogohlantirish, tugashda o'chish — internet uzilgan holda ham, quvvat uzilib qaytganda davom etish, erta to'xtatish).
+HARDWARE.md §5 dagi sinovlarni bajaring: yoqilganda hamma chiroq o'chiq; har bir stol faqat **o'z** chirog'ini yoqadi; 5 daqiqa ogohlantirish; tugashda o'chish — internet uzilgan holda ham; quvvat uzilib qaytganda davom etish; erta to'xtatish.
 
 ## 5. Keyinchalik: Wi-Fi o'zgarsa yoki qurilmani boshqa joyga ko'chirish
 - **BOOT tugmasini 3 soniya** bosib turing → sozlash Wi-Fi'si 10 daqiqaga yoqiladi → yangi Wi-Fi'ni kiriting.
-- **10 soniya** bosib turing → zavod holatiga qaytadi (Wi-Fi va ulanish o'chadi; yorliqdagi sozlash paroli o'zgarmaydi). Boshqa stol/mijozga ulashdan oldin admin panelda eski ulanishni **Uzish** kerak (Qurilmalar → qurilma → Uzish).
+- **10 soniya** bosib turing → zavod holatiga qaytadi (Wi-Fi va ulanish o'chadi; yorliqdagi sozlash paroli o'zgarmaydi). Boshqa mijozga ulashdan oldin admin panelda eski ulanishni **Uzish** kerak (Qurilmalar → qurilma → Uzish; stollar avtomatik ajratiladi). O'yin ketayotganda uzib bo'lmaydi.
+- Shu mijozning **boshqa filialiga** ko'chirish: avval **Stollar**da bu qurilmaga ulangan stollarni "Ulanmagan" qiling, so'ng **Qurilmalar** → qurilma → **Boshqa filialga ko'chirish**.
 
 ## 6. Yangilash (OTA, kompyutersiz)
 1. GitHub → **Actions → CI → Run workflow** → versiya: masalan `1.1.0` → **Run**. Tugagach `esp32-firmware` ni yuklab oling.
@@ -59,4 +63,6 @@ HARDWARE.md §5 dagi 5 ta sinovni bajaring (yoqish, 5 daqiqa ogohlantirish, tuga
 | Sozlash sahifasida "ro'yxatdan o'tmadi (401)" yoki "(422)" | Buildda `DEVICE_REGISTRATION_SECRET` yo'q yoki serverdagidan farq qiladi (§0, §1). |
 | "Admin panelda qurilmani uzib, qayta ulang" | Bu qurilma serverda hali ulangan deb turibdi: Admin → Qurilmalar → **Uzish**, keyin qayta ulang. |
 | LED sekin miltillaydi | Server bilan aloqa yo'q. Stol chiroqlari baribir o'z vaqtida o'chadi. Wi-Fi signalini tekshiring (−75 dBm dan yaxshi). |
+| Boshqa stolning chirog'i yondi | Stollar sahifasidagi kanal va elektrik ulagan kontaktor mos emas — kanalni to'g'rilang yoki kontaktor yorlig'ini tekshiring. |
+| O'yin "FAILED", qurilma "BAD_CHANNEL" | Stolga platada yo'q kanal tanlangan (masalan 4 kanalli platada 6-kanal). To'g'ri kanalni tanlang. |
 | Serverga ulanmaydi, lekin internet bor | Server sertifikati Let's Encrypt yoki Sectigo (cPanel AutoSSL) bo'lishi kerak — boshqa sertifikat bilan qurilma xavfsizlik uchun ulanmaydi. |

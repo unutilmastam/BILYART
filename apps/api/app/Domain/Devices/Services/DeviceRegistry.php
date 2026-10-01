@@ -4,6 +4,7 @@ namespace App\Domain\Devices\Services;
 
 use App\Domain\Audit\Enums\ActorType;
 use App\Domain\Audit\Services\AuditLogger;
+use App\Domain\Branches\Models\Branch;
 use App\Domain\Devices\Enums\DeviceStatus;
 use App\Domain\Devices\Models\Device;
 use App\Domain\Devices\Models\DevicePairing;
@@ -21,8 +22,9 @@ use Illuminate\Support\Facades\DB;
 /**
  * Device registration and pairing (DEVICE_PROTOCOL.md §2). A device belongs to
  * nobody until a client admin enters its code; it then stays bound to that
- * tenant/table until explicitly unpaired (spec §17). tenant/branch/table sent
- * by a device are never trusted — they come only from the pairing.
+ * tenant/branch until explicitly unpaired (spec §17). Tables are wired to its
+ * relay channels by the admin. tenant/branch/table sent by a device are never
+ * trusted — they come only from the pairing and the wiring.
  */
 final class DeviceRegistry
 {
@@ -33,11 +35,11 @@ final class DeviceRegistry
     ) {}
 
     /** @return array{deviceCode: string, pairingCode: string, pairingExpiresAt: int, pollToken: string, serverTime: int} */
-    public function register(string $hardwareId, string $firmwareVersion, string $ip): array
+    public function register(string $hardwareId, string $firmwareVersion, string $ip, int $channelCount = 1): array
     {
         $hardwareId = strtoupper($hardwareId);
 
-        return $this->context->runAsSystem(fn () => DB::transaction(function () use ($hardwareId, $firmwareVersion, $ip): array {
+        return $this->context->runAsSystem(fn () => DB::transaction(function () use ($hardwareId, $firmwareVersion, $ip, $channelCount): array {
             /** @var Device|null $device */
             $device = Device::query()->where('active_hardware_id', $hardwareId)->lockForUpdate()->first();
             if ($device?->status === DeviceStatus::PAIRED) {
@@ -53,7 +55,7 @@ final class DeviceRegistry
                     'registered_at' => now(),
                 ]);
             }
-            $device->forceFill(['firmware_version' => $firmwareVersion, 'last_ip' => $ip, 'last_seen_at' => now()])->save();
+            $device->forceFill(['firmware_version' => $firmwareVersion, 'channel_count' => $channelCount, 'last_ip' => $ip, 'last_seen_at' => now()])->save();
 
             DevicePairing::query()->where('device_id', $device->id)->whereNull('used_at')->update(['expires_at' => now()]);
             $code = PairingCodes::fresh();
@@ -100,15 +102,15 @@ final class DeviceRegistry
         }));
     }
 
-    /** Client admin enters the code shown by the device portal and chooses a table (spec §17). */
-    public function pair(User $admin, string $code, BilliardTable $table): Device
+    /** Client admin enters the code shown by the device portal and chooses the branch (spec §17). Tables are wired to channels afterwards. */
+    public function pair(User $admin, string $code, Branch $branch): Device
     {
-        if (! $table->is_active) {
-            throw ApiException::of(ErrorCode::TABLE_DISABLED);
+        if (! $branch->is_active) {
+            throw ApiException::of(ErrorCode::VALIDATION_FAILED);
         }
         $tenantId = $this->context->requireTenantId();
 
-        return $this->limits->within(LimitGuard::DEVICES, function () use ($admin, $code, $table, $tenantId): Device {
+        return $this->limits->within(LimitGuard::DEVICES, function () use ($admin, $code, $branch, $tenantId): Device {
             $pairing = $this->context->runAsSystem(fn () => DevicePairing::query()
                 ->where('code_hash', PairingCodes::hash($code))->whereNull('used_at')->lockForUpdate()->first());
             if ($pairing === null) {
@@ -122,67 +124,95 @@ final class DeviceRegistry
             if ($device->status !== DeviceStatus::UNPAIRED) {
                 throw ApiException::of(ErrorCode::PAIRING_CODE_INVALID);
             }
-            if (Device::query()->where('active_table_id', $table->id)->exists()) {
-                throw ApiException::of(ErrorCode::CONFLICT); // one device per table; unpair the old one first
-            }
 
-            $this->context->runAsSystem(function () use ($device, $pairing, $table, $admin, $tenantId): void {
+            $this->context->runAsSystem(function () use ($device, $pairing, $branch, $admin, $tenantId): void {
                 $device->forceFill([
                     'tenant_id' => $tenantId,
-                    'branch_id' => $table->branch_id,
-                    'table_id' => $table->id,
-                    'active_table_id' => $table->id,
+                    'branch_id' => $branch->id,
                     'status' => DeviceStatus::PAIRED,
                     'paired_at' => now(),
                     'paired_by' => $admin->id,
                 ])->save();
                 $pairing->forceFill(['used_at' => now(), 'used_by' => $admin->id, 'tenant_id' => $tenantId])->save();
             });
-            $this->audit->log('device.paired', $device, ['code' => $device->device_code, 'table' => $table->number]);
+            $this->audit->log('device.paired', $device, ['code' => $device->device_code, 'branch' => $branch->name, 'channels' => $device->channel_count]);
 
             return $device;
         });
     }
 
-    /** Moves a paired device to another table of the same tenant (no running session on either). */
-    public function moveToTable(Device $device, BilliardTable $table): Device
+    /** Moves a paired device to another branch of the same tenant; its channels must be free first. */
+    public function moveToBranch(Device $device, Branch $branch): Device
     {
-        return DB::transaction(function () use ($device, $table): Device {
-            $this->assertNoRunningSession($device->table_id);
-            $this->assertNoRunningSession($table->id);
-            if (Device::query()->where('active_table_id', $table->id)->whereKeyNot($device->id)->exists()) {
-                throw ApiException::of(ErrorCode::CONFLICT);
+        return DB::transaction(function () use ($device, $branch): Device {
+            if (BilliardTable::query()->where('device_id', $device->id)->exists()) {
+                throw ApiException::of(ErrorCode::CONFLICT); // unwire its tables first
             }
-            $from = $device->table_id;
-            $device->forceFill(['branch_id' => $table->branch_id, 'table_id' => $table->id, 'active_table_id' => $table->id])->save();
-            $this->audit->log('device.moved', $device, ['fromTable' => $from, 'toTable' => $table->id]);
+            $from = $device->branch_id;
+            $device->forceFill(['branch_id' => $branch->id])->save();
+            $this->audit->log('device.moved', $device, ['fromBranch' => $from, 'toBranch' => $branch->id]);
 
             return $device;
         });
     }
 
-    /** Unpair = revoke the registration: token invalid, table and hardware id released (re-pairing needs the portal). */
+    /**
+     * Wires a table's lamp to a relay channel of a device in the same branch (null = unwire).
+     * One table per channel (DB unique); never while the table has a running session.
+     */
+    public function assignChannel(BilliardTable $table, ?Device $device, ?int $channel): BilliardTable
+    {
+        return DB::transaction(function () use ($table, $device, $channel): BilliardTable {
+            /** @var BilliardTable $locked */
+            $locked = BilliardTable::query()->lockForUpdate()->findOrFail($table->id);
+            if ($locked->device_id === $device?->id && $locked->device_channel === ($device ? $channel : null)) {
+                return $locked;
+            }
+            $this->assertNoRunningSession([$locked->id]);
+            if ($device !== null) {
+                if ($device->status !== DeviceStatus::PAIRED || $device->branch_id !== $locked->branch_id) {
+                    throw new ApiException(ErrorCode::VALIDATION_FAILED, [], ['fields' => ['deviceId' => [__('validation.exists', ['attribute' => 'device'])]]]);
+                }
+                if ($channel === null || $channel < 1 || $channel > $device->channel_count) {
+                    throw new ApiException(ErrorCode::VALIDATION_FAILED, [], ['fields' => ['deviceChannel' => [__('validation.between.numeric', ['attribute' => 'channel', 'min' => 1, 'max' => $device->channel_count])]]]);
+                }
+                $taken = BilliardTable::query()->where('device_id', $device->id)->where('device_channel', $channel)->whereKeyNot($locked->id)->exists();
+                if ($taken) {
+                    throw ApiException::of(ErrorCode::CONFLICT); // that relay already drives another table
+                }
+            }
+            $from = ['device' => $locked->device_id, 'channel' => $locked->device_channel];
+            $locked->forceFill(['device_id' => $device?->id, 'device_channel' => $device ? $channel : null])->save();
+            $this->audit->log('table.device_wired', $locked, ['from' => $from, 'to' => ['device' => $device?->device_code, 'channel' => $device ? $channel : null]]);
+
+            return $locked;
+        });
+    }
+
+    /** Unpair = revoke the registration: token invalid, tables unwired, hardware id released (re-pairing needs the portal). */
     public function unpair(User $admin, Device $device): Device
     {
         return DB::transaction(function () use ($admin, $device): Device {
-            $this->assertNoRunningSession($device->table_id);
+            $tableIds = BilliardTable::query()->where('device_id', $device->id)->pluck('id')->all();
+            $this->assertNoRunningSession($tableIds);
+            BilliardTable::query()->whereIn('id', $tableIds)->update(['device_id' => null, 'device_channel' => null]);
             $device->forceFill([
                 'status' => DeviceStatus::REVOKED,
-                'active_table_id' => null,
                 'active_hardware_id' => null,
                 'token_hash' => null,
                 'revoked_at' => now(),
                 'revoked_by' => $admin->id,
             ])->save();
-            $this->audit->log('device.unpaired', $device, ['code' => $device->device_code]);
+            $this->audit->log('device.unpaired', $device, ['code' => $device->device_code, 'unwiredTables' => count($tableIds)]);
 
             return $device;
         });
     }
 
-    private function assertNoRunningSession(?int $tableId): void
+    /** @param list<int> $tableIds */
+    private function assertNoRunningSession(array $tableIds): void
     {
-        if ($tableId !== null && GameSession::query()->where('table_id', $tableId)
+        if ($tableIds !== [] && GameSession::query()->whereIn('table_id', $tableIds)
             ->whereIn('status', [SessionStatus::STARTING->value, SessionStatus::ACTIVE->value, SessionStatus::COMPLETING->value])
             ->where(fn ($q) => $q->whereNull('end_at')->orWhere('end_at', '>', now()))->exists()) {
             throw ApiException::of(ErrorCode::CONFLICT);

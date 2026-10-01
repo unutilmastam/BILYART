@@ -69,7 +69,7 @@ Server side and admin first (Phases 2–7, 9 server part, 10 server part, 12–1
  └───────────────────────────────────────────────────────────────────┘
             ▲ HTTPS poll/ack/heartbeat (device token)        ▲ Telegram Bot API
             │                                                 │
-   ESP32 (1 per table) → optocoupler/driver → relay/contactor → 220V lamp
+   ESP32 (1 per branch, 1 relay channel per table) → opto relay module → contactor → 220V lamp
 ```
 
 ## 4. Backend (apps/api)
@@ -121,6 +121,8 @@ Implementation notes (Phase 7):
 - Both builds are copied into `apps/api/public/{admin,tablet}` by CI → same origin, no CORS.
 
 ## 7. Firmware (devices/esp32)
+**One ESP32 per branch** (owner decision 2026-10-01): a board has 1–8 relay channels (`RELAY_CHANNELS`, default 4), one per table lamp. The device is paired to a branch; tables are wired to `(device_id, device_channel)` by the admin (DB: unique per channel, composite FK keeps device, table, branch and tenant consistent). Sessions and commands carry the channel; each channel has its own local timer, so channels never affect each other. Trade-off accepted by the owner: a failed controller stops automatic switching for the whole branch — mitigated by keyed bypass switches and a spare pre-flashed board (HARDWARE.md).
+
 PlatformIO, Arduino-ESP32 core. Modules: `net` (Wi-Fi + captive-portal provisioning), `api` (HTTPS client, pinned root CA), `session` (state + NVS persistence), `relay`, `clock` (NTP + server time), `ota`, `watchdog`, `diag`. Pure logic (session timing, command handling) is in platform-independent C++ so it can be unit-tested with `pio test -e native`. Details: DEVICE_PROTOCOL.md.
 
 ## 8. Telegram

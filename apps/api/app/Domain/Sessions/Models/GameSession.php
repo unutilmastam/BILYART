@@ -42,6 +42,7 @@ class GameSession extends Model
             'status' => SessionStatus::class,
             'payment_status' => PaymentStatus::class,
             'duration_minutes' => 'integer',
+            'device_channel' => 'integer',
             'reserved_until' => 'immutable_datetime',
             'start_at' => 'immutable_datetime',
             'end_at' => 'immutable_datetime',

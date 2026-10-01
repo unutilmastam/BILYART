@@ -44,11 +44,17 @@ static Session makeSession(const char* id = SID, int64_t start = T0, int64_t end
   return s;
 }
 
-static std::string startCmd(const char* cmdId, const char* sid, int64_t end, int64_t expires = T0 + 30) {
+static std::string startCmd(const char* cmdId, const char* sid, int64_t end, int64_t expires = T0 + 30, int channel = 1) {
   char buf[400];
   snprintf(buf, sizeof buf,
-           R"({"commandId":"%s","type":"START_SESSION","expiresAt":%lld,"payload":{"sessionId":"%s","startAt":%lld,"endAt":%lld,"warnBeforeSec":300,"flashCount":3}})",
-           cmdId, (long long)expires, sid, (long long)T0, (long long)end);
+           R"({"commandId":"%s","type":"START_SESSION","expiresAt":%lld,"payload":{"channel":%d,"sessionId":"%s","startAt":%lld,"endAt":%lld,"warnBeforeSec":300,"flashCount":3}})",
+           cmdId, (long long)expires, channel, sid, (long long)T0, (long long)end);
+  return buf;
+}
+
+static std::string stopCmd(const char* cmdId, const char* sid, int channel = 1) {
+  char buf[220];
+  snprintf(buf, sizeof buf, R"({"commandId":"%s","type":"STOP_SESSION","expiresAt":%lld,"payload":{"channel":%d,"sessionId":"%s"}})", cmdId, (long long)(T0 + 30), channel, sid);
   return buf;
 }
 
@@ -126,14 +132,16 @@ void test_start_command_turns_light_on_and_is_idempotent() {
   const std::string cmd = startCmd("01JCMD00000000000000000001", SID, T0 + 3600);
   Ack a = run(c, cmd, T0, fx);
   TEST_ASSERT_EQUAL_STRING("OK", a.result);
-  TEST_ASSERT_TRUE(fx.persistSession);
-  TEST_ASSERT_TRUE(c.tick(T0 + 1, 0).relayOn);
+  TEST_ASSERT_TRUE(fx.persists(1));
+  TEST_ASSERT_EQUAL(1, a.channel);
+  TEST_ASSERT_EQUAL(static_cast<int>(Light::On), static_cast<int>(a.light));
+  TEST_ASSERT_TRUE(c.tick(T0 + 1, 0).relayOn[0]);
 
   Effects fx2;
   Ack again = run(c, cmd, T0 + 6, fx2);  // re-delivered after a lost ACK
   TEST_ASSERT_EQUAL_STRING("IGNORED", again.result);
-  TEST_ASSERT_FALSE(fx2.persistSession);
-  TEST_ASSERT_TRUE(c.tick(T0 + 7, 0).relayOn);
+  TEST_ASSERT_EQUAL(0, fx2.persistChannels);
+  TEST_ASSERT_TRUE(c.tick(T0 + 7, 0).relayOn[0]);
 }
 
 void test_expired_commands_are_never_applied() {
@@ -141,24 +149,20 @@ void test_expired_commands_are_never_applied() {
   Effects fx;
   Ack a = run(c, startCmd("01JCMD00000000000000000002", SID, T0 + 3600, T0 + 30), T0 + 31, fx);
   TEST_ASSERT_EQUAL_STRING("IGNORED", a.result);
-  TEST_ASSERT_FALSE(c.timer().active());
-  TEST_ASSERT_FALSE(c.tick(T0 + 31, 0).relayOn);
+  TEST_ASSERT_FALSE(c.timer(1).active());
+  TEST_ASSERT_FALSE(c.tick(T0 + 31, 0).relayOn[0]);
 }
 
 void test_stop_only_stops_the_matching_session() {
   Controller c;
   Effects fx;
   run(c, startCmd("01JCMD00000000000000000003", SID, T0 + 3600), T0, fx);
-  char stopOther[200];
-  snprintf(stopOther, sizeof stopOther, R"({"commandId":"01JCMD00000000000000000004","type":"STOP_SESSION","expiresAt":%lld,"payload":{"sessionId":"%s"}})", (long long)(T0 + 30), SID2);
-  run(c, stopOther, T0, fx);
-  TEST_ASSERT_TRUE(c.timer().active());
-  char stop[200];
-  snprintf(stop, sizeof stop, R"({"commandId":"01JCMD00000000000000000005","type":"STOP_SESSION","expiresAt":%lld,"payload":{"sessionId":"%s"}})", (long long)(T0 + 30), SID);
+  run(c, stopCmd("01JCMD00000000000000000004", SID2), T0, fx);
+  TEST_ASSERT_TRUE(c.timer(1).active());
   Effects fx2;
-  TEST_ASSERT_EQUAL_STRING("OK", run(c, stop, T0 + 10, fx2).result);
-  TEST_ASSERT_TRUE(fx2.persistSession);
-  TEST_ASSERT_FALSE(c.tick(T0 + 11, 0).relayOn);
+  TEST_ASSERT_EQUAL_STRING("OK", run(c, stopCmd("01JCMD00000000000000000005", SID), T0 + 10, fx2).result);
+  TEST_ASSERT_TRUE(fx2.persists(1));
+  TEST_ASSERT_FALSE(c.tick(T0 + 11, 0).relayOn[0]);
 }
 
 void test_unknown_or_malformed_commands_are_errors() {
@@ -167,15 +171,15 @@ void test_unknown_or_malformed_commands_are_errors() {
   Ack u = run(c, R"({"commandId":"01JCMD00000000000000000006","type":"SELF_DESTRUCT","expiresAt":1790000030,"payload":{}})", T0, fx);
   TEST_ASSERT_EQUAL_STRING("ERROR", u.result);
   TEST_ASSERT_EQUAL_STRING("UNKNOWN_COMMAND", u.error);
-  Ack m = run(c, R"({"commandId":"01JCMD00000000000000000007","type":"START_SESSION","expiresAt":1790000030,"payload":{"sessionId":"01J9ZQ3K8M4N5P6Q7R8S9T0V1W"}})", T0, fx);
+  Ack m = run(c, R"({"commandId":"01JCMD00000000000000000007","type":"START_SESSION","expiresAt":1790000030,"payload":{"channel":1,"sessionId":"01J9ZQ3K8M4N5P6Q7R8S9T0V1W"}})", T0, fx);
   TEST_ASSERT_EQUAL_STRING("ERROR", m.result);
-  TEST_ASSERT_FALSE(c.timer().active());
+  TEST_ASSERT_FALSE(c.timer(1).active());
 }
 
 void test_ota_is_refused_during_a_game() {
   Controller c;
   Effects fx;
-  run(c, startCmd("01JCMD00000000000000000008", SID, T0 + 3600), T0, fx);
+  run(c, startCmd("01JCMD00000000000000000008", SID, T0 + 3600, T0 + 30, 3), T0, fx);  // only channel 3 plays
   const char* ota = R"({"commandId":"01JCMD00000000000000000009","type":"OTA","expiresAt":1790000030,"payload":{"version":"1.1.0","sha256":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","size":900000}})";
   Effects fx2;
   Ack a = run(c, ota, T0, fx2);
@@ -198,7 +202,7 @@ void test_config_update_respects_protocol_ranges() {
 void test_every_command_in_the_protocol_poll_example_is_handled() {
   JsonDocument d;
   TEST_ASSERT_FALSE(deserializeJson(d, fixture("device.poll.response.json")));
-  Controller c;
+  Controller c(Config{}, 4);
   const int64_t serverNow = d["serverTime"];
   for (JsonObjectConst cmd : d["commands"].as<JsonArrayConst>()) {
     Effects fx;
@@ -207,38 +211,100 @@ void test_every_command_in_the_protocol_poll_example_is_handled() {
   }
 }
 
-void test_state_example_resumes_the_session_and_null_state_stops_it() {
+void test_state_example_resumes_each_channel_and_missing_channels_stop() {
   JsonDocument d;
   TEST_ASSERT_FALSE(deserializeJson(d, fixture("device.state.response.json")));
-  Controller c;
+  Controller c(Config{}, 4);
   Effects fx;
   const int64_t now = d["serverTime"];
   c.applyState(d.as<JsonObjectConst>(), now, fx);
-  TEST_ASSERT_TRUE(c.timer().active());
-  TEST_ASSERT_TRUE(c.tick(now, 0).relayOn);
+  TEST_ASSERT_TRUE(c.timer(1).active());
+  TEST_ASSERT_FALSE(c.timer(2).active());
+  TEST_ASSERT_TRUE(c.timer(3).active());
+  Controller::Output out = c.tick(now, 0);
+  TEST_ASSERT_TRUE(out.relayOn[0]);
+  TEST_ASSERT_FALSE(out.relayOn[1]);
+  TEST_ASSERT_EQUAL(static_cast<int>(Light::Warning), static_cast<int>(out.light[2]));  // channel 3 ends at +100 s
 
-  JsonDocument empty;
-  deserializeJson(empty, R"({"serverTime":1790000200,"session":null,"config":{"pollIntervalSec":3,"maxSessionSec":43200,"warnBeforeSec":300,"flashCount":3}})");
+  JsonDocument one;
+  deserializeJson(one, R"({"serverTime":1790000150,"sessions":[{"channel":3,"sessionId":"01J9ZQ3K8M4N5P6Q7R8S9T0V4Z","startAt":1789999000,"endAt":1790000200,"status":"ACTIVE"}],"config":{"pollIntervalSec":3,"maxSessionSec":43200,"warnBeforeSec":300,"flashCount":3}})");
   Effects fx2;
-  c.applyState(empty.as<JsonObjectConst>(), now + 100, fx2);  // stopped early while we were offline
-  TEST_ASSERT_FALSE(c.timer().active());
-  TEST_ASSERT_TRUE(fx2.persistSession);
+  c.applyState(one.as<JsonObjectConst>(), now + 50, fx2);  // channel 1 was stopped early while we were offline
+  TEST_ASSERT_FALSE(c.timer(1).active());
+  TEST_ASSERT_TRUE(c.timer(3).active());
+  TEST_ASSERT_TRUE(fx2.persists(1));
+  TEST_ASSERT_FALSE(fx2.persists(3));  // unchanged channel: no flash write
+}
+
+void test_channels_are_independent() {
+  Controller c(Config{}, 4);
+  Effects fx;
+  run(c, startCmd("01JCMD0000000000000000000B", SID, T0 + 600, T0 + 30, 1), T0, fx);
+  run(c, startCmd("01JCMD0000000000000000000C", SID2, T0 + 3600, T0 + 30, 4), T0, fx);
+  Controller::Output out = c.tick(T0 + 1, 0);
+  TEST_ASSERT_TRUE(out.relayOn[0]);
+  TEST_ASSERT_FALSE(out.relayOn[1]);
+  TEST_ASSERT_FALSE(out.relayOn[2]);
+  TEST_ASSERT_TRUE(out.relayOn[3]);
+
+  // Channel 1 ends locally at its endAt (no network); channel 4 keeps running.
+  out = c.tick(T0 + 600, 0);
+  TEST_ASSERT_EQUAL(1, out.ended);
+  TEST_ASSERT_FALSE(out.relayOn[0]);
+  TEST_ASSERT_TRUE(out.relayOn[3]);
+
+  // A STOP for channel 4's session sent to channel 1 does nothing.
+  Effects fx2;
+  run(c, stopCmd("01JCMD0000000000000000000D", SID2, 1), T0, fx2, T0 + 700);
+  TEST_ASSERT_TRUE(c.timer(4).active());
+  run(c, stopCmd("01JCMD0000000000000000000E", SID2, 4), T0, fx2, T0 + 700);
+  TEST_ASSERT_FALSE(c.timer(4).active());
+  TEST_ASSERT_TRUE(fx2.persists(4));
+}
+
+void test_commands_for_a_channel_the_board_lacks_are_rejected() {
+  Controller c(Config{}, 2);
+  Effects fx;
+  Ack a = run(c, startCmd("01JCMD0000000000000000000F", SID, T0 + 600, T0 + 30, 3), T0, fx);
+  TEST_ASSERT_EQUAL_STRING("ERROR", a.result);
+  TEST_ASSERT_EQUAL_STRING("BAD_CHANNEL", a.error);
+  Ack none = run(c, R"({"commandId":"01JCMD0000000000000000000G","type":"START_SESSION","expiresAt":1790000030,"payload":{"sessionId":"01J9ZQ3K8M4N5P6Q7R8S9T0V1W","startAt":1790000000,"endAt":1790000600}})", T0, fx);
+  TEST_ASSERT_EQUAL_STRING("BAD_CHANNEL", none.error);
+  Controller::Output out = c.tick(T0 + 1, 0);
+  TEST_ASSERT_FALSE(out.relayOn[0]);
+  TEST_ASSERT_FALSE(out.relayOn[1]);
+  TEST_ASSERT_EQUAL(0, fx.persistChannels);
 }
 
 void test_poll_body_has_protocol_fields_and_no_tenant_data() {
+  Controller c(Config{}, 4);
+  Effects fx;
+  run(c, startCmd("01JCMD00000000000000000001", SID, T0 + 3600, T0 + 30, 2), T0, fx);
   JsonDocument d;
-  Session s = makeSession();
-  s.active = true;
-  buildPoll(d, T0, "1.0.0", Light::On, s, -61, 86400, "POWERON", "01JCMD00000000000000000001");
-  TEST_ASSERT_EQUAL_STRING("ON", d["state"]);
-  TEST_ASSERT_EQUAL_STRING(SID, d["sessionId"]);
-  TEST_ASSERT_EQUAL_INT64(T0 + 3600, d["endAt"].as<int64_t>());
+  buildPoll(d, T0, "1.0.0", c, -61, 86400, "POWERON");
+  TEST_ASSERT_EQUAL(4, d["channels"].size());
+  TEST_ASSERT_EQUAL(1, d["channels"][0]["channel"].as<int>());
+  TEST_ASSERT_EQUAL_STRING("OFF", d["channels"][0]["state"]);
+  TEST_ASSERT_TRUE(d["channels"][0]["sessionId"].isNull());
+  TEST_ASSERT_EQUAL_STRING("ON", d["channels"][1]["state"]);
+  TEST_ASSERT_EQUAL_STRING(SID, d["channels"][1]["sessionId"]);
+  TEST_ASSERT_EQUAL_INT64(T0 + 3600, d["channels"][1]["endAt"].as<int64_t>());
+  TEST_ASSERT_EQUAL_STRING("01JCMD00000000000000000001", d["lastAppliedCommandId"]);
   TEST_ASSERT_FALSE(d["tenantId"].is<const char*>());
   TEST_ASSERT_FALSE(d["tableId"].is<const char*>());
-  // Same key set as the protocol example.
+  // Same key sets as the protocol example.
   JsonDocument ex;
   deserializeJson(ex, fixture("device.poll.request.json"));
   for (JsonPairConst kv : d.as<JsonObjectConst>()) TEST_ASSERT_TRUE_MESSAGE(ex[kv.key()].isNull() == false || kv.value().isNull(), kv.key().c_str());
+  for (JsonPairConst kv : d["channels"][0].as<JsonObjectConst>()) TEST_ASSERT_TRUE_MESSAGE(ex["channels"][0].as<JsonObjectConst>()[kv.key()].isUnbound() == false, kv.key().c_str());
+
+  // ACK carries the channel and its light.
+  Ack acks[1];
+  acks[0] = run(c, stopCmd("01JCMD00000000000000000002", SID, 2), T0 + 5, fx);
+  JsonDocument a;
+  buildAck(a, acks, 1);
+  TEST_ASSERT_EQUAL(2, a["acks"][0]["channel"].as<int>());
+  TEST_ASSERT_EQUAL_STRING("OFF", a["acks"][0]["state"]);
 }
 
 // ---- boot + clocks ---------------------------------------------------------
@@ -286,7 +352,9 @@ int main() {
   RUN_TEST(test_ota_is_refused_during_a_game);
   RUN_TEST(test_config_update_respects_protocol_ranges);
   RUN_TEST(test_every_command_in_the_protocol_poll_example_is_handled);
-  RUN_TEST(test_state_example_resumes_the_session_and_null_state_stops_it);
+  RUN_TEST(test_state_example_resumes_each_channel_and_missing_channels_stop);
+  RUN_TEST(test_channels_are_independent);
+  RUN_TEST(test_commands_for_a_channel_the_board_lacks_are_rejected);
   RUN_TEST(test_poll_body_has_protocol_fields_and_no_tenant_data);
   RUN_TEST(test_boot_recovery_decisions);
   RUN_TEST(test_epoch_clock_and_backoff);

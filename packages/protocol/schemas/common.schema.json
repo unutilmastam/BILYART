@@ -121,6 +121,13 @@
           }
         }
       }
+    },
+    "Channel": {
+      "title": "Channel",
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 8,
+      "description": "Relay channel on the device (1-based). One channel = one table lamp."
     }
   }
 }

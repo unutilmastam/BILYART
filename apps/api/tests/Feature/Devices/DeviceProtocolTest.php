@@ -6,7 +6,6 @@ use App\Domain\Devices\Enums\CommandType;
 use App\Domain\Devices\Models\Device;
 use App\Domain\Devices\Models\DeviceCommand;
 use App\Domain\Devices\Services\DeviceCommandBus;
-use App\Domain\Tables\Models\BilliardTable;
 use App\Domain\Tenancy\Models\Tenant;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -28,14 +27,17 @@ class DeviceProtocolTest extends TestCase
         config(['devices.registration_secret' => 'test-registration-secret-123']);
     }
 
-    /** Registers + pairs a simulator to the hall's table (replacing the fixture device). */
-    private function pairedSimulator(array $h): DeviceSimulator
+    /** Registers + pairs a simulator to the hall's branch and wires the hall's table to channel 1 (replacing the fixture device). */
+    private function pairedSimulator(array $h, int $channel = 1): DeviceSimulator
     {
-        $this->asSystem(fn () => $h['device']->forceFill(['status' => 'REVOKED', 'active_table_id' => null, 'active_hardware_id' => null])->save());
+        $this->wire($h['table'], null, null);
+        $this->asSystem(fn () => $h['device']->forceFill(['status' => 'REVOKED', 'active_hardware_id' => null])->save());
         $sim = new DeviceSimulator($this);
         $sim->register()->assertOk();
-        $this->actingAs($this->tenantUser('CLIENT_OWNER', $h['tenant']))
-            ->postJson('/api/admin/devices/pair', ['code' => $sim->pairingCode, 'tableId' => $h['table']->public_id])->assertCreated();
+        $owner = $this->tenantUser('CLIENT_OWNER', $h['tenant']);
+        $deviceId = $this->actingAs($owner)
+            ->postJson('/api/admin/devices/pair', ['code' => $sim->pairingCode, 'branchId' => $h['branch']->public_id])->assertCreated()->json('data.id');
+        $this->actingAs($owner)->patchJson("/api/admin/tables/{$h['table']->public_id}", ['deviceId' => $deviceId, 'deviceChannel' => $channel])->assertOk();
         $sim->pairingStatus()->assertOk()->assertJsonPath('status', 'PAIRED');
         $this->app['auth']->forgetGuards();
 
@@ -58,11 +60,12 @@ class DeviceProtocolTest extends TestCase
         $this->assertMatchesProtocol('device.pairing-status.response', $waiting->json());
 
         $owner = $this->tenantUser('CLIENT_OWNER', $h['tenant']);
-        $table2 = $this->asSystem(fn () => BilliardTable::factory()->create(['tenant_id' => $h['tenant']->id, 'branch_id' => $h['branch']->id, 'number' => 2]));
-        $this->actingAs($owner)->postJson('/api/admin/devices/pair', ['code' => '000000', 'tableId' => $table2->public_id])
+        $this->actingAs($owner)->postJson('/api/admin/devices/pair', ['code' => '000000', 'branchId' => $h['branch']->public_id])
             ->assertStatus(422)->assertJsonPath('error.code', 'PAIRING_CODE_INVALID');
-        $this->actingAs($owner)->postJson('/api/admin/devices/pair', ['code' => $sim->pairingCode, 'tableId' => $table2->public_id])
-            ->assertCreated()->assertJsonPath('data.code', 'ESP32-B2D3E4')->assertJsonPath('data.table.number', 2)->assertJsonPath('data.online', true);
+        $this->actingAs($owner)->postJson('/api/admin/devices/pair', ['code' => $sim->pairingCode, 'branchId' => $h['branch']->public_id])
+            ->assertCreated()->assertJsonPath('data.code', 'ESP32-B2D3E4')->assertJsonPath('data.branch.name', 'Markaz')
+            ->assertJsonPath('data.channelCount', 4)->assertJsonCount(4, 'data.channels')->assertJsonPath('data.channels.0.table', null)
+            ->assertJsonPath('data.online', true);
 
         $paired = $sim->pairingStatus()->assertOk()->assertJsonPath('status', 'PAIRED');
         $this->assertMatchesProtocol('device.pairing-status.response', $paired->json());
@@ -82,15 +85,13 @@ class DeviceProtocolTest extends TestCase
         $sim->register()->assertOk();
         $ownerA = $this->tenantUser('CLIENT_OWNER', $a['tenant']);
         $ownerB = $this->tenantUser('CLIENT_OWNER', $b['tenant']);
-        $tableB2 = $this->asSystem(fn () => BilliardTable::factory()->create(['tenant_id' => $b['tenant']->id, 'branch_id' => $b['branch']->id, 'number' => 2]));
-        $tableA2 = $this->asSystem(fn () => BilliardTable::factory()->create(['tenant_id' => $a['tenant']->id, 'branch_id' => $a['branch']->id, 'number' => 2]));
 
-        $this->actingAs($ownerB)->postJson('/api/admin/devices/pair', ['code' => $sim->pairingCode, 'tableId' => $tableB2->public_id])->assertCreated();
-        // The same code, or a foreign table id, is useless for A.
-        $this->actingAs($ownerA)->postJson('/api/admin/devices/pair', ['code' => $sim->pairingCode, 'tableId' => $tableA2->public_id])
+        $this->actingAs($ownerB)->postJson('/api/admin/devices/pair', ['code' => $sim->pairingCode, 'branchId' => $b['branch']->public_id])->assertCreated();
+        // The same code, or a foreign branch id, is useless for A.
+        $this->actingAs($ownerA)->postJson('/api/admin/devices/pair', ['code' => $sim->pairingCode, 'branchId' => $a['branch']->public_id])
             ->assertStatus(422)->assertJsonPath('error.code', 'PAIRING_CODE_INVALID');
-        $this->actingAs($ownerA)->postJson('/api/admin/devices/pair', ['code' => '123456', 'tableId' => $tableB2->public_id])
-            ->assertStatus(422)->assertJsonStructure(['error' => ['fields' => ['tableId']]]);
+        $this->actingAs($ownerA)->postJson('/api/admin/devices/pair', ['code' => '123456', 'branchId' => $b['branch']->public_id])
+            ->assertStatus(422)->assertJsonStructure(['error' => ['fields' => ['branchId']]]);
         // Re-registering the paired hardware (e.g. from A's hall) is refused until B unpairs it.
         $sim->register()->assertStatus(409)->assertJsonPath('error.code', 'DEVICE_ALREADY_PAIRED');
 
@@ -107,10 +108,11 @@ class DeviceProtocolTest extends TestCase
         $sim = $this->pairedSimulator($h);
         $other = $this->pairedSimulator($this->hall());
 
-        $this->postJson('/device/v1/poll', ['ts' => 1, 'fw' => '1.0.0', 'state' => 'OFF'])->assertStatus(401)->assertJsonPath('error.code', 'DEVICE_UNAUTHORIZED');
-        $this->postJson('/device/v1/poll', ['ts' => 1, 'fw' => '1.0.0', 'state' => 'OFF'], ['Authorization' => "Device {$sim->deviceCode}.".str_repeat('x', 43)])
+        $beat = ['ts' => 1, 'fw' => '1.0.0', 'channels' => [['channel' => 1, 'state' => 'OFF']]];
+        $this->postJson('/device/v1/poll', $beat)->assertStatus(401)->assertJsonPath('error.code', 'DEVICE_UNAUTHORIZED');
+        $this->postJson('/device/v1/poll', $beat, ['Authorization' => "Device {$sim->deviceCode}.".str_repeat('x', 43)])
             ->assertStatus(401)->assertJsonPath('error.code', 'REPAIR_REQUIRED');
-        $this->postJson('/device/v1/poll', ['ts' => 1, 'fw' => '1.0.0', 'state' => 'OFF'], ['Authorization' => "Device {$other->deviceCode}.{$sim->token}"])
+        $this->postJson('/device/v1/poll', $beat, ['Authorization' => "Device {$other->deviceCode}.{$sim->token}"])
             ->assertStatus(401); // token of one device with the code of another
 
         // Device B cannot acknowledge (or learn about) device A's commands.
@@ -132,15 +134,16 @@ class DeviceProtocolTest extends TestCase
 
         $poll = $sim->poll()->assertOk();
         $this->assertMatchesProtocol('device.poll.response', $poll->json());
-        $poll->assertJsonPath('commands.0.type', 'START_SESSION')->assertJsonPath('commands.0.payload.sessionId', $id);
+        $poll->assertJsonPath('commands.0.type', 'START_SESSION')->assertJsonPath('commands.0.payload.sessionId', $id)->assertJsonPath('commands.0.payload.channel', 1);
 
-        $ack = $sim->ack([['commandId' => $poll->json('commands.0.commandId'), 'result' => 'OK', 'state' => 'ON']])->assertOk();
+        $ack = $sim->ack([['commandId' => $poll->json('commands.0.commandId'), 'result' => 'OK', 'channel' => 1, 'state' => 'ON']])->assertOk();
         $this->assertMatchesProtocol('device.ack.response', $ack->json());
         $this->assertSame('ACTIVE', DB::table('game_sessions')->where('public_id', $id)->value('status'));
         $this->assertSame([], $sim->poll()->json('commands'));
         $sim->ack([['commandId' => $poll->json('commands.0.commandId'), 'result' => 'OK']])->assertJsonPath('accepted', [$poll->json('commands.0.commandId')]); // duplicate ACK is harmless
 
-        $state = $sim->state()->assertOk()->assertJsonPath('session.sessionId', $id)->assertJsonPath('session.status', 'ACTIVE');
+        $state = $sim->state()->assertOk()->assertJsonCount(1, 'sessions')->assertJsonPath('sessions.0.channel', 1)
+            ->assertJsonPath('sessions.0.sessionId', $id)->assertJsonPath('sessions.0.status', 'ACTIVE');
         $this->assertMatchesProtocol('device.state.response', $state->json());
     }
 
@@ -181,10 +184,12 @@ class DeviceProtocolTest extends TestCase
         $sim->poll(['tenantId' => $other['tenant']->id, 'tableId' => $other['table']->public_id])->assertOk();
         $device = $this->asSystem(fn () => Device::query()->where('hardware_id', $sim->hardwareId)->sole());
         $this->assertSame($h['tenant']->id, $device->tenant_id);
-        $this->assertSame($h['table']->id, $device->table_id);
+        $this->assertSame($h['branch']->id, $device->branch_id);
+        $this->assertSame($device->id, DB::table('billiard_tables')->where('id', $h['table']->id)->value('device_id'));
 
         $owner = $this->tenantUser('CLIENT_OWNER', $h['tenant']);
-        $this->actingAs($owner)->getJson('/api/admin/devices')->assertJsonPath('data.0.online', true)->assertJsonPath('data.0.state', 'OFF');
+        $this->actingAs($owner)->getJson('/api/admin/devices')->assertJsonPath('data.0.online', true)
+            ->assertJsonPath('data.0.channels.0.state', 'OFF')->assertJsonPath('data.0.channels.0.table.number', 1);
         $this->travel(16)->seconds();
         $this->actingAs($owner)->getJson('/api/admin/devices')->assertJsonPath('data.0.online', false);
     }
@@ -204,7 +209,7 @@ class DeviceProtocolTest extends TestCase
         // ESP32 receives the command, light turns on, session becomes ACTIVE.
         $received = $sim->pollAndApply();
         $this->assertSame('START_SESSION', $received[0]['type']);
-        $this->assertSame('ON', $sim->light);
+        $this->assertSame('ON', $sim->light());
         $this->withToken($h['token'])->getJson('/api/tablet/tables')->assertJsonPath('tables.0.status', 'BUSY');
 
         // 5-minute warning window.
@@ -215,12 +220,12 @@ class DeviceProtocolTest extends TestCase
         // Internet disconnects: no polls. The device ends the session locally at endAt.
         $this->travelTo(CarbonImmutable::parse('2026-10-05 07:10:05'));
         $sim->tick();
-        $this->assertSame('OFF', $sim->light);
+        $this->assertSame('OFF', $sim->light());
         $this->artisan('sessions:finalize');
         $this->assertSame('COMPLETED', DB::table('game_sessions')->where('public_id', $id)->value('status'));
 
         // Reconnect: authoritative state says nothing is running; table available again.
-        $sim->state()->assertOk()->assertJsonPath('session', null);
+        $sim->state()->assertOk()->assertJsonPath('sessions', []);
         $sim->pollAndApply();
         $this->withToken($h['token'])->getJson('/api/tablet/tables')->assertJsonPath('tables.0.status', 'AVAILABLE');
     }
@@ -239,7 +244,7 @@ class DeviceProtocolTest extends TestCase
         $received = $sim->pollAndApply();
 
         $this->assertSame('STOP_SESSION', $received[0]['type']);
-        $this->assertSame('OFF', $sim->light);
+        $this->assertSame('OFF', $sim->light());
         $this->assertSame('COMPLETED', DB::table('game_sessions')->where('public_id', $id)->value('status'));
     }
 
@@ -257,8 +262,8 @@ class DeviceProtocolTest extends TestCase
 
         $other = $this->hall();
         $sim->register()->assertOk();
-        $table2 = $this->asSystem(fn () => BilliardTable::factory()->create(['tenant_id' => $other['tenant']->id, 'branch_id' => $other['branch']->id, 'number' => 2]));
-        $this->actingAs($this->tenantUser('CLIENT_OWNER', $other['tenant']))->postJson('/api/admin/devices/pair', ['code' => $sim->pairingCode, 'tableId' => $table2->public_id])->assertCreated();
+        $this->assertNull(DB::table('billiard_tables')->where('id', $h['table']->id)->value('device_id')); // unwired
+        $this->actingAs($this->tenantUser('CLIENT_OWNER', $other['tenant']))->postJson('/api/admin/devices/pair', ['code' => $sim->pairingCode, 'branchId' => $other['branch']->public_id])->assertCreated();
         $this->assertSame(2, DB::table('devices')->where('hardware_id', $sim->hardwareId)->count()); // history row kept
     }
 
@@ -268,9 +273,8 @@ class DeviceProtocolTest extends TestCase
         $h = $this->hall(['device_limit' => 1]);
         $sim = new DeviceSimulator($this);
         $sim->register()->assertOk();
-        $table2 = $this->asSystem(fn () => BilliardTable::factory()->create(['tenant_id' => $h['tenant']->id, 'branch_id' => $h['branch']->id, 'number' => 2]));
 
-        $this->actingAs($this->tenantUser('CLIENT_OWNER', $h['tenant']))->postJson('/api/admin/devices/pair', ['code' => $sim->pairingCode, 'tableId' => $table2->public_id])
+        $this->actingAs($this->tenantUser('CLIENT_OWNER', $h['tenant']))->postJson('/api/admin/devices/pair', ['code' => $sim->pairingCode, 'branchId' => $h['branch']->public_id])
             ->assertStatus(422)->assertJsonPath('error.code', 'LIMIT_REACHED');
     }
 

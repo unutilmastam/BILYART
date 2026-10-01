@@ -12,6 +12,7 @@ use App\Domain\Devices\Models\DeviceHeartbeat;
 use App\Domain\Sessions\Enums\SessionStatus;
 use App\Domain\Sessions\Models\GameSession;
 use App\Domain\Sessions\Services\SessionService;
+use App\Domain\Tables\Models\BilliardTable;
 use App\Domain\Tenancy\Models\Tenant;
 use App\Domain\Tenancy\Services\TenantSettings;
 use Carbon\CarbonImmutable;
@@ -40,24 +41,30 @@ final class DeviceGateway
         private readonly AuditLogger $audit,
     ) {}
 
-    /** @param array{ts: int, fw: string, state: string, sessionId?: ?string, endAt?: ?int, rssi?: ?int, uptime?: ?int, bootReason?: ?string} $beat */
+    /**
+     * @param  array{ts: int, fw: string, channels: list<array{channel: int, state: string, sessionId?: ?string, endAt?: ?int}>, rssi?: ?int, uptime?: ?int, bootReason?: ?string}  $beat
+     */
     public function poll(Device $device, array $beat, string $ip): array
     {
         $now = CarbonImmutable::now();
-        $previousState = $device->last_state['state'] ?? null;
+        $channels = collect($beat['channels'])->sortBy('channel')->values()
+            ->map(fn (array $c) => ['channel' => (int) $c['channel'], 'state' => $c['state'], 'sessionId' => $c['sessionId'] ?? null, 'endAt' => $c['endAt'] ?? null])->all();
+        // One letter per channel (N = on, W = warning, F = off), e.g. "NFWF" — fits the heartbeat row.
+        $summary = implode('', array_map(fn (array $c) => ['ON' => 'N', 'WARNING' => 'W'][$c['state']] ?? 'F', $channels));
+        $previous = $device->last_state['summary'] ?? null;
         $lastSeen = $device->last_seen_at;
 
         $device->forceFill([
             'last_seen_at' => $now,
             'last_ip' => $ip,
             'firmware_version' => $beat['fw'],
-            'last_state' => array_intersect_key($beat, array_flip(['state', 'sessionId', 'endAt', 'rssi', 'uptime', 'bootReason'])),
+            'last_state' => ['summary' => $summary, 'channels' => $channels] + array_intersect_key($beat, array_flip(['rssi', 'uptime', 'bootReason'])),
         ])->save();
 
-        if ($previousState !== $beat['state'] || $lastSeen === null || $lastSeen->lessThan($now->subSeconds(self::HEARTBEAT_ROW_EVERY_SEC))) {
+        if ($previous !== $summary || $lastSeen === null || $lastSeen->lessThan($now->subSeconds(self::HEARTBEAT_ROW_EVERY_SEC))) {
             $hb = new DeviceHeartbeat([
-                'device_id' => $device->id, 'received_at' => $now, 'state' => $beat['state'],
-                'session_public_id' => $beat['sessionId'] ?? null, 'rssi' => $beat['rssi'] ?? null,
+                'device_id' => $device->id, 'received_at' => $now, 'state' => substr($summary, 0, 8),
+                'session_public_id' => collect($channels)->pluck('sessionId')->filter()->first(), 'rssi' => $beat['rssi'] ?? null,
                 'uptime' => $beat['uptime'] ?? null, 'fw' => $beat['fw'], 'boot_reason' => $beat['bootReason'] ?? null,
             ]);
             $hb->tenant_id = $device->tenant_id;
@@ -104,25 +111,28 @@ final class DeviceGateway
         return ['serverTime' => now()->getTimestamp(), 'accepted' => $accepted];
     }
 
-    /** Authoritative state after boot/reconnect (spec §35, DEVICE_PROTOCOL.md §6). */
+    /** Authoritative state after boot/reconnect (spec §35, DEVICE_PROTOCOL.md §6): the running session of every wired channel. */
     public function state(Device $device): array
     {
         $now = CarbonImmutable::now();
-        /** @var GameSession|null $session */
-        $session = GameSession::query()
-            ->where('table_id', $device->table_id)
+        $channelOf = BilliardTable::query()->where('device_id', $device->id)->pluck('device_channel', 'id');
+        $sessions = GameSession::query()
+            ->whereIn('table_id', $channelOf->keys()->all())
+            ->where('device_id', $device->id)
             ->whereIn('status', [SessionStatus::STARTING->value, SessionStatus::ACTIVE->value])
             ->where('end_at', '>', $now)
-            ->orderByDesc('id')->first();
+            ->orderByDesc('id')->get()
+            ->unique('table_id');
 
         return [
             'serverTime' => $now->getTimestamp(),
-            'session' => $session ? [
-                'sessionId' => $session->public_id,
-                'startAt' => $session->start_at->getTimestamp(),
-                'endAt' => $session->end_at->getTimestamp(),
-                'status' => $session->status->value,
-            ] : null,
+            'sessions' => $sessions->map(fn (GameSession $s) => [
+                'channel' => (int) ($s->device_channel ?? $channelOf[$s->table_id]),
+                'sessionId' => $s->public_id,
+                'startAt' => $s->start_at->getTimestamp(),
+                'endAt' => $s->end_at->getTimestamp(),
+                'status' => $s->status->value,
+            ])->sortBy('channel')->values()->all(),
             'config' => $this->config($device),
         ];
     }
