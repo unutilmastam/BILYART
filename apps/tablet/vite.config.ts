@@ -35,8 +35,8 @@ export default defineConfig({
       registerType: 'autoUpdate',
       injectRegister: 'auto',
       manifest: {
-        name: 'Bilyart stol band qilish',
-        short_name: 'Bilyart',
+        name: 'NBX stol band qilish',
+        short_name: 'NBX',
         description: "Billiard stolini band qilish kioski",
         lang: 'uz',
         start_url: '/tablet/',

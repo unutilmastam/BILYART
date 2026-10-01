@@ -1,6 +1,6 @@
 /** Uzbek (Latin) UI strings. Keys are stable; a `ru` dictionary can be added with the same shape. */
 export const uz = {
-  'app.title': 'Bilyart',
+  'app.title': 'NBX',
   'app.superTitle': 'Platforma boshqaruvi',
   'common.save': 'Saqlash',
   'common.cancel': 'Bekor qilish',
@@ -158,7 +158,7 @@ export const uz = {
   'history.events': 'Hodisalar',
 
   'settings.supportContact': "Qo'llab-quvvatlash kontakti",
-  'settings.paymentInstructions': "To'lov bo'yicha ko'rsatma (muddati tugagan mijozlarga ko'rinadi)",
+  'settings.paymentInstructions': "To'lov bo'yicha ko'rsatma (karta raqami; zal egasi Obuna sahifasida ko'radi)",
   'settings.defaultBranchLimit': 'Standart filial limiti',
   'settings.saved': 'Saqlandi',
 

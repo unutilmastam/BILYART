@@ -14,8 +14,8 @@ export default defineConfig({
       registerType: 'autoUpdate',
       injectRegister: 'auto',
       manifest: {
-        name: 'Bilyart boshqaruv paneli',
-        short_name: 'Bilyart',
+        name: 'NBX boshqaruv paneli',
+        short_name: 'NBX',
         description: 'Billiard zallarini boshqarish paneli',
         lang: 'uz',
         start_url: '/admin/',
