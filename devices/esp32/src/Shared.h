@@ -3,6 +3,7 @@
 #include <freertos/FreeRTOS.h>
 #include <freertos/semphr.h>
 
+#include "Board.h"
 #include "Controller.h"
 #include "EpochClock.h"
 
@@ -11,7 +12,7 @@
  * task (core 0, blocking HTTPS). Every access goes through Lock.
  */
 struct Shared {
-  bl::Controller controller;
+  bl::Controller controller{bl::Config{}, kChannels};
   bl::EpochClock clock;
   String deviceCode;
   String pairingCode;  // shown on the setup portal while waiting for the admin

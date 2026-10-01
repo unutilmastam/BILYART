@@ -47,11 +47,11 @@ void page() {
          "<title>Bilyart qurilma</title><style>body{font-family:sans-serif;margin:16px;max-width:520px}input,button{font-size:18px;width:100%;padding:10px;margin:6px 0;box-sizing:border-box}"
          ".code{font-size:44px;font-weight:bold;letter-spacing:6px}.box{border:2px solid #047857;border-radius:12px;padding:12px;margin:12px 0}</style>");
   h += "<h2>Qurilma: " + esc(code) + "</h2>";
-  h += "<p>Wi-Fi: " + esc(wifi) + "<br>Server: " + esc(srv) + "<br>Dastur: " FW_VERSION "</p>";
+  h += "<p>Wi-Fi: " + esc(wifi) + "<br>Server: " + esc(srv) + "<br>Dastur: " FW_VERSION "<br>Kanallar: " + String(kChannels) + "</p>";
   if (paired) {
     h += F("<div class='box'>Qurilma ulangan. Bu sahifa endi kerak emas.</div>");
   } else if (pairing.length()) {
-    h += "<div class='box'>Ulash kodi:<div class='code'>" + esc(pairing) + "</div>Admin panel → Qurilmalar → ESP32 ulash → shu kod, filial va stolni tanlang.</div>";
+    h += "<div class='box'>Ulash kodi:<div class='code'>" + esc(pairing) + "</div>Admin panel → Qurilmalar → ESP32 ulash → shu kod va filialni tanlang. Keyin Stollar sahifasida har bir stolga kanal tanlang.</div>";
   }
   h += F("<form method='post' action='/save'><h3>Wi-Fi sozlamasi</h3><label>Wi-Fi nomi (SSID)<input name='ssid' maxlength='32' required value='");
   h += esc(n.ssid);

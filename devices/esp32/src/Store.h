@@ -24,14 +24,16 @@ String portalPassword();
 bl::Config config();
 void saveConfig(const bl::Config& c);
 
+/** A relay channel's session as written to flash (channel 1..bl::kMaxChannels). */
 struct SavedSession {
   bl::Session session;
   bool warned = false;
   int64_t remainingSec = 0;
 };
-SavedSession session();
-void saveSession(const bl::Session& s, bool warned, int64_t remainingSec);
-void checkpoint(int64_t remainingSec, bool warned);
+SavedSession session(int channel);
+void saveSession(int channel, const bl::Session& s, bool warned, int64_t remainingSec);
+/** Remaining time + warned flag of every running channel in one small write (every 30 s while any lamp is ON). */
+void checkpoint(const int64_t* remainingSec, uint8_t warnedMask, int channels);
 
 /** Clears everything except the setup-portal password (it is written on the device label). */
 void factoryReset();

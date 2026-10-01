@@ -17,6 +17,9 @@ inline const char* lightName(Light l) {
 
 constexpr size_t kIdLen = 26;  // ULID public id
 
+/** Relay channels per device (protocol Channel: 1..8). One channel switches one table lamp. */
+constexpr int kMaxChannels = 8;
+
 /** A session as the device keeps it (all times: Unix epoch seconds, UTC — server authoritative). */
 struct Session {
   char id[kIdLen + 1] = {0};

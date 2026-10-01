@@ -1,6 +1,7 @@
-// Billiard table light controller (DEVICE_PROTOCOL.md). Two tasks:
-//  - loop() on core 1: relay + local timer, portal, button, LED. Never blocks → the light
-//    goes OFF at endAt even while the network task is stuck in a slow HTTPS call.
+// Billiard light controller (DEVICE_PROTOCOL.md): one ESP32 per branch, one relay channel per
+// table lamp. Two tasks:
+//  - loop() on core 1: relays + local timers, portal, button, LED. Never blocks → every lamp
+//    goes OFF at its endAt even while the network task is stuck in a slow HTTPS call.
 //  - netTask on core 0: Wi-Fi, pairing, /state, /poll, /ack, OTA.
 #include <Arduino.h>
 #include <WiFi.h>
@@ -32,10 +33,13 @@ constexpr uint32_t kCheckpointMs = 30000;             // NVS remainingSec checkp
 constexpr uint32_t kOtaConfirmDeadlineMs = 10 * 60000;  // new image must reach the server within 10 min
 
 String hardwareId;
-store::SavedSession saved;
+store::SavedSession saved[bl::kMaxChannels];  // index = channel − 1
 volatile bool bootResolved = false;
 
-void relay(bool on) { digitalWrite(kRelayPin, (on == kRelayActiveHigh) ? HIGH : LOW); }
+void relay(int channel, bool on) { digitalWrite(kRelayPins[channel - 1], (on == kRelayActiveHigh) ? HIGH : LOW); }
+void allRelaysOff() {
+  for (int ch = 1; ch <= kChannels; ch++) relay(ch, false);
+}
 
 const char* bootReason() {
   switch (esp_reset_reason()) {
@@ -57,38 +61,53 @@ String efuseHardwareId() {
   return String(buf);
 }
 
+/** Writes the channels/config marked in fx to flash. Caller holds no lock. */
 void persist(const bl::Effects& fx) {
-  bl::Session s;
-  bool warned = false;
-  int64_t remaining = 0;
+  struct Snap {
+    bl::Session s;
+    bool warned;
+    int64_t remaining;
+  } snap[bl::kMaxChannels];
   bl::Config cfg;
   {
     Lock l;
-    s = g.controller.timer().session();
-    warned = g.controller.timer().warned();
-    remaining = g.controller.timer().remainingSec(g.clock.now(monoMs()));
+    const int64_t now = g.clock.now(monoMs());
+    for (int ch = 1; ch <= kChannels; ch++) {
+      if (!fx.persists(ch)) continue;
+      const bl::SessionTimer& t = g.controller.timer(ch);
+      snap[ch - 1] = Snap{t.session(), t.warned(), t.remainingSec(now)};
+    }
     cfg = g.controller.config();
   }
-  if (fx.persistSession) store::saveSession(s, warned, remaining);
+  for (int ch = 1; ch <= kChannels; ch++)
+    if (fx.persists(ch)) store::saveSession(ch, snap[ch - 1].s, snap[ch - 1].warned, snap[ch - 1].remaining);
   if (fx.persistConfig) store::saveConfig(cfg);
 }
 
-/** Boot decision once trusted time is known (or the wait expired). Caller holds no lock. */
-void resolveBoot(bool timeKnown) {
+/**
+ * Boot decision for every channel's saved session once trusted time is known (or the wait
+ * expired). Caller holds the lock; channels to clear are marked in fx.
+ */
+void resolveBootLocked(bool timeKnown, bl::Effects& fx) {
   if (bootResolved) return;
-  bl::Effects fx;
-  {
-    Lock l;
-    const int64_t now = g.clock.now(monoMs());
-    const bl::BootDecision d = bl::decideBoot(saved.session, saved.remainingSec, timeKnown, now, g.controller.config().maxSessionSec);
-    if (d.action == bl::BootDecision::Action::ResumeForCheckpoint) {
-      // No trusted time: run a provisional clock that ends the saved session after remainingSec.
-      g.clock.set(saved.session.endAt - d.resumeSec, monoMs());
+  const int32_t cap = g.controller.config().maxSessionSec;
+  for (int ch = 1; ch <= kChannels; ch++) {
+    const store::SavedSession& sv = saved[ch - 1];
+    if (!sv.session.active) continue;
+    const bl::BootDecision d = bl::decideBoot(sv.session, sv.remainingSec, timeKnown, g.clock.now(monoMs()), cap);
+    if (d.action == bl::BootDecision::Action::Off) {
+      fx.persist(ch);
+      continue;
     }
-    if (d.action != bl::BootDecision::Action::Off) g.controller.restore(saved.session, saved.warned, g.clock.now(monoMs()));
-    fx.persistSession = d.action == bl::BootDecision::Action::Off && saved.session.active;
+    bl::Session s = sv.session;
+    if (d.action == bl::BootDecision::Action::ResumeForCheckpoint) {
+      // No trusted time: the lamp stays ON for the checkpointed remainingSec only. /state corrects it later.
+      if (!g.clock.known()) g.clock.set(s.endAt - d.resumeSec, monoMs());  // one provisional clock for all channels
+      s.endAt = g.clock.now(monoMs()) + d.resumeSec;
+      if (s.startAt >= s.endAt) s.startAt = s.endAt - 1;
+    }
+    g.controller.restore(ch, s, sv.warned, g.clock.now(monoMs()));
   }
-  if (fx.persistSession) persist(fx);
   bootResolved = true;
 }
 
@@ -150,6 +169,7 @@ void pairDevice() {
   body["hardwareId"] = hardwareId;
   body["firmwareVersion"] = FW_VERSION;
   body["registrationSecret"] = DEVICE_REGISTRATION_SECRET;
+  body["channelCount"] = kChannels;  // the admin wires one table to each channel
   api::Response reg = api::request("POST", "/register", &body, "");
   noteServerTime(reg);
   if (!reg.ok()) {
@@ -189,11 +209,13 @@ void pairDevice() {
 bool syncState() {
   api::Response r = api::request("GET", "/state", nullptr, deviceAuth());
   if (!r.ok()) return false;
-  noteServerTime(r);
-  resolveBoot(true);
   bl::Effects fx;
   {
+    // Clock, boot decision and server state in one critical section: the relay loop never
+    // evaluates a provisional session against the real clock.
     Lock l;
+    if (r.body["serverTime"].is<int64_t>()) g.clock.set(r.body["serverTime"].as<int64_t>(), monoMs());
+    resolveBootLocked(true, fx);
     g.controller.applyState(r.body.as<JsonObjectConst>(), g.clock.now(monoMs()), fx);
   }
   persist(fx);
@@ -234,9 +256,7 @@ void runPaired(bl::Backoff& backoff) {
     int32_t interval;
     {
       Lock l;
-      const bl::Session& s = g.controller.timer().session();
-      const bl::Light light = g.controller.timer().active() ? (g.controller.timer().warned() ? bl::Light::Warning : bl::Light::On) : bl::Light::Off;
-      bl::buildPoll(body, g.clock.now(monoMs()), FW_VERSION, light, s, WiFi.RSSI(), millis() / 1000, bootReason(), g.controller.lastAppliedCommandId());
+      bl::buildPoll(body, g.clock.now(monoMs()), FW_VERSION, g.controller, WiFi.RSSI(), millis() / 1000, bootReason());
       interval = g.controller.config().pollIntervalSec;
     }
     api::Response r = api::request("POST", "/poll", &body, deviceAuth());
@@ -265,12 +285,7 @@ void runPaired(bl::Backoff& backoff) {
     persist(fx);  // before the ACK: an acknowledged START is always on flash
     if (n) {
       JsonDocument ack;
-      bl::Light light;
-      {
-        Lock l;
-        light = g.controller.timer().active() ? bl::Light::On : bl::Light::Off;
-      }
-      bl::buildAck(ack, acks, n, light);
+      bl::buildAck(ack, acks, n);
       api::Response a = api::request("POST", "/ack", &ack, deviceAuth(), true);
       noteServerTime(a);
     }
@@ -278,7 +293,7 @@ void runPaired(bl::Backoff& backoff) {
     if (fx.ota) {
       setServerStatus(String("yangilanmoqda ") + fx.otaVersion);
       if (ota::install(store::net().apiBase, deviceAuth(), fx.otaVersion, fx.otaSha256, fx.otaSize) == ota::Result::Ok) {
-        relay(false);
+        allRelaysOff();
         ESP.restart();
       }
       setServerStatus("yangilash muvaffaqiyatsiz");
@@ -323,7 +338,7 @@ void checkButton() {
   if (digitalRead(kButtonPin) == LOW) {
     if (!pressedAt) pressedAt = millis();
     if (millis() - pressedAt > 10000) {  // factory reset: forget Wi-Fi and pairing (physical access only)
-      relay(false);
+      allRelaysOff();
       store::factoryReset();
       ESP.restart();
     }
@@ -345,9 +360,9 @@ void updateLed(bool paired, bool online) {
 }  // namespace
 
 void setup() {
-  // 1. Light OFF before anything else (§5.1).
-  pinMode(kRelayPin, OUTPUT);
-  relay(false);
+  // 1. Every lamp OFF before anything else (§5.1).
+  for (int ch = 1; ch <= kChannels; ch++) pinMode(kRelayPins[ch - 1], OUTPUT);
+  allRelaysOff();
   pinMode(kLedPin, OUTPUT);
   pinMode(kButtonPin, INPUT_PULLUP);
 
@@ -360,17 +375,21 @@ void setup() {
   store::begin();
   hardwareId = efuseHardwareId();
 
-  // 3. Config + saved session.
+  // 3. Config + saved sessions (one per relay channel).
   g.controller.config() = store::config();
-  saved = store::session();
+  bool anySaved = false;
+  for (int ch = 1; ch <= kChannels; ch++) {
+    saved[ch - 1] = store::session(ch);
+    anySaved = anySaved || saved[ch - 1].session.active;
+  }
   g.deviceCode = store::deviceCode().length() ? store::deviceCode() : "ESP32-" + hardwareId.substring(6);
 
   Serial.print(kFirmwareMarker);  // also keeps the marker in the linked image
-  Serial.printf("\nBilyart ESP32 %s | hardwareId %s | device %s | boot %s\n", FW_VERSION, hardwareId.c_str(), g.deviceCode.c_str(), bootReason());
+  Serial.printf("\nBilyart ESP32 %s | hardwareId %s | device %s | %d channels | boot %s\n", FW_VERSION, hardwareId.c_str(), g.deviceCode.c_str(), kChannels, bootReason());
   Serial.printf("Setup Wi-Fi: BILLIARD-%s  password: %s  (write this on the device label)\n", g.deviceCode.substring(g.deviceCode.length() - 4).c_str(), store::portalPassword().c_str());
   if (strlen(DEVICE_REGISTRATION_SECRET) < 16) Serial.println("WARNING: firmware built without DEVICE_REGISTRATION_SECRET — registration will be refused.");
 
-  if (!saved.session.active) bootResolved = true;
+  if (!anySaved) bootResolved = true;
   WiFi.mode(WIFI_STA);
   xTaskCreatePinnedToCore(netTask, "net", 12288, nullptr, 1, nullptr, 0);
 }
@@ -389,36 +408,46 @@ void loop() {
   if (!wantPortal && portal::running()) portal::stop();
   portal::handle();
 
-  // 4. Saved session but no trusted time after 20 s: resume from the checkpoint (§5.4).
-  if (!bootResolved && millis() > kBootTimeWaitMs) resolveBoot(false);
+  // 4. Saved sessions but no trusted time after 20 s: resume from the checkpoint (§5.4).
+  if (!bootResolved && millis() > kBootTimeWaitMs) {
+    bl::Effects fx;
+    {
+      Lock l;
+      resolveBootLocked(false, fx);
+    }
+    persist(fx);
+  }
   // OTA safety: a new image that cannot reach the server is rolled back.
   if (millis() > kOtaConfirmDeadlineMs && ota::pendingVerify()) ota::rollback();
 
-  bool relayOn = false, ended = false, active = false, warned = false, paired, online;
-  int64_t remaining = 0;
+  bl::Controller::Output out;  // all OFF until the boot decision is made
+  bool anyActive = false, paired, online;
+  uint8_t warnedMask = 0;
+  int64_t remaining[bl::kMaxChannels] = {};
   {
     Lock l;
     if (bootResolved && g.clock.known()) {
       const int64_t now = g.clock.now(monoMs());
-      const bl::Controller::Output out = g.controller.tick(now, monoMs());
-      relayOn = out.relayOn;
-      ended = out.ended;
-      active = g.controller.timer().active();
-      warned = g.controller.timer().warned();
-      remaining = g.controller.timer().remainingSec(now);
+      out = g.controller.tick(now, monoMs());
+      for (int ch = 1; ch <= kChannels; ch++) {
+        const bl::SessionTimer& t = g.controller.timer(ch);
+        anyActive = anyActive || t.active();
+        if (t.warned()) warnedMask |= static_cast<uint8_t>(1u << (ch - 1));
+        remaining[ch - 1] = t.remainingSec(now);
+      }
     }
     paired = g.paired;
     online = g.serverStatus == "ulangan";
   }
-  relay(relayOn);  // local fail-safe: OFF at endAt with or without network
-  if (ended) {
+  for (int ch = 1; ch <= kChannels; ch++) relay(ch, out.relayOn[ch - 1]);  // local fail-safe: OFF at endAt with or without network
+  if (out.ended) {
     bl::Effects fx;
-    fx.persistSession = true;
+    fx.persistChannels = out.ended;
     persist(fx);
   }
   static uint32_t lastCheckpoint = 0;
-  if (active && millis() - lastCheckpoint > kCheckpointMs) {
-    store::checkpoint(remaining, warned);
+  if (anyActive && millis() - lastCheckpoint > kCheckpointMs) {
+    store::checkpoint(remaining, warnedMask, kChannels);
     lastCheckpoint = millis();
   }
   updateLed(paired, online);
