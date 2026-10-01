@@ -16,9 +16,9 @@ export function PairingScreen({ state }: { state: PairingState }) {
       <BallMark className="size-16" />
       <h1 className="text-4xl font-bold tracking-tight">{t('pairing.title')}</h1>
       <p className="max-w-2xl text-2xl text-white/75">{t('pairing.instructions')}</p>
-      <div className="glass rounded-[32px] px-12 py-8">
+      <div className="glass max-w-full rounded-[32px] px-6 py-6 sm:px-12 sm:py-8">
         <p className="text-xl text-white/60">{t('pairing.code')}</p>
-        <p className="tabular mt-2 font-mono text-8xl font-bold tracking-[0.2em] text-accent-300" aria-label={t('pairing.code')}>
+        <p className="tabular mt-2 font-mono text-6xl font-bold tracking-[0.15em] text-accent-300 sm:text-8xl sm:tracking-[0.2em]" aria-label={t('pairing.code')}>
           {state.pairingCode}
         </p>
       </div>

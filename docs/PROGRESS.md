@@ -154,7 +154,9 @@ Remaining for Phase 1:
 - Owner set up `nbx.itcode.uz` (AutoSSL), CloudLinux PHP Selector 8.3 with pdo_pgsql/pgsql/mbstring/gd/zip/fileinfo/intl, PostgreSQL 13.23 (db `itcode_nbx`), release 1.0.0 built by Actions and activated (migrations ran), document root → `billiard/current/apps/api/public`, cron added.
 - Found: `activate.sh` made `~/billiard` 700 → Apache could not read `.htaccess` (403). Fixed to 711 (+ deploy test asserts that others can traverse to `public/`). Hot-fix on the server: `chmod 711 ~/billiard`.
 - DEPLOY_UZ.md updated for the real setup (PHP Selector per domain, pgsql, no trailing `/` in APP_URL, copy-paste commands).
-- Owner to do: rotate the DB password and APP_KEY (both were visible in a screenshot) **before** creating the Super Admin / Telegram; then `admin:create-super`.
+- Done the same day: DB password and APP_KEY rotated, first backup taken, Super Admin created (`admin:create-super`), 2FA on; System health all green (pgsql, storage, cron, backups). Platform live at https://nbx.itcode.uz.
+- Next for the owner: first client (hall) → branch → tablet pairing (a tablet pairs to a client's branch, not to the Super Admin).
+- Polish after go-live: health detail labels in Uzbek; pairing code no longer clipped on phone-width screens.
 
 ## Open questions for the owner
 1. ~~Platform domain~~ → **nbx.itcode.uz** (subdomain, PostgreSQL).
