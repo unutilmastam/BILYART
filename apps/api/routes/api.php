@@ -31,6 +31,13 @@ Route::middleware('web')->group(function (): void {
         // Client admin (tenant users only).
         Route::prefix('admin')->middleware(['tenant.member', 'throttle:admin', 'idempotency'])->group(function (): void {
             Route::get('subscription', Admin\SubscriptionController::class);
+            // Paying is possible even (especially) when the subscription has expired.
+            Route::middleware('perm:billing.manage')->group(function (): void {
+                Route::get('payment-requests', [Admin\PaymentRequestController::class, 'index']);
+                Route::post('payment-requests', [Admin\PaymentRequestController::class, 'store'])->middleware('throttle:uploads');
+                Route::post('payment-requests/{paymentRequest}/cancel', [Admin\PaymentRequestController::class, 'cancel']);
+                Route::get('payment-requests/{paymentRequest}/receipt', [Admin\PaymentRequestController::class, 'receipt']);
+            });
             // Always available, even when the subscription is inactive (spec §29).
             Route::get('notifications', [Admin\NotificationController::class, 'index']);
             Route::post('notifications/read-all', [Admin\NotificationController::class, 'readAll']);
@@ -146,6 +153,10 @@ Route::middleware('web')->group(function (): void {
             Route::middleware('perm:platform.payments')->group(function (): void {
                 Route::post('tenants/{tenant}/payments', [SuperAdmin\TenantController::class, 'recordPayment']);
                 Route::get('payments', SuperAdmin\PaymentController::class);
+                Route::get('payment-requests', [SuperAdmin\PaymentRequestController::class, 'index']);
+                Route::get('payment-requests/{paymentRequest}/receipt', [SuperAdmin\PaymentRequestController::class, 'receipt']);
+                Route::post('payment-requests/{paymentRequest}/approve', [SuperAdmin\PaymentRequestController::class, 'approve']);
+                Route::post('payment-requests/{paymentRequest}/reject', [SuperAdmin\PaymentRequestController::class, 'reject']);
             });
             Route::get('audit-logs', SuperAdmin\AuditLogController::class)->middleware('perm:platform.audit');
             Route::get('health', SuperAdmin\HealthController::class)->middleware('perm:platform.health');

@@ -13,7 +13,8 @@ use InvalidArgumentException;
  */
 final class LocalPrivateDisk implements PhotoStorage
 {
-    private const ALLOWED = '#^tenants/\d+/sessions/[0-9A-HJKMNP-TV-Z]{26}/[0-9A-HJKMNP-TV-Z]{26}\.jpg$#';
+    // Session photos, and subscription payment receipts (same private disk, same rules).
+    private const ALLOWED = '#^tenants/\d+/(sessions/[0-9A-HJKMNP-TV-Z]{26}|receipts)/[0-9A-HJKMNP-TV-Z]{26}\.jpg$#';
 
     private function disk(): Filesystem
     {

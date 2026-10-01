@@ -21,7 +21,7 @@ final class BackupService
 {
     /** Business tables in creation (FK-safe) order. A test asserts nothing is missing. */
     public const TABLES = [
-        'tenants', 'users', 'subscription_payments', 'subscriptions', 'subscription_events', 'system_settings', 'firmware_releases',
+        'tenants', 'users', 'subscription_payments', 'subscription_payment_requests', 'subscriptions', 'subscription_events', 'system_settings', 'firmware_releases',
         'branches', 'working_hours', 'branch_closed_days', 'user_branch_access',
         'pricing_plans', 'devices', 'billiard_tables', // tables point to their ESP32 (device_id)
         'device_pairings', 'tablets', 'tablet_pairings',

@@ -14,6 +14,7 @@ final class UpdatePlatformSettingsRequest extends FormRequest
             'defaultBranchLimit' => ['sometimes', 'integer', 'min:1', 'max:1000'],
             'reminderDays' => ['sometimes', 'array', 'min:1', 'max:10'],
             'reminderDays.*' => ['integer', 'min:0', 'max:60', 'distinct'],
+            'pricePerBranch' => ['sometimes', 'integer', 'min:0', 'max:100000000'],
         ];
     }
 }

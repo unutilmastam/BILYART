@@ -42,6 +42,8 @@ enum ErrorCode: string
     case DEVICE_UNAUTHORIZED = 'DEVICE_UNAUTHORIZED';
     case REPAIR_REQUIRED = 'REPAIR_REQUIRED';
     case DEVICE_REVOKED = 'DEVICE_REVOKED';
+    case BILLING_NOT_CONFIGURED = 'BILLING_NOT_CONFIGURED';
+    case PAYMENT_REQUEST_PENDING = 'PAYMENT_REQUEST_PENDING';
     case SERVER_ERROR = 'SERVER_ERROR';
 
     public function status(): int
@@ -53,7 +55,7 @@ enum ErrorCode: string
             self::NOT_FOUND => 404,
             self::METHOD_NOT_ALLOWED => 405,
             self::TABLE_UNAVAILABLE, self::INVALID_STATE_TRANSITION, self::CONFLICT, self::IDEMPOTENCY_KEY_REUSED,
-            self::IDEMPOTENCY_IN_PROGRESS, self::DEVICE_ALREADY_PAIRED, self::RESERVATION_EXPIRED => 409,
+            self::IDEMPOTENCY_IN_PROGRESS, self::DEVICE_ALREADY_PAIRED, self::RESERVATION_EXPIRED, self::PAYMENT_REQUEST_PENDING => 409,
             self::IDEMPOTENCY_KEY_REQUIRED => 400,
             self::ACCOUNT_LOCKED => 423,
             self::RATE_LIMITED => 429,
