@@ -37,9 +37,29 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - run: infrastructure/release/build.sh "$VERSION" release-out
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.14.3'
+      - name: Kiosk APK (skipped with a warning until the signing secrets exist)
+        env:
+          KIOSK_KEYSTORE_BASE64: ${{ secrets.KIOSK_KEYSTORE_BASE64 }}
+          KIOSK_KEYSTORE_PASSWORD: ${{ secrets.KIOSK_KEYSTORE_PASSWORD }}
+          KIOSK_BASE_URL: ${{ vars.PLATFORM_URL || 'https://nbx.itcode.uz' }}
+        run: infrastructure/release/build-kiosk.sh "$VERSION" kiosk-out
+      - run: KIOSK_DIR="$PWD/kiosk-out" infrastructure/release/build.sh "$VERSION" release-out
       - uses: actions/upload-artifact@v4
         with:
           name: bilyart-release-${{ inputs.version }}
           path: release-out/
           retention-days: 30
+      - uses: actions/upload-artifact@v4
+        with:
+          name: nbx-kiosk-apk-${{ inputs.version }}
+          path: kiosk-out/
+          include-hidden-files: true
+          retention-days: 30
+          if-no-files-found: ignore

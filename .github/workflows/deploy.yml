@@ -41,6 +41,7 @@ jobs:
   package:
     needs: guard
     uses: ./.github/workflows/release.yml
+    secrets: inherit   # kiosk APK signing key
     with:
       version: ${{ inputs.version }}
 

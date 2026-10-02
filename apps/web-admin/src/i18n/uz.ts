@@ -388,6 +388,20 @@ export const uz = {
   'preq.confirmApprove': "{amount} tushganini tasdiqlaysizmi? Obuna {months} oyga uzaytiriladi.",
   'preq.reject': 'Rad etish',
   'preq.reason': "Rad etish sababi (mijozga ko'rinadi)",
+  'kiosk.title': 'Kiosk ilova (qulflangan planshet)',
+  'kiosk.intro': "Planshet faqat NBX ekranini ko'rsatadi: Orqaga, Bosh ekran va boshqa ilovalar ishlamaydi, ekran o'chmaydi, yonganda o'zi ochiladi.",
+  'kiosk.step1': "Planshetni zavod holatiga qaytaring (Sozlamalar → Tiklash). Undagi barcha ma'lumotlar o'chadi.",
+  'kiosk.step2': "Birinchi \"Salom / Welcome\" ekranida bo'sh joyni ketma-ket 6 marta bosing — QR skaner ochiladi.",
+  'kiosk.step3': "Quyidagi QR kodni skanerlang. Planshet ilovani o'zi yuklab, kiosk rejimiga o'tadi.",
+  'kiosk.step4': "Ilova ochilgach administrator PIN kodini o'rnating, keyin planshet ekranidagi 6 raqamli kodni yuqoridagi \"Planshet ulash\" bo'limiga kiriting.",
+  'kiosk.wifiSsid': 'Zal Wi-Fi nomi (ixtiyoriy)',
+  'kiosk.wifiPassword': 'Wi-Fi paroli',
+  'kiosk.wifiHint': "Wi-Fi QR ichiga yoziladi, shunda planshet o'zi ulanadi. Parol serverga yuborilmaydi. QR rasmini hech kimga yubormang.",
+  'kiosk.showQr': "QR kodni ko'rsatish",
+  'kiosk.qrAlt': 'Kiosk sozlash QR kodi',
+  'kiosk.version': 'Kiosk ilova versiyasi: {version}',
+  'kiosk.apkLink': "APK faylni to'g'ridan-to'g'ri yuklash (qulfsiz, oddiy o'rnatish uchun):",
+  'kiosk.notInRelease': "Bu serverda kiosk ilova (APK) hali yo'q. Uni o'z ichiga olgan yangilanishni o'rnating.",
 } as const;
 
 export type MessageKey = keyof typeof uz;

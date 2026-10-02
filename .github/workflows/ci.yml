@@ -179,6 +179,32 @@ jobs:
           include-hidden-files: true # dist/.htaccess (CSP + camera permission)
           retention-days: 14
 
+  android-kiosk:
+    name: Android kiosk (build APK, lint)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/android-kiosk
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.14.3'
+      # Debug-key signed: proves the shell compiles and passes lint. Real APKs come only from "Release package".
+      - run: gradle --no-daemon assembleRelease lintRelease -PversionName=0.0.0-ci.${{ github.run_number }} -PversionCode=${{ github.run_number }}
+      - name: Manifest keeps the kiosk guarantees
+        run: |
+          m=app/src/main/AndroidManifest.xml
+          grep -q 'android.intent.category.HOME' $m
+          grep -q 'android.app.action.GET_PROVISIONING_MODE' $m
+          grep -q 'android.app.action.ADMIN_POLICY_COMPLIANCE' $m
+          grep -q 'android:allowBackup="false"' $m
+          grep -q 'android:usesCleartextTraffic="false"' $m
+
   firmware:
     name: ESP32 firmware (native tests, build .bin)
     runs-on: ubuntu-latest

@@ -32,6 +32,11 @@ find "$pkg/apps/api/vendor" -name .git -type d -prune -exec rm -rf {} +
 echo "== PWA builds into public/"
 cp -a "$root/apps/web-admin/dist" "$pkg/apps/api/public/admin"
 cp -a "$root/apps/tablet/dist" "$pkg/apps/api/public/tablet"
+# Optional: the signed kiosk APK + provisioning.json from build-kiosk.sh, served at /kiosk/.
+if [ -n "${KIOSK_DIR:-}" ] && [ -f "$KIOSK_DIR/nbx-kiosk.apk" ]; then
+  cp -a "$KIOSK_DIR" "$pkg/apps/api/public/kiosk"
+  echo "== kiosk APK included"
+fi
 
 echo "== storage skeleton (on the server storage/ is replaced by a link to shared/storage)"
 for d in app/private app/public framework/cache/data framework/sessions framework/views logs; do mkdir -p "$pkg/apps/api/storage/$d"; done

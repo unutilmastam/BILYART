@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">NBX Kiosk</string>
+    <string name="admin_receiver_label">NBX kiosk boshqaruvi</string>
+    <string name="pin_set_title">Administrator PIN kodini o\'rnating</string>
+    <string name="pin_set_hint">4–8 raqam. Kioskdan chiqish uchun kerak bo\'ladi. Uni faqat mas\'ul xodim bilsin.</string>
+    <string name="pin_repeat">PIN ni qayta kiriting</string>
+    <string name="pin_mismatch">PIN lar mos kelmadi. Qaytadan kiriting.</string>
+    <string name="pin_invalid">PIN 4–8 ta raqamdan iborat bo\'lishi kerak.</string>
+    <string name="pin_enter_title">Administrator PIN</string>
+    <string name="pin_wrong">PIN noto\'g\'ri.</string>
+    <string name="pin_locked">Juda ko\'p xato urinish. %1$d daqiqadan keyin qayta urinib ko\'ring.</string>
+    <string name="ok">OK</string>
+    <string name="cancel">Bekor qilish</string>
+    <string name="admin_menu_title">Kiosk boshqaruvi</string>
+    <string name="admin_reload">Sahifani yangilash</string>
+    <string name="admin_settings">Android sozlamalarini ochish</string>
+    <string name="admin_exit">Kiosk rejimidan vaqtincha chiqish</string>
+    <string name="admin_change_pin">PIN ni o\'zgartirish</string>
+    <string name="admin_remove">Kiosk rejimini butunlay o\'chirish</string>
+    <string name="admin_remove_confirm">Planshet oddiy holatga qaytadi: qulflash, avtomatik ishga tushish va ekranni yoqiq ushlash o\'chadi. Davom etasizmi?</string>
+    <string name="admin_status_owner">Holat: to\'liq kiosk (Device Owner). Versiya %1$s</string>
+    <string name="admin_status_pinned">Holat: ekran mahkamlash (Device Owner emas). Versiya %1$s</string>
+    <string name="camera_needed">Kamera ruxsati kerak: mijoz surati olinmasa o\'yin boshlanmaydi.</string>
+    <string name="offline_title">Server bilan aloqa yo\'q</string>
+    <string name="offline_body">Internet yoki Wi-Fi ni tekshiring. Sahifa o\'zi qayta yuklanadi.</string>
+</resources>

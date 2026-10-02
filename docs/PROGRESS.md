@@ -173,6 +173,12 @@ Remaining for Phase 1:
   - commercial Android panel instead of a tablet (cost);
   - cash bill acceptor for game payment (payment stays at the cashier; QR payments via Payme/Click/Uzum once the owner has a YaTT).
 
+## Owner request — locked kiosk APK (2026-10-02)
+- Owner reversed the earlier "PWA + App pinning only" decision: wants a real APK that customers cannot leave.
+- `apps/android-kiosk`: Kotlin WebView shell (no dependencies) as **Device Owner** via QR provisioning — Lock Task without system UI, launcher/auto-start, screen stays on, camera only for our origin, hidden 7-tap + admin PIN exit, "remove kiosk mode" to return the tablet to normal.
+- Built + linted in CI; signed only in **Release package** (`build-kiosk.sh`, key in GitHub secrets, certificate checked with apksigner) and shipped at `/kiosk/` with `provisioning.json`; admin panel → Qurilmalar → **Kiosk ilova** shows the setup QR (Wi-Fi optional, password never leaves the page).
+- Known limits: power button cannot be blocked (use a lockable stand); not yet tried on the owner's tablet; APK self-update not implemented (UI updates come from the server, APK changes are rare).
+
 ## Open questions for the owner
 1. ~~Platform domain~~ → **nbx.itcode.uz** (subdomain, PostgreSQL).
 2. ~~First ESP32 flash method~~ → from a computer (owner, 2026-09-30).

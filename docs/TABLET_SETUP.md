@@ -2,7 +2,28 @@
 
 Bu hujjat zal egasi / xodim uchun: Android planshetni mijozlar uchun kioskka aylantirish. Hammasi telefondan / planshetning o'zidan bajariladi, kompyuter kerak emas.
 
-> Technical summary (EN): the kiosk is the tablet PWA at `https://<domain>/tablet/`, installed from Chrome, locked with Android **App pinning** (owner decision 2026-09-30: no native shell). Pairing = code on the tablet → admin binds it to a branch. Limitations are listed in §7.
+> Technical summary (EN): the kiosk is the tablet PWA at `https://<domain>/tablet/`. Two ways to lock it: **(A, recommended, owner request 2026-10-02)** the NBX Kiosk APK (`apps/android-kiosk`) installed as **Device Owner** by QR provisioning on a factory-reset tablet — Lock Task with no Home/Recents/status bar, launcher + auto-start, screen always on, exit only by hidden gesture + admin PIN; or **(B)** the PWA from Chrome + Android **App pinning** (§1–§7). Pairing = code on the tablet → admin binds it to a branch.
+
+## A. To'liq qulflangan kiosk ilova (NBX Kiosk APK) — tavsiya
+Planshet faqat NBX ekranini ko'rsatadi: **Orqaga, Bosh ekran, So'nggi ilovalar, tepadagi panel ishlamaydi**, ekran o'chmaydi (zaryadda), planshet yonganda ilova o'zi ochiladi.
+
+**Bir marta (platforma egasi):** GitHub → Settings → Secrets and variables → Actions → ikkita secret: `KIOSK_KEYSTORE_BASE64` va `KIOSK_KEYSTORE_PASSWORD` (imzo kaliti; uni yo'qotmang — keyingi yangilanishlar shu kalit bilan bo'lishi shart). Keyin **Release package** dan yangi versiya yig'ing — APK paket ichida bo'ladi (`/kiosk/`).
+
+**Har bir planshet (5–10 daqiqa):**
+1. Planshetni **zavod holatiga qaytaring** (Sozlamalar → Tizim → Tiklash → Barcha ma'lumotlarni o'chirish). Bu shart: Android kiosk huquqini faqat yangi holatdagi planshetga beradi.
+2. Telefonda admin panel → **Qurilmalar → Kiosk ilova** → zal Wi-Fi nomi va paroli (ixtiyoriy) → **QR kodni ko'rsatish**.
+3. Planshetning birinchi **"Salom / Welcome"** ekranida bo'sh joyni ketma-ket **6 marta** bosing → QR skaner ochiladi → telefondagi QR ni skanerlang.
+4. Planshet Wi-Fi ga ulanadi, ilovani serverdan o'zi yuklab o'rnatadi va kiosk rejimiga o'tadi (bir necha daqiqa).
+5. Ilova ochilganda **administrator PIN** (4–8 raqam) o'rnating — faqat mas'ul xodim bilsin.
+6. Ekrandagi 6 raqamli kodni admin panel → **Qurilmalar → Planshet ulash** ga kiriting (§3).
+
+**Xodim uchun chiqish:** ekranning **chap yuqori burchagini 4 soniya ichida 7 marta** bosing → PIN → menyu: sahifani yangilash, PIN ni o'zgartirish, Android sozlamalari, vaqtincha chiqish (ilova yana ochilganda qayta qulflanadi), kiosk rejimini butunlay o'chirish. 5 marta xato PIN → 5 daqiqa kutish.
+
+**Yangilanishlar:** ekran va funksiyalar serverdan keladi (APK yangilash shart emas). APK ning o'zini yangilash juda kam kerak bo'ladi.
+
+**Cheklov:** yoqish/o'chirish (power) tugmasini hech qaysi dastur to'liq bloklay olmaydi — planshetni tugmalari yopiladigan qulflanadigan stendga o'rnating. Planshet o'chib-yonsa, ilova o'zi ochiladi.
+
+> Quyidagi §1–§7 — APK siz, Chrome + App pinning bilan (oddiyroq, lekin to'liq qulf emas).
 
 ## 0. Nima kerak
 - Android 9 yoki yangiroq planshet, **old kamerasi** bilan (10" yoki kattaroq tavsiya etiladi).
@@ -55,7 +76,7 @@ Mijoz ilovadan chiqib ketmasligi uchun:
 | Cheklov | Nima qilish kerak |
 |---|---|
 | Planshet qayta yoqilganda (reboot) ilova avtomatik ochilmaydi va mahkamlash yo'qoladi. | Xodim Bilyart ni ochib, §5.3 bo'yicha qayta mahkamlaydi. |
-| PIN va chiqish ishorasini biladigan odam ilovadan chiqa oladi (App pinning — to'liq "Device Owner" kiosk emas). | PIN ni faqat mas'ul xodim bilsin. To'liq qulflangan kiosk kerak bo'lsa — alohida Android ilova (keyinroq, egasi so'rasa). |
+| PIN va chiqish ishorasini biladigan odam ilovadan chiqa oladi (App pinning — to'liq "Device Owner" kiosk emas). | PIN ni faqat mas'ul xodim bilsin. To'liq qulf kerak bo'lsa — **A bo'lim** (NBX Kiosk APK). |
 | Chrome ma'lumotlari tozalansa, planshet ulanishi o'chadi. | §3 bo'yicha qayta ulang (1 daqiqa). |
 | O'zbek TTS ovozi ko'p planshetlarda yo'q. | Ogohlantirishdan oldin baland qo'ng'iroq chalinadi, matn eng yaqin ovozda o'qiladi. Stol chirog'i ham 3 marta miltillaydi (ESP32). |
 | Surat faqat yuz aniqlanganda avtomatik olinadi; suratsiz o'yin boshlanmaydi (egasining qarori — surat dalil). Yuzni aniqlash moduli ishlamasa (juda eski planshet, xotira yetishmasa), o'yin boshlab bo'lmaydi. | Ekranda "Yuzni aniqlash ishga tushmadi" chiqadi → **Qayta urinish**. Takrorlansa — planshetni qayta yoqing; bo'lmasa kuchliroq planshet kerak (Android 9+, 3 GB+ RAM tavsiya). |
