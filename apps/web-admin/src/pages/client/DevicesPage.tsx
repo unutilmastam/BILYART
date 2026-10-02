@@ -10,6 +10,7 @@ import { t, tDynamic } from '../../i18n';
 import { api, ApiError } from '../../lib/api';
 import { formatDateTime } from '../../lib/format';
 import type { DeviceInfo, TabletInfo } from '../../types/api';
+import { KioskQr } from './KioskQr';
 
 const useTablets = () => useQuery({ queryKey: ['client', 'tablets'], queryFn: async () => (await api<{ data: TabletInfo[] }>('/admin/tablets')).data, refetchInterval: 30_000 });
 
@@ -155,6 +156,7 @@ export function DevicesPage() {
         )}
       </Card>
       {canManage && <Card title={t('dev.pairTablet')}><PairTablet /></Card>}
+      {canManage && <Card title={t('kiosk.title')} description={t('kiosk.intro')}><KioskQr /></Card>}
       <Card title={t('dev.tablets')}>
         {tablets.isPending ? <Spinner /> : tablets.isError ? <ErrorBanner error={tablets.error} /> : tablets.data.length === 0 ? <Empty /> : (
           <ul className="divide-y divide-slate-100">{tablets.data.map((tb) => <TabletRow key={tb.id} tb={tb} canManage={canManage} />)}</ul>

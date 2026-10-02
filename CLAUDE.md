@@ -63,6 +63,7 @@ docs/               all documentation
 - Admin: `cd apps/web-admin && npm ci && npm test && npm run typecheck && npm run build` (PWA under `/admin/`, dev server proxies `/api` to :8000)
 - Tablet: `cd apps/tablet && npm ci && npm test && npm run typecheck && npm run build` (PWA under `/tablet/`, dev server :5174 proxies `/api`). Setup for halls: `docs/TABLET_SETUP.md`
 - Firmware: `cd devices/esp32 && pio test -e native && pio run -e esp32dev` (no PlatformIO registry access, e.g. in the cloud dev container: `scripts/native-test.sh`; CI builds the `.bin`). After changing `certs/`: `python scripts/make_ca_bundle.py`
+- Android kiosk (Device Owner WebView shell): no Android SDK in the cloud dev container — CI job "Android kiosk" builds + lints it (`cd apps/android-kiosk && gradle assembleRelease lintRelease`); signed APK only in "Release package" (`infrastructure/release/build-kiosk.sh`, secrets `KIOSK_KEYSTORE_BASE64` / `KIOSK_KEYSTORE_PASSWORD`). Setup: `docs/TABLET_SETUP.md` §A
 - Protocol: `cd packages/protocol && npm ci && npm test && npm run typecheck && npm run check-generated` (after editing schemas: `npm run generate`)
 - Hosting check script: `infrastructure/hosting-check/tests/run.sh` (build for owner: Actions → "Hosting check (build file)")
 - Release package: `infrastructure/release/build.sh <version> [out]` (owner: Actions → "Release package"). Deploy-script test: `DB_CONNECTION=… DB_HOST=… DB_PORT=… DB_DATABASE=… DB_USERNAME=… DB_PASSWORD=… infrastructure/deploy/tests/run.sh`. Hosting install/update: `docs/DEPLOY_UZ.md`

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="KioskTheme" parent="@android:style/Theme.Material.NoActionBar.Fullscreen">
+        <item name="android:windowBackground">@color/felt</item>
+        <item name="android:statusBarColor">@color/felt</item>
+        <item name="android:navigationBarColor">@color/felt</item>
+        <item name="android:windowDisablePreview">false</item>
+    </style>
+    <color name="felt">#FF06352A</color>
+    <color name="brass">#FFE2B24A</color>
+</resources>
