@@ -3,6 +3,7 @@
 namespace App\Domain\Devices\Models;
 
 use App\Domain\Branches\Models\Branch;
+use App\Domain\Devices\Enums\DeviceKind;
 use App\Domain\Devices\Enums\DeviceStatus;
 use App\Domain\Tables\Models\BilliardTable;
 use App\Domain\Tenancy\Concerns\BelongsToTenant;
@@ -28,10 +29,13 @@ class Device extends Model
 
     protected $hidden = ['token_hash'];
 
+    protected $attributes = ['kind' => 'LIGHT'];
+
     protected function casts(): array
     {
         return [
             'status' => DeviceStatus::class,
+            'kind' => DeviceKind::class,
             'channel_count' => 'integer',
             'last_state' => 'array',
             'last_seen_at' => 'immutable_datetime',
@@ -68,4 +72,9 @@ class Device extends Model
     }
 
     public const MAX_CHANNELS = 8;
+
+    public function isCash(): bool
+    {
+        return $this->kind === DeviceKind::CASH;
+    }
 }

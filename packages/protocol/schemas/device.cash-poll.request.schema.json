@@ -1,0 +1,54 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://protocol.bilyart/device.cash-poll.request.schema.json",
+  "title": "DeviceCashPollRequest",
+  "description": "POST /device/v1/cash/poll — bill acceptor heartbeat (every pollIntervalSec).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "ts",
+    "fw",
+    "accepting",
+    "queued"
+  ],
+  "properties": {
+    "ts": {
+      "$ref": "common.schema.json#/definitions/EpochSeconds"
+    },
+    "fw": {
+      "$ref": "common.schema.json#/definitions/SemVer"
+    },
+    "accepting": {
+      "type": "boolean",
+      "description": "Acceptor inhibit is open right now."
+    },
+    "queued": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 1000,
+      "description": "Bills stored in flash and not yet confirmed by the server."
+    },
+    "rssi": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": -127,
+      "maximum": 0
+    },
+    "uptime": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 0
+    },
+    "bootReason": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "maxLength": 32
+    }
+  }
+}

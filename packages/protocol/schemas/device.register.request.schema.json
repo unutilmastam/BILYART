@@ -29,6 +29,14 @@
       "minimum": 1,
       "maximum": 8,
       "description": "Number of relay channels this device drives (default 1)."
+    },
+    "kind": {
+      "type": "string",
+      "enum": [
+        "LIGHT",
+        "CASH"
+      ],
+      "description": "LIGHT = table lamp relay controller (default); CASH = bill acceptor box, one per branch."
     }
   }
 }

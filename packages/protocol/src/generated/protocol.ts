@@ -132,6 +132,93 @@ export interface DeviceAckResponse {
   serverTime: EpochSeconds;
   accepted: PublicId[];
 }
+/**
+ * POST /device/v1/cash/notes (Idempotency-Key) — bills taken by the acceptor, oldest first. Each bill is written to flash BEFORE sending and removed only after the server answered for its noteUid.
+ *
+ * This interface was referenced by `ProtocolRoot`'s JSON-Schema
+ * via the `definition` "DeviceCashNotesRequest".
+ */
+export interface DeviceCashNotesRequest {
+  /**
+   * @minItems 1
+   * @maxItems 20
+   */
+  notes: {
+    /**
+     * Unique per device forever, e.g. <deviceCode>-<flash counter>.
+     */
+    noteUid: string;
+    /**
+     * UZS bill value decoded from the pulses.
+     */
+    nominal: 1000 | 2000 | 5000 | 10000 | 20000 | 50000 | 100000 | 200000;
+    /**
+     * The session the box was accepting for (from the last poll).
+     */
+    sessionId?: PublicId | null;
+    deviceTs?: number | null;
+  }[];
+}
+/**
+ * This interface was referenced by `ProtocolRoot`'s JSON-Schema
+ * via the `definition` "DeviceCashNotesResponse".
+ */
+export interface DeviceCashNotesResponse {
+  results: {
+    noteUid: string;
+    /**
+     * Every status means: stored, delete it from flash.
+     */
+    status: 'CREDITED' | 'UNASSIGNED' | 'DUPLICATE';
+  }[];
+  serverTime: EpochSeconds;
+  pollIntervalSec: number;
+  /**
+   * Open the acceptor (inhibit off). Close it when false, when the server is unreachable for 5 s, or past acceptUntil.
+   */
+  accept: boolean;
+  sessionId: PublicId | null;
+  required: MoneyUzs;
+  paid: MoneyUzs;
+  acceptUntil: EpochSeconds | null;
+}
+/**
+ * POST /device/v1/cash/poll — bill acceptor heartbeat (every pollIntervalSec).
+ *
+ * This interface was referenced by `ProtocolRoot`'s JSON-Schema
+ * via the `definition` "DeviceCashPollRequest".
+ */
+export interface DeviceCashPollRequest {
+  ts: EpochSeconds;
+  fw: SemVer;
+  /**
+   * Acceptor inhibit is open right now.
+   */
+  accepting: boolean;
+  /**
+   * Bills stored in flash and not yet confirmed by the server.
+   */
+  queued: number;
+  rssi?: number | null;
+  uptime?: number | null;
+  bootReason?: string | null;
+}
+/**
+ * This interface was referenced by `ProtocolRoot`'s JSON-Schema
+ * via the `definition` "DeviceCashPollResponse".
+ */
+export interface DeviceCashPollResponse {
+  serverTime: EpochSeconds;
+  pollIntervalSec: number;
+  /**
+   * Open the acceptor (inhibit off). Close it when false, when the server is unreachable for 5 s, or past acceptUntil.
+   */
+  accept: boolean;
+  sessionId: PublicId | null;
+  required: MoneyUzs;
+  paid: MoneyUzs;
+  acceptUntil: EpochSeconds | null;
+}
 export interface StartSessionCommand {
   commandId: PublicId;
   expiresAt: EpochSeconds;
@@ -266,6 +353,10 @@ export interface DeviceRegisterRequest {
    * Number of relay channels this device drives (default 1).
    */
   channelCount?: number;
+  /**
+   * LIGHT = table lamp relay controller (default); CASH = bill acceptor box, one per branch.
+   */
+  kind?: 'LIGHT' | 'CASH';
 }
 /**
  * This interface was referenced by `ProtocolRoot`'s JSON-Schema
@@ -322,6 +413,11 @@ export interface TabletBootstrapResponse {
     tenantName: string;
     timezone: string;
     isOpenNow: boolean;
+    paymentMode?: 'CASHIER' | 'BILL_ACCEPTOR';
+    /**
+     * Bill acceptor reachable; null when the branch pays at the cashier.
+     */
+    cashOnline?: boolean | null;
   };
   settings: {
     locale: 'uz' | 'ru';
@@ -430,6 +526,15 @@ export interface TabletSession {
     endAt: IsoUtc | null;
     hasPhoto: boolean;
     failureReason?: string | null;
+    payment?: null | {
+      mode: 'BILL_ACCEPTOR';
+      paid: MoneyUzs;
+      /**
+       * The acceptor takes bills for this session right now.
+       */
+      accepting: boolean;
+      acceptUntil: IsoUtc | null;
+    };
   };
 }
 /**
@@ -442,4 +547,5 @@ export interface TabletTablesResponse {
   serverTime: IsoUtc;
   isOpenNow: boolean;
   tables: TabletTable[];
+  cashOnline?: boolean | null;
 }

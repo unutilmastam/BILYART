@@ -11,7 +11,7 @@ $operator = [
 
 $manager = array_merge($operator, [
     'photos.view', 'photos.delete', 'reports.view',
-    'tables.manage', 'pricing.manage', 'working_hours.manage', 'devices.manage', 'users.manage',
+    'tables.manage', 'pricing.manage', 'working_hours.manage', 'devices.manage', 'users.manage', 'cash.manage',
 ]);
 
 $owner = array_merge($manager, [

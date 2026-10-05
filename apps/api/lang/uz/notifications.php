@@ -13,6 +13,10 @@ return [
     'device_offline' => '⚠️ Qurilma aloqada emas: :device (:table, :branch)',
     'device_online' => '✅ Qurilma qayta ulandi: :device (:table, :branch)',
     'session_failed' => '❗ Sessiya boshlanmadi: :table (:branch). Sabab: :reason',
+    'cash_unassigned' => "💵 Kassaga biriktirilmagan pul tushdi: :amount so'm (:branch). Admin panel → Kassa bo'limida hal qiling.",
+    'cash_paid_not_started' => "❗ To'langan o'yin boshlanmadi: :table (:branch), :amount so'm. Stol qurilmasi javob bermadi — mijozga boshqa stol bering yoki pulni qaytaring.",
+    'cash_too_little' => "💵 :amount so'm bir daqiqa o'yin uchun ham yetmadi: :table (:branch). Admin panel → Kassa bo'limida hal qiling.",
+    'cash_mismatch' => "⚠️ Inkassatsiyada farq: :branch. Tizim bo'yicha :expected so'm, sanaldi :counted so'm (:user).",
     'subscription_expiring' => 'Obuna muddati :days kundan keyin tugaydi (:date).',
     'subscription_expires_today' => 'Obuna muddati bugun tugaydi.',
     'subscription_expired' => "Obuna muddati tugadi. Ma'lumotlaringiz saqlanadi. To'lov uchun platforma administratori bilan bog'laning.",
@@ -24,5 +28,6 @@ return [
     'reason' => [
         'DEVICE_NO_ACK' => 'stol qurilmasi javob bermadi',
         'DEVICE_ERROR' => 'stol qurilmasida xato',
+        'PAID_NOT_STARTED' => "to'langan, lekin stol yoqilmadi",
     ],
 ];

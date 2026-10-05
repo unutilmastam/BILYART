@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Device\CashDeviceController;
 use App\Http\Controllers\Device\DeviceApiController;
 use Illuminate\Support\Facades\Route;
 
@@ -19,5 +20,8 @@ Route::middleware(['auth.device', 'throttle:device'])->group(function (): void {
     Route::post('poll', [DeviceApiController::class, 'poll']);
     Route::post('ack', [DeviceApiController::class, 'ack'])->middleware('idempotency:required');
     Route::get('state', [DeviceApiController::class, 'state']);
+    // Bill acceptor box (kind CASH): heartbeat + what to accept, and the bills it took (re-sent safely from its queue).
+    Route::post('cash/poll', [CashDeviceController::class, 'poll']);
+    Route::post('cash/notes', [CashDeviceController::class, 'notes'])->middleware('idempotency:required');
     Route::get('firmware/{version}', [DeviceApiController::class, 'firmware'])->where('version', '\d+\.\d+\.\d+(-[0-9A-Za-z.-]+)?');
 });

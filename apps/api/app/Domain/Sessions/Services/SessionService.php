@@ -4,8 +4,10 @@ namespace App\Domain\Sessions\Services;
 
 use App\Domain\Audit\Enums\ActorType;
 use App\Domain\Audit\Services\AuditLogger;
+use App\Domain\Branches\Enums\PaymentMode;
 use App\Domain\Branches\Models\Branch;
 use App\Domain\Branches\Services\WorkingHoursCalendar;
+use App\Domain\Cash\Services\CashPaymentService;
 use App\Domain\Devices\Models\Device;
 use App\Domain\Devices\Services\DeviceCommandBus;
 use App\Domain\Notifications\Enums\Severity;
@@ -107,7 +109,7 @@ final class SessionService
         }
     }
 
-    /** Step 9–10: create the session times and send START to the ESP32. */
+    /** Step 9–10: create the session times and send START to the ESP32 (or, in a bill acceptor branch, open the cash payment). */
     public function start(Tablet $tablet, GameSession $session): GameSession
     {
         $this->assertOwnedByTablet($tablet, $session);
@@ -115,7 +117,7 @@ final class SessionService
         // An expired reservation is cancelled (committed) before the error is returned.
         $expired = DB::transaction(function () use ($session): bool {
             $locked = GameSession::query()->lockForUpdate()->findOrFail($session->id);
-            if ($locked->status === SessionStatus::RESERVED && $locked->reserved_until->lessThanOrEqualTo(now())) {
+            if ($locked->status === SessionStatus::RESERVED && $locked->payment_source === null && $locked->reserved_until->lessThanOrEqualTo(now())) {
                 $this->transition($locked, SessionStatus::CANCELLED, ActorType::SYSTEM, null, 'RESERVATION_EXPIRED');
 
                 return true;
@@ -127,42 +129,68 @@ final class SessionService
             throw ApiException::of(ErrorCode::RESERVATION_EXPIRED);
         }
 
-        return DB::transaction(function () use ($session): GameSession {
-            $now = CarbonImmutable::now();
-            /** @var GameSession $locked */
-            $locked = GameSession::query()->lockForUpdate()->findOrFail($session->id);
-            SessionStateMachine::assert($locked->status, SessionStatus::STARTING);
+        // The branch decides how the customer pays (never the tablet): bill acceptor → collect cash first.
+        if (Branch::query()->findOrFail($session->branch_id)->payment_mode === PaymentMode::BILL_ACCEPTOR) {
+            return app(CashPaymentService::class)->open($tablet, $session);
+        }
 
-            $settings = $this->settings->for(Tenant::query()->findOrFail($locked->tenant_id));
-            // The customer photo is evidence for the hall (owner decision 2026-09-30): no photo, no game — for every tenant.
-            if (! $locked->photo()->whereNull('deleted_at')->exists()) {
-                throw ApiException::of(ErrorCode::PHOTO_REQUIRED);
-            }
-            $table = BilliardTable::query()->findOrFail($locked->table_id);
-            $device = $this->onlineDeviceFor($table, $now);
+        return DB::transaction(fn (): GameSession => $this->launch($session->id, ActorType::TABLET, $session->tablet_id));
+    }
 
+    /**
+     * RESERVED → STARTING: fixes the times and sends START to the table's lamp. Must run inside a transaction.
+     * $paid = [minutes, amount] when the bill acceptor collected the money: the game lasts what was paid.
+     *
+     * @param  array{minutes: int, amount: int}|null  $paid
+     */
+    public function launch(int $sessionId, ActorType $actor, ?int $actorId, ?array $paid = null): GameSession
+    {
+        $now = CarbonImmutable::now();
+        /** @var GameSession $locked */
+        $locked = GameSession::query()->lockForUpdate()->findOrFail($sessionId);
+        SessionStateMachine::assert($locked->status, SessionStatus::STARTING);
+
+        $settings = $this->settings->for(Tenant::query()->findOrFail($locked->tenant_id));
+        // The customer photo is evidence for the hall (owner decision 2026-09-30): no photo, no game — for every tenant.
+        if (! $locked->photo()->whereNull('deleted_at')->exists()) {
+            throw ApiException::of(ErrorCode::PHOTO_REQUIRED);
+        }
+        $table = BilliardTable::query()->findOrFail($locked->table_id);
+        $device = $this->onlineDeviceFor($table, $now);
+
+        if ($paid !== null) {
             $locked->forceFill([
-                'device_id' => $device->id,
-                'device_channel' => $table->device_channel, // the wiring at start time; STOP goes to the same relay
-                'start_at' => $now,
-                'end_at' => $now->addMinutes($locked->duration_minutes),
-                'reserved_until' => null,
+                'duration_minutes' => $paid['minutes'],
+                'amount' => $paid['amount'],
+                'payment_status' => PaymentStatus::PAID,
+                'payment_marked_at' => $now,
+                'paying_until' => null,
             ]);
-            $this->transition($locked, SessionStatus::STARTING, ActorType::TABLET, $locked->tablet_id);
+        }
+        $locked->forceFill([
+            'device_id' => $device->id,
+            'device_channel' => $table->device_channel, // the wiring at start time; STOP goes to the same relay
+            'start_at' => $now,
+            'end_at' => $now->addMinutes($locked->duration_minutes),
+            'reserved_until' => null,
+        ]);
+        $this->transition($locked, SessionStatus::STARTING, $actor, $actorId);
 
-            $this->commands->startSession($device, $locked, (int) $settings['warn_before_minutes'] * 60, 3);
-            $this->audit->log('session.created', $locked, [
-                'table' => $table->number, 'minutes' => $locked->duration_minutes, 'amount' => $locked->amount,
-                'endAt' => $locked->end_at->toIso8601ZuluString(),
-            ]);
+        $this->commands->startSession($device, $locked, (int) $settings['warn_before_minutes'] * 60, 3);
+        $this->audit->log('session.created', $locked, [
+            'table' => $table->number, 'minutes' => $locked->duration_minutes, 'amount' => $locked->amount,
+            'endAt' => $locked->end_at->toIso8601ZuluString(),
+        ] + ($paid !== null ? ['paidCash' => $paid['amount']] : []), $actor === ActorType::TABLET ? [] : ['actor_type' => $actor, 'actor_id' => $actorId]);
 
-            return $locked;
-        });
+        return $locked;
     }
 
     public function cancel(Tablet $tablet, GameSession $session): GameSession
     {
         $this->assertOwnedByTablet($tablet, $session);
+        if ($session->payment_source === PaymentMode::BILL_ACCEPTOR) {
+            return app(CashPaymentService::class)->close($session, 'CUSTOMER_CANCELLED'); // money already in the box becomes game time
+        }
 
         return DB::transaction(function () use ($session): GameSession {
             $locked = GameSession::query()->lockForUpdate()->findOrFail($session->id);
@@ -291,7 +319,7 @@ final class SessionService
         $event->save();
     }
 
-    private function onlineDeviceFor(BilliardTable $table, CarbonImmutable $now): Device
+    public function onlineDeviceFor(BilliardTable $table, CarbonImmutable $now): Device
     {
         $device = $table->device_id ? Device::query()->whereKey($table->device_id)->where('status', 'PAIRED')->first() : null;
         if ($device === null || $table->device_channel === null) {

@@ -19,6 +19,7 @@ final class BranchResource extends JsonResource
             'timezone' => $this->timezone,
             'isActive' => $this->is_active,
             'reportTime' => substr((string) $this->report_time, 0, 5),
+            'paymentMode' => $this->payment_mode->value,
         ];
     }
 }

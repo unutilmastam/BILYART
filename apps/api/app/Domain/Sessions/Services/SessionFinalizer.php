@@ -3,6 +3,8 @@
 namespace App\Domain\Sessions\Services;
 
 use App\Domain\Audit\Enums\ActorType;
+use App\Domain\Branches\Enums\PaymentMode;
+use App\Domain\Cash\Services\CashPaymentService;
 use App\Domain\Devices\Services\DeviceCommandBus;
 use App\Domain\Sessions\Enums\SessionStatus;
 use App\Domain\Sessions\Models\GameSession;
@@ -59,6 +61,11 @@ final class SessionFinalizer
 
     private function expireReservation(GameSession $session): void
     {
+        if ($session->payment_source === PaymentMode::BILL_ACCEPTOR) {
+            app(CashPaymentService::class)->settle($session); // paid cash becomes game time, nothing paid → cancelled
+
+            return;
+        }
         DB::transaction(function () use ($session): void {
             $locked = GameSession::query()->lockForUpdate()->findOrFail($session->id);
             if ($locked->status === SessionStatus::RESERVED) {

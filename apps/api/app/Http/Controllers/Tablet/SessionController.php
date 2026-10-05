@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Tablet;
 
+use App\Domain\Cash\Services\CashPaymentService;
 use App\Domain\Sessions\Models\GameSession;
 use App\Domain\Sessions\Services\SessionService;
 use App\Domain\Tables\Models\BilliardTable;
@@ -16,7 +17,10 @@ use Illuminate\Http\Request;
 /** Customer session flow (ARCHITECTURE §5). All state changes go through SessionService. */
 final class SessionController extends Controller
 {
-    public function __construct(private readonly SessionService $sessions) {}
+    public function __construct(
+        private readonly SessionService $sessions,
+        private readonly CashPaymentService $cash,
+    ) {}
 
     public function prepare(Request $request): JsonResponse
     {
@@ -48,7 +52,8 @@ final class SessionController extends Controller
             throw ApiException::of(ErrorCode::NOT_FOUND);
         }
 
-        return TabletSessionResource::make($session);
+        // A finished cash payment is settled on read too (the scheduler is only a backstop).
+        return TabletSessionResource::make($this->cash->settleIfDue($session));
     }
 
     private function tablet(Request $request): Tablet

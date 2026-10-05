@@ -2,8 +2,12 @@
 
 namespace App\Http\Controllers\Tablet;
 
+use App\Domain\Branches\Enums\PaymentMode;
 use App\Domain\Branches\Models\Branch;
 use App\Domain\Branches\Services\WorkingHoursCalendar;
+use App\Domain\Devices\Enums\DeviceKind;
+use App\Domain\Devices\Enums\DeviceStatus;
+use App\Domain\Devices\Models\Device;
 use App\Domain\Pricing\Models\PricingPlan;
 use App\Domain\Pricing\Services\PriceCalculator;
 use App\Domain\Sessions\Services\TableStatusResolver;
@@ -41,6 +45,8 @@ final class KioskController extends Controller
                 'tenantName' => $tenant->name,
                 'timezone' => $branch->timezone,
                 'isOpenNow' => $branch->is_active && $this->calendar->isOpenAt($branch, now()->toImmutable()),
+                'paymentMode' => $branch->payment_mode->value,
+                'cashOnline' => $this->cashOnline($branch),
             ],
             'settings' => [
                 'locale' => $settings['locale'],
@@ -62,6 +68,7 @@ final class KioskController extends Controller
         return [
             'serverTime' => now()->toIso8601ZuluString(),
             'isOpenNow' => $branch->is_active && $this->calendar->isOpenAt($branch, now()->toImmutable()),
+            'cashOnline' => $this->cashOnline($branch),
             'tables' => $this->tableRows($tablet, $warnMinutes),
         ];
     }
@@ -99,6 +106,17 @@ final class KioskController extends Controller
         })->values()->all();
 
         return $rows;
+    }
+
+    /** Bill acceptor reachable (null when the branch pays at the cashier). */
+    private function cashOnline(Branch $branch): ?bool
+    {
+        if ($branch->payment_mode !== PaymentMode::BILL_ACCEPTOR) {
+            return null;
+        }
+        $cash = Device::query()->where('branch_id', $branch->id)->where('kind', DeviceKind::CASH->value)->where('status', DeviceStatus::PAIRED->value)->first();
+
+        return $cash !== null && $cash->isOnline();
     }
 
     public function heartbeat(Request $request): Response

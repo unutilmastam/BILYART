@@ -1,0 +1,82 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://protocol.bilyart/device.cash-notes.response.schema.json",
+  "title": "DeviceCashNotesResponse",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "results",
+    "serverTime",
+    "pollIntervalSec",
+    "accept",
+    "sessionId",
+    "required",
+    "paid",
+    "acceptUntil"
+  ],
+  "properties": {
+    "results": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "noteUid",
+          "status"
+        ],
+        "properties": {
+          "noteUid": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "CREDITED",
+              "UNASSIGNED",
+              "DUPLICATE"
+            ],
+            "description": "Every status means: stored, delete it from flash."
+          }
+        }
+      }
+    },
+    "serverTime": {
+      "$ref": "common.schema.json#/definitions/EpochSeconds"
+    },
+    "pollIntervalSec": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 60
+    },
+    "accept": {
+      "type": "boolean",
+      "description": "Open the acceptor (inhibit off). Close it when false, when the server is unreachable for 5 s, or past acceptUntil."
+    },
+    "sessionId": {
+      "oneOf": [
+        {
+          "$ref": "common.schema.json#/definitions/PublicId"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "required": {
+      "$ref": "common.schema.json#/definitions/MoneyUzs"
+    },
+    "paid": {
+      "$ref": "common.schema.json#/definitions/MoneyUzs"
+    },
+    "acceptUntil": {
+      "oneOf": [
+        {
+          "$ref": "common.schema.json#/definitions/EpochSeconds"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  }
+}

@@ -14,7 +14,7 @@ class SessionStateMachineTest extends TestCase
     public function only_documented_transitions_are_allowed(): void
     {
         $allowed = [
-            'RESERVED' => ['STARTING', 'CANCELLED'],
+            'RESERVED' => ['STARTING', 'CANCELLED', 'FAILED'], // FAILED: cash paid but the lamp could not start
             'STARTING' => ['ACTIVE', 'FAILED', 'COMPLETING'],
             'ACTIVE' => ['COMPLETING', 'COMPLETED'],
             'COMPLETING' => ['COMPLETED'],

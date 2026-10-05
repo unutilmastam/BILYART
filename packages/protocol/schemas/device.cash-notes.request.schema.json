@@ -1,0 +1,65 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://protocol.bilyart/device.cash-notes.request.schema.json",
+  "title": "DeviceCashNotesRequest",
+  "description": "POST /device/v1/cash/notes (Idempotency-Key) — bills taken by the acceptor, oldest first. Each bill is written to flash BEFORE sending and removed only after the server answered for its noteUid.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "notes"
+  ],
+  "properties": {
+    "notes": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 20,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "noteUid",
+          "nominal"
+        ],
+        "properties": {
+          "noteUid": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9._:-]{4,48}$",
+            "description": "Unique per device forever, e.g. <deviceCode>-<flash counter>."
+          },
+          "nominal": {
+            "type": "integer",
+            "enum": [
+              1000,
+              2000,
+              5000,
+              10000,
+              20000,
+              50000,
+              100000,
+              200000
+            ],
+            "description": "UZS bill value decoded from the pulses."
+          },
+          "sessionId": {
+            "oneOf": [
+              {
+                "$ref": "common.schema.json#/definitions/PublicId"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The session the box was accepting for (from the last poll)."
+          },
+          "deviceTs": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0
+          }
+        }
+      }
+    }
+  }
+}
