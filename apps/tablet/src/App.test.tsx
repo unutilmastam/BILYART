@@ -120,6 +120,53 @@ describe('customer flow', () => {
     }
   }, 15_000);
 
+  it('bill acceptor branch: pay screen follows the counted money, extra cash is extra time, the server starts the game', async () => {
+    const endAt = new Date(Date.now() + 90 * 60_000).toISOString();
+    const until = new Date(Date.now() + 180_000).toISOString();
+    const paying = (paid: number) => session('RESERVED', { hasPhoto: true, payment: { mode: 'BILL_ACCEPTOR', paid, accepting: true, acceptUntil: until } });
+    const paidSteps = [paying(10000), paying(10000), session('ACTIVE', { hasPhoto: true, durationMinutes: 90, amount: 30000, startAt: new Date().toISOString(), endAt, payment: { mode: 'BILL_ACCEPTOR', paid: 30000, accepting: false, acceptUntil: null } })];
+    let shows = 0;
+    const cash = bootstrap([table(1)]);
+    cash.branch = { ...cash.branch, paymentMode: 'BILL_ACCEPTOR', cashOnline: true };
+    mockApi({
+      'GET /api/tablet/bootstrap': () => ({ status: 200, body: cash }),
+      'GET /api/tablet/tables': () => ({ status: 200, body: { serverTime: new Date().toISOString(), isOpenNow: true, cashOnline: true, tables: [table(1)] } }),
+      'POST /api/tablet/heartbeat': () => ({ status: 204 }),
+      'POST /api/tablet/sessions/prepare': () => ({ status: 201, body: session('RESERVED') }),
+      [`POST /api/tablet/sessions/${ID(500)}/photo`]: () => ({ status: 200, body: session('RESERVED', { hasPhoto: true }) }),
+      [`POST /api/tablet/sessions/${ID(500)}/start`]: () => ({ status: 200, body: paying(0) }),
+      [`GET /api/tablet/sessions/${ID(500)}`]: () => ({ status: 200, body: paidSteps[Math.min(shows++, paidSteps.length - 1)] }),
+    });
+    render(<App photoDeps={photoDeps()} />);
+
+    await userEvent.click(await screen.findByRole('button', { name: /1-stol/ }));
+    await userEvent.click(await screen.findByRole('button', { name: /1 soat/ }));
+    expect(screen.getByText(/kupyura qabul qilgich orqali/)).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Davom etish' }));
+
+    expect(await screen.findByText('Pul soling', {}, { timeout: 8000 })).toBeInTheDocument();
+    expect(screen.getByText('Kerak')).toBeInTheDocument();
+    expect(await screen.findByText("Yana 10 000 so'm", {}, { timeout: 4000 })).toBeInTheDocument();
+    expect(screen.getByText('Bu pulga: 30 daqiqa')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: "Shu pulga o'ynash" })).toBeInTheDocument();
+
+    expect(await screen.findByText("O'yin boshlandi!", {}, { timeout: 8000 })).toBeInTheDocument();
+    expect(screen.getByText("To'landi: 30 000 so'm · 1 soat 30 daqiqa")).toBeInTheDocument();
+  }, 20_000);
+
+  it('bill acceptor offline: tables cannot be chosen and the customer is told', async () => {
+    const cash = bootstrap([table(1)]);
+    cash.branch = { ...cash.branch, paymentMode: 'BILL_ACCEPTOR', cashOnline: false };
+    mockApi({
+      'GET /api/tablet/bootstrap': () => ({ status: 200, body: cash }),
+      'GET /api/tablet/tables': () => ({ status: 200, body: { serverTime: new Date().toISOString(), isOpenNow: true, cashOnline: false, tables: [table(1)] } }),
+      'POST /api/tablet/heartbeat': () => ({ status: 204 }),
+    });
+    render(<App photoDeps={photoDeps()} />);
+    expect(await screen.findByText(/Kassa \(kupyura qabul qilgich\) ishlamayapti/)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /1-stol/ })).toBeDisabled();
+  });
+
   it('retries a failed prepare with the same idempotency key (never two sessions)', async () => {
     let attempts = 0;
     const calls = mockApi({

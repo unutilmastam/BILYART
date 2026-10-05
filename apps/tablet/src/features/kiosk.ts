@@ -55,7 +55,7 @@ export function useKiosk(onUnpaired: () => void): KioskData {
     try {
       const r = await api<TabletTablesResponse>('/tablet/tables');
       const b = current.current;
-      save({ ...b, serverTime: r.serverTime, tables: r.tables, branch: { ...b.branch, isOpenNow: r.isOpenNow } });
+      save({ ...b, serverTime: r.serverTime, tables: r.tables, branch: { ...b.branch, isOpenNow: r.isOpenNow, cashOnline: r.cashOnline ?? b.branch.cashOnline } });
       setConnection('online');
     } catch (e) {
       handleError(e);

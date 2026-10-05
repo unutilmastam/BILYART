@@ -113,7 +113,10 @@ function DeviceRow({ d, canManage }: { d: DeviceInfo; canManage: boolean }) {
     <li className="py-3">
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div>
-          <p className="flex items-center gap-2 font-medium"><OnlineDot online={d.online} /> {d.code} · {d.branch?.name ?? '—'}</p>
+          <p className="flex items-center gap-2 font-medium">
+            <OnlineDot online={d.online} /> {d.code} · {d.branch?.name ?? '—'}
+            {d.kind === 'CASH' && <span className="rounded-full bg-amber-50 px-2 py-0.5 text-xs font-semibold text-amber-800 ring-1 ring-amber-200">{t('dev.cashBox')}</span>}
+          </p>
           <p className="text-xs text-slate-500">
             {t('dev.lastSeen')}: {formatDateTime(d.lastSeenAt)} · {t('dev.fw')}: {d.firmwareVersion ?? '—'}
             {d.rssi !== null && ` · ${d.rssi} dBm`}
@@ -121,7 +124,7 @@ function DeviceRow({ d, canManage }: { d: DeviceInfo; canManage: boolean }) {
         </div>
         {canManage && <Button variant="secondary" loading={unpair.isPending} onClick={() => window.confirm(t('dev.confirmUnpair')) && unpair.mutate()}>{t('dev.unpair')}</Button>}
       </div>
-      <Channels d={d} />
+      {d.kind === 'CASH' ? <p className="mt-1 text-xs text-slate-500">{t('dev.cashHint')}</p> : <Channels d={d} />}
       {canManage && <MoveDevice d={d} />}
       {unpair.isError && <ErrorBanner error={unpair.error} />}
     </li>

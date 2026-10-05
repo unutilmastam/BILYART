@@ -4,16 +4,16 @@ import { useMe } from '../../auth/useMe';
 import { Button } from '../../components/Button';
 import { Card } from '../../components/Card';
 import { Empty, ErrorBanner, Spinner, SuccessBanner } from '../../components/Feedback';
-import { TextField } from '../../components/Field';
+import { SelectField, TextField } from '../../components/Field';
 import { useBranch, useClientMutation, useClosedDays, useWorkingHours } from '../../features/client/api';
 import { t } from '../../i18n';
 import type { MessageKey } from '../../i18n/uz';
 import { ApiError } from '../../lib/api';
 import { formatDate } from '../../lib/format';
-import type { Branch, WorkingDay } from '../../types/api';
+import type { Branch, PaymentMode, WorkingDay } from '../../types/api';
 
 function EditBranch({ branch }: { branch: Branch }) {
-  const [form, setForm] = useState({ name: branch.name, address: branch.address ?? '', phone: branch.phone ?? '', reportTime: branch.reportTime });
+  const [form, setForm] = useState({ name: branch.name, address: branch.address ?? '', phone: branch.phone ?? '', reportTime: branch.reportTime, paymentMode: branch.paymentMode });
   const m = useClientMutation<Partial<Branch>>(`/admin/branches/${branch.id}`, 'PATCH');
   const err = (f: string) => (m.error instanceof ApiError ? m.error.fieldError(f) : undefined);
   return (
@@ -23,6 +23,13 @@ function EditBranch({ branch }: { branch: Branch }) {
         <TextField label={t('branch.address')} value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} />
         <TextField label={t('branch.phone')} type="tel" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
         <TextField label={t('branch.reportTime')} type="time" value={form.reportTime} onChange={(e) => setForm({ ...form, reportTime: e.target.value })} error={err('reportTime')} />
+        <SelectField
+          label={t('branch.paymentMode')}
+          value={form.paymentMode}
+          onChange={(e) => setForm({ ...form, paymentMode: e.target.value as PaymentMode })}
+          options={[{ value: 'CASHIER', label: t('paymode.CASHIER') }, { value: 'BILL_ACCEPTOR', label: t('paymode.BILL_ACCEPTOR') }]}
+          hint={form.paymentMode === 'BILL_ACCEPTOR' ? t('branch.paymentModeHint') : undefined}
+        />
       </div>
       {m.isError && <ErrorBanner error={m.error} />}
       {m.isSuccess && <SuccessBanner>{t('settings.saved')}</SuccessBanner>}

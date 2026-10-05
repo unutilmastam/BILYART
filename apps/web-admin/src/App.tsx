@@ -1,6 +1,7 @@
 import {
   Activity,
   BadgeDollarSign,
+  Banknote,
   BarChart3,
   Building2,
   Cpu,
@@ -24,6 +25,7 @@ import { t } from './i18n';
 import { useMe } from './auth/useMe';
 import { BranchDetailPage } from './pages/client/BranchDetailPage';
 import { BranchesPage } from './pages/client/BranchesPage';
+import { CashPage } from './pages/client/CashPage';
 import { ClientHomePage } from './pages/client/ClientHomePage';
 import { DevicesPage } from './pages/client/DevicesPage';
 import { PricingPage } from './pages/client/PricingPage';
@@ -68,6 +70,7 @@ const clientNav: (NavItem & { permission?: string })[] = [
   { to: '/client', label: 'nav.dashboard', icon: LayoutDashboard, end: true },
   { to: '/client/sessions', label: 'nav.sessions', icon: Timer, permission: 'sessions.view' },
   { to: '/client/reports', label: 'nav.reports', icon: BarChart3, permission: 'reports.view' },
+  { to: '/client/cash', label: 'nav.cash', icon: Banknote, permission: 'reports.view' },
   { to: '/client/devices', label: 'nav.devices', icon: Cpu, permission: 'tables.view' },
   { to: '/client/branches', label: 'nav.branches', icon: Building2 },
   { to: '/client/tables', label: 'nav.tables', icon: Table2, permission: 'tables.view' },
@@ -128,6 +131,7 @@ export const routes = [
       { path: 'sessions', element: <SessionsPage /> },
       { path: 'sessions/:id', element: <SessionDetailPage /> },
       { path: 'reports', element: <ReportsPage /> },
+      { path: 'cash', element: <CashPage /> },
       { path: 'devices', element: <DevicesPage /> },
       { path: 'branches', element: <BranchesPage /> },
       { path: 'branches/:id', element: <BranchDetailPage /> },

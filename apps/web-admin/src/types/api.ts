@@ -137,7 +137,11 @@ export interface Branch {
   timezone: string;
   isActive: boolean;
   reportTime: string;
+  /** How customers pay: at the cashier (staff marks it) or into the bill acceptor before the game starts. */
+  paymentMode: PaymentMode;
 }
+
+export type PaymentMode = 'CASHIER' | 'BILL_ACCEPTOR';
 
 export interface WorkingDay {
   weekday: number;
@@ -253,6 +257,8 @@ export interface Report {
 export interface DeviceInfo {
   id: string;
   code: string;
+  /** LIGHT = lamp relay controller; CASH = bill acceptor box (one per branch). */
+  kind: 'LIGHT' | 'CASH';
   status: 'PAIRED' | 'UNPAIRED' | 'REVOKED';
   online: boolean;
   lastSeenAt: string | null;
@@ -283,4 +289,24 @@ export interface TabletInfo {
   deviceModel: string | null;
   branch?: { id: string; name: string } | null;
   pairedAt: string | null;
+}
+
+export type CashNoteStatus = 'CREDITED' | 'UNASSIGNED' | 'RESOLVED';
+
+export interface CashTotal {
+  amount: number;
+  count: number;
+}
+
+/** GET /admin/cash — bill acceptor boxes, last bills and collections of the user's branches. */
+export interface CashOverview {
+  boxes: {
+    branch: { id: string; name: string; paymentMode: PaymentMode };
+    device: { id: string; code: string; online: boolean; lastSeenAt: string | null; accepting: boolean; queued: number } | null;
+    uncollected: CashTotal;
+    today: CashTotal;
+    unassigned: CashTotal;
+  }[];
+  notes: { id: string; nominal: number; status: CashNoteStatus; receivedAt: string; branch: string | null; table: string | null; sessionId: string | null; resolveComment: string | null }[];
+  collections: { id: string; branch: string | null; deviceCode: string | null; expected: number; counted: number; notesCount: number; collectedBy: string | null; comment: string | null; createdAt: string }[];
 }

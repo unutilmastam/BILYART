@@ -112,6 +112,13 @@ A `SENT` command without ACK is re-delivered on next poll after 6 s, max 3 attem
 - **OTA**: server command → device downloads `/firmware/{version}` with its token, checks `Content-Length` = `size` and SHA-256 = `sha256` while streaming into the inactive slot, reboots. `verifyRollbackLater()` keeps the new image `PENDING_VERIFY` until a successful `/state`; no success within 10 min → rollback to the previous image. Each build embeds `BLYFWVER:<version>`; the server refuses an upload whose marker differs from the typed version, so a rollout always converges. Rollout: Super Admin → Proshivka → `POST /api/super/firmware/{id}/rollout` queues OTA (1 h TTL) for paired devices on another version with no occupying session on any of their tables; repeating skips devices that already have one pending.
 - **Build-time values** (`scripts/defaults.py`): `FW_VERSION`, `DEVICE_REGISTRATION_SECRET` (GitHub secret, never committed), `DEFAULT_API_BASE`.
 
+## 6c. Bill acceptor box (kind CASH, owner request 2026-10-05)
+One per branch: TOP TB77 (UZS bills, PULSE mode: 1 000 = 1 … 200 000 = 8 pulses) + ESP32 (+ optocouplers on signal and inhibit, see HARDWARE.md §7). Registers with `"kind": "CASH"` and pairs like a lamp device (same token, OTA, offline monitoring); it never receives lamp commands and lamp endpoints answer 403 `DEVICE_KIND_MISMATCH`.
+- `POST /device/v1/cash/poll` every `pollIntervalSec` (2 s): `{ts, fw, accepting, queued, rssi?, uptime?, bootReason?}` → `{serverTime, pollIntervalSec, accept, sessionId, required, paid, acceptUntil}`. **Open the acceptor (inhibit off) only while `accept` is true**; close it when `accept` is false, after 5 s without a server answer, or past `acceptUntil`.
+- Every accepted bill: decode the nominal (pulses after 400 ms silence; unknown counts are logged, not sent), write `{noteUid, nominal, sessionId, deviceTs}` to flash **first** (`noteUid` = device code + persistent counter), then `POST /device/v1/cash/notes` (Idempotency-Key, up to 20, oldest first). Delete a note from flash only after the server answered it (`CREDITED` / `UNASSIGNED` / `DUPLICATE` all mean stored). After a reboot the queue is re-sent; duplicates are ignored by the server.
+- The response carries the same state as `/cash/poll` (e.g. `accept: false` the moment the price is reached).
+- Schemas: `device.cash-poll.*`, `device.cash-notes.*` in `packages/protocol`.
+
 ## 7. Error codes
 401 `DEVICE_UNAUTHORIZED` / `REPAIR_REQUIRED`, 403 `DEVICE_REVOKED`, 429 rate limited (device backs off), 5xx → retry with backoff, keep local timer.
 

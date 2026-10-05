@@ -1,6 +1,6 @@
 import { BigButton, Centered, Ring, Spinner } from '../components/ui';
 import type { Session } from '../features/session';
-import { formatClock, formatCountdown } from '../lib/format';
+import { formatClock, formatCountdown, formatDuration, formatUzs } from '../lib/format';
 import { t } from '../i18n';
 
 export function StartScreen({ session, now, timezone, error, onDone }: { session: Session | null; now: number; timezone: string; error: string | null; onDone: () => void }) {
@@ -8,7 +8,7 @@ export function StartScreen({ session, now, timezone, error, onDone }: { session
     return (
       <Centered>
         <p role="alert" className="max-w-3xl text-4xl font-bold text-red-300">
-          {error ?? t('start.failed')}
+          {error ?? (session?.failureReason === 'PAID_NOT_STARTED' ? t('pay.failedPaid') : t('start.failed'))}
         </p>
         <BigButton onClick={onDone}>{t('common.done')}</BigButton>
       </Centered>
@@ -32,6 +32,7 @@ export function StartScreen({ session, now, timezone, error, onDone }: { session
         <span className="tabular text-7xl font-bold">{formatCountdown(end - now)}</span>
         <span className="mt-2 text-xl text-white/70">{t('start.endsAt', { time: formatClock(end, timezone) })}</span>
       </Ring>
+      {session.payment && <p className="text-2xl font-semibold text-accent-300">{t('start.paid', { amount: formatUzs(session.amount), time: formatDuration(session.durationMinutes) })}</p>}
       <BigButton onClick={onDone} className="min-w-72">
         {t('common.done')}
       </BigButton>

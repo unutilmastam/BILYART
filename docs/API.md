@@ -111,9 +111,11 @@ Tenant, branch and table are **always** resolved from the principal, never from 
 | POST | `/heartbeat` | `{appVersion}` |
 | POST | `/sessions/prepare` | `Idempotency-Key` · `TabletSessionPrepareRequest` → `TabletSession` (RESERVED, TTL 120 s) · checks subscription, working hours, table in tablet's branch, device online, table free |
 | POST | `/sessions/{session}/photo` | multipart `photo` (≤ 2 MB), 10/min · RESERVED only |
-| POST | `/sessions/{session}/start` | `Idempotency-Key` → STARTING, queues `START_SESSION`. Requires the uploaded photo (422 `PHOTO_REQUIRED` otherwise, for every tenant) |
-| POST | `/sessions/{session}/cancel` | `Idempotency-Key` · RESERVED only |
+| POST | `/sessions/{session}/start` | `Idempotency-Key` → STARTING, queues `START_SESSION`. Requires the uploaded photo (422 `PHOTO_REQUIRED` otherwise, for every tenant). **Bill acceptor branch:** stays RESERVED with `session.payment` (409 `CASH_DEVICE_OFFLINE` / `CASH_BUSY`); the server starts the game itself once paid (ARCHITECTURE §5.9) |
+| POST | `/sessions/{session}/cancel` | `Idempotency-Key` · RESERVED only. In a bill acceptor payment: stops accepting; after an 8 s grace the paid part becomes game time (nothing paid → CANCELLED) |
 | GET | `/sessions/{session}` | `TabletSession` |
+
+Client Admin cash (bill acceptor): `GET /cash` (`reports.view`) → boxes (online, in box since last collection, today, unassigned), last 50 bills, last 20 collections · `POST /cash/collections` {deviceId, countedAmount, comment?} (`cash.manage`) → expected vs counted, mismatch notification · `POST /cash/notes/{cashNote}/resolve` {comment} (`cash.manage`) UNASSIGNED → RESOLVED. Branch `PATCH` accepts `paymentMode` (CASHIER / BILL_ACCEPTOR).
 
 ### 3.5 Device (`/device/v1`) — see DEVICE_PROTOCOL.md
 `POST /register` · `GET /pairing-status` · `POST /poll` · `POST /ack` · `GET /state` · `GET /firmware/{version}`

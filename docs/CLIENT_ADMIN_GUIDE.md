@@ -33,6 +33,8 @@ Xodimni faqat ayrim filiallarga bog'lash mumkin (**Xodimlar → Filiallar**; bo'
   - **To'xtatish** — o'yinni muddatidan oldin tugatish; chiroq bir necha soniyada o'chadi.
   - **Surat** — ruxsati bor xodimga ko'rinadi; har bir ko'rish jurnalga yoziladi. Kerak bo'lmasa **o'chirish** mumkin.
   - **Tarix** — sessiyaning barcha bosqichlari (kim, qachon).
+- **Kupyura qabul qilgich (ixtiyoriy):** Filiallar → filial → **To'lov usuli → Kupyura qabul qilgich**. Kassa qurilmasini **Qurilmalar → ESP32 ulash** orqali ulang (u "Kassa" belgisi bilan ko'rinadi). Shundan keyin mijoz suratdan keyin **pulni qabul qilgichga soladi**; to'liq to'langanda o'yin o'zi boshlanadi. Qaytim berilmaydi — ortiqcha pul qo'shimcha vaqt bo'ladi; bekor qilsa yoki 3 daqiqa pul solmasa, solgan puliga teng vaqt o'ynaydi. Kassa qurilmasi aloqada bo'lmasa, planshet "Kassa ishlamayapti" deb ko'rsatadi va o'yin boshlanmaydi.
+- **Kassa** bo'limi: qutida qancha pul borligi, bugungi tushum, oxirgi kupyuralar. **Biriktirilmagan** pul (masalan o'yin boshlangandan keyin tushgan kupyura) — **Hal qilish** tugmasi bilan nima qilinganini yozing (qo'shimcha vaqt berildi / pul qaytarildi). Qutidan pul olganda **Pul olindi** → sanalgan summani kiriting: tizim kutilgan summa bilan solishtiradi, farq bo'lsa xabar keladi.
 - **Hisobotlar → Kunlik / Oylik**: sessiyalar soni, o'yin vaqti, summa, to'lanmagan, stollar bandligi (filial bo'yicha).
 
 ## 4. Obuna
