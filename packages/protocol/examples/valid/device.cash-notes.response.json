@@ -1,0 +1,15 @@
+{
+  "results": [
+    {
+      "noteUid": "ESP32-A1B2C3-000042",
+      "status": "CREDITED"
+    }
+  ],
+  "serverTime": 1790000004,
+  "pollIntervalSec": 2,
+  "accept": false,
+  "sessionId": null,
+  "required": 0,
+  "paid": 0,
+  "acceptUntil": null
+}

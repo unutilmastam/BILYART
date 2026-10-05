@@ -5,10 +5,33 @@
   "description": "GET /api/tablet/tables — polled every few seconds.",
   "type": "object",
   "additionalProperties": false,
-  "required": ["serverTime", "isOpenNow", "tables"],
+  "required": [
+    "serverTime",
+    "isOpenNow",
+    "tables"
+  ],
   "properties": {
-    "serverTime": { "$ref": "common.schema.json#/definitions/IsoUtc" },
-    "isOpenNow": { "type": "boolean" },
-    "tables": { "type": "array", "items": { "$ref": "tablet.table.schema.json" } }
+    "serverTime": {
+      "$ref": "common.schema.json#/definitions/IsoUtc"
+    },
+    "isOpenNow": {
+      "type": "boolean"
+    },
+    "tables": {
+      "type": "array",
+      "items": {
+        "$ref": "tablet.table.schema.json"
+      }
+    },
+    "cashOnline": {
+      "oneOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
   }
 }

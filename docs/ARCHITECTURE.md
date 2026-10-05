@@ -104,7 +104,13 @@ Implementation notes (Phase 7):
 - `SessionFinalizer` (`sessions:finalize`, every minute): ACTIVE past endAt → COMPLETED (ended_at = end_at), RESERVED past TTL → CANCELLED, STARTING without ACK after 20 s → FAILED + STOP, COMPLETING after 60 s → COMPLETED, `warned_at` recorded.
 - `TableStatusResolver` derives AVAILABLE/RESERVED/STARTING/BUSY/WARNING/DISABLED/DEVICE_OFFLINE/CLOSED at read time, so a missed cron run never shows a finished table as busy.
 - `DeviceCommandBus`: a newer START/STOP supersedes undelivered commands of other sessions; a STOP expires its own session's undelivered START.
-8. Payment status (UNPAID/PAID/WAIVED) is set **manually** by authorized staff. No automatic verification (spec §10, §69).
+8. Payment status (UNPAID/PAID/WAIVED) is set **manually** by authorized staff in **CASHIER** branches. No automatic verification (spec §10, §69).
+9. **Bill acceptor branches** (`branches.payment_mode = BILL_ACCEPTOR`, owner request 2026-10-05; the owner's PDF was adapted to this design, not the other way round):
+   - Step 3 opens a cash payment instead of starting: the session stays `RESERVED` (the existing double-booking guard keeps the table) with `payment_source = BILL_ACCEPTOR`, `cash_device_id`, `paying_until = now + 180 s`. Requires the lamp device and the branch's **CASH** device online; one paying session per acceptor (branch row lock → 409 `CASH_BUSY`).
+   - The bill box (`devices.kind = CASH`, same pairing/token/OTA as lamp devices) polls `POST /device/v1/cash/poll` every 2 s and opens its acceptor only while `accept` is true; every bill is stored in its flash, sent to `POST /device/v1/cash/notes` and counted **once** (`cash_notes` UNIQUE(device_id, note_uid)). Each bill extends the window by 180 s.
+   - Fully paid → the **server** starts the lamp at once (`SessionService::launch`, `payment_status = PAID`). Cancel / window over → acceptance stops, 8 s grace for a bill already inside the acceptor, then the paid amount becomes time: `minutes = ⌊paid × 60 / price_per_hour⌋` (never less than the chosen time once its price is paid, max 720). Nothing paid → CANCELLED. No change is given: extra money is extra time.
+   - Money never disappears silently: a bill no paying session can take (late re-send, extra bill after full payment, other box) is `UNASSIGNED` + staff notification; paid but the lamp cannot start → `FAILED`/`PAID_NOT_STARTED` + critical notification. Staff resolve unassigned bills and record box collections (expected vs counted) in Admin → Kassa (`cash.manage`).
+   - Only the cash device writes money; the tablet only reads it (`TabletSession.payment`).
 
 ## 6. Frontends
 - **web-admin**: React 18 + Vite + TypeScript + React Router + TanStack Query + Tailwind. Areas: `/admin/super/*` (SUPER_ADMIN), `/admin/*` (tenant roles). Mobile-first.

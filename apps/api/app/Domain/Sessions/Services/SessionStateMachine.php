@@ -14,12 +14,15 @@ use App\Support\Http\ErrorCode;
  *     │ cancel/expired    │  └─no ACK─▶ FAILED    └─staff stop─▶ COMPLETING ──STOP ACK/timeout──▶ COMPLETED
  *     ▼                   └─staff stop─▶ COMPLETING
  *  CANCELLED
+ *
+ * Bill acceptor branches: RESERVED also collects cash; money paid but the lamp cannot start → FAILED
+ * (PAID_NOT_STARTED, staff resolves it) — the money is never silently dropped.
  */
 final class SessionStateMachine
 {
     /** @var array<string, list<S>> */
     private const ALLOWED = [
-        'RESERVED' => [S::STARTING, S::CANCELLED],
+        'RESERVED' => [S::STARTING, S::CANCELLED, S::FAILED],
         'STARTING' => [S::ACTIVE, S::FAILED, S::COMPLETING],
         'ACTIVE' => [S::COMPLETING, S::COMPLETED],
         'COMPLETING' => [S::COMPLETED],

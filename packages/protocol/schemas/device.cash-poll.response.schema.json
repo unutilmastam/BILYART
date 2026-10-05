@@ -1,0 +1,56 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://protocol.bilyart/device.cash-poll.response.schema.json",
+  "title": "DeviceCashPollResponse",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "serverTime",
+    "pollIntervalSec",
+    "accept",
+    "sessionId",
+    "required",
+    "paid",
+    "acceptUntil"
+  ],
+  "properties": {
+    "serverTime": {
+      "$ref": "common.schema.json#/definitions/EpochSeconds"
+    },
+    "pollIntervalSec": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 60
+    },
+    "accept": {
+      "type": "boolean",
+      "description": "Open the acceptor (inhibit off). Close it when false, when the server is unreachable for 5 s, or past acceptUntil."
+    },
+    "sessionId": {
+      "oneOf": [
+        {
+          "$ref": "common.schema.json#/definitions/PublicId"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "required": {
+      "$ref": "common.schema.json#/definitions/MoneyUzs"
+    },
+    "paid": {
+      "$ref": "common.schema.json#/definitions/MoneyUzs"
+    },
+    "acceptUntil": {
+      "oneOf": [
+        {
+          "$ref": "common.schema.json#/definitions/EpochSeconds"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  }
+}

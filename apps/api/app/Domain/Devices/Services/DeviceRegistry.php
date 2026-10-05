@@ -5,6 +5,7 @@ namespace App\Domain\Devices\Services;
 use App\Domain\Audit\Enums\ActorType;
 use App\Domain\Audit\Services\AuditLogger;
 use App\Domain\Branches\Models\Branch;
+use App\Domain\Devices\Enums\DeviceKind;
 use App\Domain\Devices\Enums\DeviceStatus;
 use App\Domain\Devices\Models\Device;
 use App\Domain\Devices\Models\DevicePairing;
@@ -35,11 +36,11 @@ final class DeviceRegistry
     ) {}
 
     /** @return array{deviceCode: string, pairingCode: string, pairingExpiresAt: int, pollToken: string, serverTime: int} */
-    public function register(string $hardwareId, string $firmwareVersion, string $ip, int $channelCount = 1): array
+    public function register(string $hardwareId, string $firmwareVersion, string $ip, int $channelCount = 1, DeviceKind $kind = DeviceKind::LIGHT): array
     {
         $hardwareId = strtoupper($hardwareId);
 
-        return $this->context->runAsSystem(fn () => DB::transaction(function () use ($hardwareId, $firmwareVersion, $ip, $channelCount): array {
+        return $this->context->runAsSystem(fn () => DB::transaction(function () use ($hardwareId, $firmwareVersion, $ip, $channelCount, $kind): array {
             /** @var Device|null $device */
             $device = Device::query()->where('active_hardware_id', $hardwareId)->lockForUpdate()->first();
             if ($device?->status === DeviceStatus::PAIRED) {
@@ -55,7 +56,7 @@ final class DeviceRegistry
                     'registered_at' => now(),
                 ]);
             }
-            $device->forceFill(['firmware_version' => $firmwareVersion, 'channel_count' => $channelCount, 'last_ip' => $ip, 'last_seen_at' => now()])->save();
+            $device->forceFill(['firmware_version' => $firmwareVersion, 'kind' => $kind, 'channel_count' => $kind === DeviceKind::CASH ? 1 : $channelCount, 'last_ip' => $ip, 'last_seen_at' => now()])->save();
 
             DevicePairing::query()->where('device_id', $device->id)->whereNull('used_at')->update(['expires_at' => now()]);
             $code = PairingCodes::fresh();
@@ -124,6 +125,13 @@ final class DeviceRegistry
             if ($device->status !== DeviceStatus::UNPAIRED) {
                 throw ApiException::of(ErrorCode::PAIRING_CODE_INVALID);
             }
+            if ($device->kind === DeviceKind::CASH) {
+                // One bill acceptor per branch: two boxes would not know which customer is paying.
+                Branch::query()->whereKey($branch->id)->lockForUpdate()->first();
+                if (Device::query()->where('branch_id', $branch->id)->where('kind', DeviceKind::CASH->value)->where('status', DeviceStatus::PAIRED->value)->exists()) {
+                    throw ApiException::of(ErrorCode::CASH_DEVICE_EXISTS);
+                }
+            }
 
             $this->context->runAsSystem(function () use ($device, $pairing, $branch, $admin, $tenantId): void {
                 $device->forceFill([
@@ -148,6 +156,13 @@ final class DeviceRegistry
             if (BilliardTable::query()->where('device_id', $device->id)->exists()) {
                 throw ApiException::of(ErrorCode::CONFLICT); // unwire its tables first
             }
+            if ($device->kind === DeviceKind::CASH) {
+                $this->assertNotCollecting($device);
+                Branch::query()->whereKey($branch->id)->lockForUpdate()->first();
+                if (Device::query()->where('branch_id', $branch->id)->where('kind', DeviceKind::CASH->value)->where('status', DeviceStatus::PAIRED->value)->whereKeyNot($device->id)->exists()) {
+                    throw ApiException::of(ErrorCode::CASH_DEVICE_EXISTS);
+                }
+            }
             $from = $device->branch_id;
             $device->forceFill(['branch_id' => $branch->id])->save();
             $this->audit->log('device.moved', $device, ['fromBranch' => $from, 'toBranch' => $branch->id]);
@@ -170,7 +185,7 @@ final class DeviceRegistry
             }
             $this->assertNoRunningSession([$locked->id]);
             if ($device !== null) {
-                if ($device->status !== DeviceStatus::PAIRED || $device->branch_id !== $locked->branch_id) {
+                if ($device->status !== DeviceStatus::PAIRED || $device->branch_id !== $locked->branch_id || $device->kind !== DeviceKind::LIGHT) {
                     throw new ApiException(ErrorCode::VALIDATION_FAILED, [], ['fields' => ['deviceId' => [__('validation.exists', ['attribute' => 'device'])]]]);
                 }
                 if ($channel === null || $channel < 1 || $channel > $device->channel_count) {
@@ -195,6 +210,7 @@ final class DeviceRegistry
         return DB::transaction(function () use ($admin, $device): Device {
             $tableIds = BilliardTable::query()->where('device_id', $device->id)->pluck('id')->all();
             $this->assertNoRunningSession($tableIds);
+            $this->assertNotCollecting($device);
             BilliardTable::query()->whereIn('id', $tableIds)->update(['device_id' => null, 'device_channel' => null]);
             $device->forceFill([
                 'status' => DeviceStatus::REVOKED,
@@ -207,6 +223,14 @@ final class DeviceRegistry
 
             return $device;
         });
+    }
+
+    /** A bill acceptor cannot be moved/unpaired while a customer is paying into it. */
+    private function assertNotCollecting(Device $device): void
+    {
+        if (GameSession::query()->where('cash_device_id', $device->id)->where('status', SessionStatus::RESERVED->value)->exists()) {
+            throw ApiException::of(ErrorCode::CONFLICT);
+        }
     }
 
     /** @param list<int> $tableIds */

@@ -96,12 +96,18 @@ class RouteSweepTest extends TestCase
                 'created_by' => $user->id, 'created_at' => now(), 'updated_at' => now(),
             ]);
 
+            $ids['cashNote'] = (string) Str::ulid();
+            DB::table('cash_notes')->insert([
+                'public_id' => $ids['cashNote'], 'tenant_id' => $t, 'branch_id' => $h['branch']->id, 'device_id' => $h['device']->id,
+                'note_uid' => 'sweep-'.Str::random(8), 'nominal' => 10000, 'status' => 'UNASSIGNED', 'received_at' => now(),
+            ]);
+
             return [
                 'branch' => $h['branch']->public_id, 'table' => $h['table']->public_id, 'plan' => $h['plan']->public_id,
                 'device' => $h['device']->public_id, 'tablet' => $h['tablet']->public_id, 'user' => $user->public_id,
                 'session' => $sessionPublicId,
                 'photo' => $ids['photo'], 'day' => $ids['day'], 'chat' => $ids['chat'], 'notification' => $ids['notification'],
-                'paymentRequest' => $ids['paymentRequest'],
+                'paymentRequest' => $ids['paymentRequest'], 'cashNote' => $ids['cashNote'],
             ];
         });
     }
@@ -109,7 +115,7 @@ class RouteSweepTest extends TestCase
     /** Row counts + update stamps of tenant B, to prove nothing was changed by A's requests. */
     private function fingerprint(int $tenantId): array
     {
-        $tables = ['branches', 'branch_closed_days', 'pricing_plans', 'billiard_tables', 'devices', 'tablets', 'users', 'game_sessions', 'session_photos', 'telegram_chats', 'notifications', 'subscription_payment_requests'];
+        $tables = ['branches', 'branch_closed_days', 'pricing_plans', 'billiard_tables', 'devices', 'tablets', 'users', 'game_sessions', 'session_photos', 'telegram_chats', 'notifications', 'subscription_payment_requests', 'cash_notes'];
 
         return $this->asSystem(fn () => collect($tables)->mapWithKeys(fn ($t) => [$t => DB::table($t)->where('tenant_id', $tenantId)->get()->map(fn ($r) => json_encode($r))->sort()->values()->all()])->all());
     }
@@ -169,7 +175,7 @@ class RouteSweepTest extends TestCase
     #[Test]
     public function guests_get_401_on_every_admin_super_and_account_route(): void
     {
-        $keys = array_fill_keys(['branch', 'table', 'plan', 'user', 'session', 'photo', 'device', 'tablet', 'day', 'chat', 'notification', 'tenant', 'release', 'paymentRequest'], (string) Str::ulid());
+        $keys = array_fill_keys(['branch', 'table', 'plan', 'user', 'session', 'photo', 'device', 'tablet', 'day', 'chat', 'notification', 'tenant', 'release', 'paymentRequest', 'cashNote'], (string) Str::ulid());
         $public = ['api/auth/csrf', 'api/auth/login'];
 
         $checked = 0;

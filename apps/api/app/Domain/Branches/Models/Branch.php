@@ -2,6 +2,7 @@
 
 namespace App\Domain\Branches\Models;
 
+use App\Domain\Branches\Enums\PaymentMode;
 use App\Domain\Tables\Models\BilliardTable;
 use App\Domain\Tenancy\Concerns\BelongsToTenant;
 use App\Support\Concerns\HasPublicId;
@@ -16,12 +17,13 @@ class Branch extends Model
 {
     use BelongsToTenant, HasFactory, HasPublicId;
 
-    protected $fillable = ['name', 'address', 'phone', 'timezone', 'is_active', 'report_time', 'settings'];
+    protected $fillable = ['name', 'address', 'phone', 'timezone', 'is_active', 'report_time', 'settings', 'payment_mode'];
 
     protected $attributes = [
         'is_active' => true,
         'timezone' => 'Asia/Tashkent',
         'report_time' => '23:30:00',
+        'payment_mode' => 'CASHIER',
     ];
 
     protected function casts(): array
@@ -29,6 +31,7 @@ class Branch extends Model
         return [
             'is_active' => 'boolean',
             'settings' => 'array',
+            'payment_mode' => PaymentMode::class,
         ];
     }
 

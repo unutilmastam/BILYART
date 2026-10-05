@@ -179,6 +179,12 @@ Remaining for Phase 1:
 - Built + linted in CI; signed only in **Release package** (`build-kiosk.sh`, key in GitHub secrets, certificate checked with apksigner) and shipped at `/kiosk/` with `provisioning.json`; admin panel → Qurilmalar → **Kiosk ilova** shows the setup QR (Wi-Fi optional, password never leaves the page).
 - Known limits: power button cannot be blocked (use a lockable stand); not yet tried on the owner's tablet; APK self-update not implemented (UI updates come from the server, APK changes are rare).
 
+## Owner request — cash payment through a bill acceptor (2026-10-05)
+- The owner's PDF architecture was **adapted to this system** (owner: keep everything we built). One bill acceptor box per branch (`devices.kind = CASH`, same pairing/token/OTA), branch setting `payment_mode` (CASHIER as before / BILL_ACCEPTOR).
+- Flow: table → time → photo → **"Pul soling"** screen; the session stays RESERVED while collecting, bills are counted once (`cash_notes` unique per device), the **server** starts the lamp when paid; extra money = extra time, cancel/3-minute timeout = play what was paid, nothing paid = cancelled. Unassigned money and paid-but-not-started games notify staff; Admin → **Kassa** (box totals, bills, resolve, collections with counted vs expected).
+- Server, protocol (`device.cash-*`), tablet pay screen, admin Kassa page, tests (API 223 on 3 DBs, tablet 19, admin 32) and docs done. Demo video recorded with a simulated box.
+- Next: cash box firmware (TB77 pulses, flash queue, inhibit) + bench test with the real TB77; fiscal receipt question is with the owner's accountant.
+
 ## Open questions for the owner
 1. ~~Platform domain~~ → **nbx.itcode.uz** (subdomain, PostgreSQL).
 2. ~~First ESP32 flash method~~ → from a computer (owner, 2026-09-30).

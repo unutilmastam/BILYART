@@ -25,7 +25,7 @@ final class BackupService
         'branches', 'working_hours', 'branch_closed_days', 'user_branch_access',
         'pricing_plans', 'devices', 'billiard_tables', // tables point to their ESP32 (device_id)
         'device_pairings', 'tablets', 'tablet_pairings',
-        'game_sessions', 'session_photos', 'session_events',
+        'game_sessions', 'session_photos', 'session_events', 'cash_collections', 'cash_notes',
         'device_commands', 'device_heartbeats',
         'telegram_integrations', 'telegram_chats', 'notifications', 'notification_logs',
         'audit_logs',

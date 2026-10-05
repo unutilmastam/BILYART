@@ -1,0 +1,9 @@
+{
+  "ts": 1790000000,
+  "fw": "1.0.0",
+  "accepting": true,
+  "queued": 0,
+  "rssi": -60,
+  "uptime": 3600,
+  "bootReason": "POWERON"
+}

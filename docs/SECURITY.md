@@ -32,7 +32,7 @@ Permissions are explicit strings mapped to roles in `config/permissions.php` (si
 | photos.view | ✓ | ✓ | – (configurable) |
 | photos.delete | ✓ | ✓ | – |
 | reports.view | ✓ | ✓ | – |
-| tables.manage, pricing.manage, working_hours.manage, devices.manage | ✓ | ✓ | – |
+| tables.manage, pricing.manage, working_hours.manage, devices.manage, cash.manage (bill acceptor collections) | ✓ | ✓ | – |
 | users.manage | ✓ | ✓ (not owners) | – |
 | branches.manage, telegram.manage, tenant.settings, tenant.export, billing.manage | ✓ | – | – |
 

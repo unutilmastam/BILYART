@@ -107,6 +107,11 @@ Route::middleware('web')->group(function (): void {
                 // Photo view permission (incl. the operator setting) is checked in PhotoService.
                 Route::get('photos/{photo}', [Admin\PhotoController::class, 'show']);
                 Route::delete('photos/{photo}', [Admin\PhotoController::class, 'destroy'])->middleware('perm:photos.delete');
+                Route::get('cash', [Admin\CashController::class, 'index'])->middleware('perm:reports.view');
+                Route::middleware('perm:cash.manage')->group(function (): void {
+                    Route::post('cash/collections', [Admin\CashController::class, 'collect']);
+                    Route::post('cash/notes/{cashNote}/resolve', [Admin\CashController::class, 'resolve']);
+                });
                 Route::middleware('perm:reports.view')->group(function (): void {
                     Route::get('reports/daily', [Admin\ReportController::class, 'daily']);
                     Route::get('reports/monthly', [Admin\ReportController::class, 'monthly']);

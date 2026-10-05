@@ -55,7 +55,7 @@ class AppServiceProvider extends ServiceProvider
         RateLimiter::for('tablet-register', fn (Request $request) => Limit::perHour(10)->by('tab-reg:'.$request->ip()));
         RateLimiter::for('tablet', fn (Request $request) => Limit::perMinute(120)->by('tablet:'.($request->bearerToken() ? hash('sha256', $request->bearerToken()) : $request->ip())));
         RateLimiter::for('photo-upload', fn (Request $request) => Limit::perMinute(10)->by('photo:'.($request->bearerToken() ? hash('sha256', $request->bearerToken()) : $request->ip())));
-        RateLimiter::for('device', fn (Request $request) => Limit::perMinute(40)->by('device:'.sha1((string) $request->header('Authorization')).$request->ip()));
+        RateLimiter::for('device', fn (Request $request) => Limit::perMinute(90)->by('device:'.sha1((string) $request->header('Authorization')).$request->ip()));
         RateLimiter::for('telegram', fn (Request $request) => Limit::perMinute(120)->by('tg:'.$request->route('integration')));
         RateLimiter::for('uploads', fn (Request $request) => Limit::perHour(20)->by('upload:'.($request->user()?->id ?? $request->ip())));
         RateLimiter::for('admin', fn (Request $request) => Limit::perMinute(300)->by('admin:'.($request->user()?->id ?? $request->ip())));

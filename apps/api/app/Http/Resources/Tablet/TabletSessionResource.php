@@ -2,6 +2,8 @@
 
 namespace App\Http\Resources\Tablet;
 
+use App\Domain\Branches\Enums\PaymentMode;
+use App\Domain\Sessions\Enums\SessionStatus;
 use App\Domain\Sessions\Models\GameSession;
 use App\Domain\Tables\Models\BilliardTable;
 
@@ -26,6 +28,12 @@ final class TabletSessionResource
                 'endAt' => $s->end_at?->toIso8601ZuluString(),
                 'hasPhoto' => $s->photo()->whereNull('deleted_at')->exists(),
                 'failureReason' => $s->failure_reason,
+                'payment' => $s->payment_source === PaymentMode::BILL_ACCEPTOR ? [
+                    'mode' => 'BILL_ACCEPTOR',
+                    'paid' => $s->cash_paid,
+                    'accepting' => $s->status === SessionStatus::RESERVED && $s->paying_until !== null && $s->paying_until->isFuture() && $s->cash_paid < $s->amount,
+                    'acceptUntil' => $s->paying_until?->toIso8601ZuluString(),
+                ] : null,
             ],
         ];
     }

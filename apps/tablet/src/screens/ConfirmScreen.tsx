@@ -3,7 +3,7 @@ import { BigButton, ScreenTitle, Spinner } from '../components/ui';
 import { formatDuration, formatUzs } from '../lib/format';
 import { t } from '../i18n';
 
-export function ConfirmScreen(props: { table: TabletTable; quote: TabletDurationQuote; busy: boolean; error: string | null; privacyNotice: string; onConfirm: () => void; onBack: () => void }) {
+export function ConfirmScreen(props: { table: TabletTable; quote: TabletDurationQuote; busy: boolean; error: string | null; privacyNotice: string; payNote: string; onConfirm: () => void; onBack: () => void }) {
   const { table, quote, busy, error } = props;
   return (
     <div className="flex h-full flex-col gap-6 p-6 lg:p-8">
@@ -17,7 +17,7 @@ export function ConfirmScreen(props: { table: TabletTable; quote: TabletDuration
           <dt className="pt-4 text-white/60">{t('confirm.amount')}</dt>
           <dd className="tabular pt-4 text-right text-5xl font-extrabold text-accent-300">{formatUzs(quote.amount)}</dd>
         </dl>
-        <p className="text-xl text-white/80">{t('confirm.payNote')}</p>
+        <p className="max-w-3xl text-center text-xl text-white/80">{props.payNote}</p>
         {props.privacyNotice && <p className="max-w-3xl text-center text-base text-white/55">{props.privacyNotice}</p>}
         {error && (
           <p role="alert" className="rounded-2xl bg-red-600/90 px-6 py-3 text-2xl font-semibold">

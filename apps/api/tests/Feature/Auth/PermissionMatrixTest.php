@@ -14,7 +14,7 @@ class PermissionMatrixTest extends TestCase
     public function roles_have_exactly_the_documented_permissions(): void
     {
         $operator = ['tables.view', 'sessions.view', 'sessions.create', 'sessions.stop', 'sessions.mark_payment'];
-        $manager = array_merge($operator, ['photos.view', 'photos.delete', 'reports.view', 'tables.manage', 'pricing.manage', 'working_hours.manage', 'devices.manage', 'users.manage']);
+        $manager = array_merge($operator, ['photos.view', 'photos.delete', 'reports.view', 'tables.manage', 'pricing.manage', 'working_hours.manage', 'devices.manage', 'users.manage', 'cash.manage']);
         $owner = array_merge($manager, ['branches.manage', 'telegram.manage', 'tenant.settings', 'tenant.export', 'billing.manage']);
 
         $this->assertEqualsCanonicalizing($operator, Permissions::forRole(Role::CLIENT_OPERATOR));

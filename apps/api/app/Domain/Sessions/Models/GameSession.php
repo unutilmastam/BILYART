@@ -2,6 +2,7 @@
 
 namespace App\Domain\Sessions\Models;
 
+use App\Domain\Branches\Enums\PaymentMode;
 use App\Domain\Branches\Models\Branch;
 use App\Domain\Devices\Models\Device;
 use App\Domain\Photos\Models\SessionPhoto;
@@ -53,6 +54,10 @@ class GameSession extends Model
             'price_per_hour_snapshot' => 'integer',
             'rounding_step_snapshot' => 'integer',
             'amount' => 'integer',
+            'payment_source' => PaymentMode::class,
+            'cash_paid' => 'integer',
+            'cash_device_id' => 'integer',
+            'paying_until' => 'immutable_datetime',
         ];
     }
 

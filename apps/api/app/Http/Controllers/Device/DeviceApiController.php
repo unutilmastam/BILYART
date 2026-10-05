@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Device;
 
+use App\Domain\Devices\Enums\DeviceKind;
 use App\Domain\Devices\Models\Device;
 use App\Domain\Devices\Services\DeviceGateway;
 use App\Domain\Devices\Services\DeviceRegistry;
@@ -28,6 +29,7 @@ final class DeviceApiController extends Controller
             'firmwareVersion' => ['required', 'string', 'max:32', 'regex:/^\d+\.\d+\.\d+(-[0-9A-Za-z.-]+)?$/'],
             'registrationSecret' => ['required', 'string', 'min:16', 'max:128'],
             'channelCount' => ['sometimes', 'integer', 'between:1,'.Device::MAX_CHANNELS],
+            'kind' => ['sometimes', 'in:LIGHT,CASH'],
         ]);
         $expected = (string) config('devices.registration_secret');
         // Not an ownership proof — only keeps random internet clients from spamming registrations.
@@ -35,7 +37,7 @@ final class DeviceApiController extends Controller
             throw ApiException::of(ErrorCode::DEVICE_UNAUTHORIZED);
         }
 
-        return $this->registry->register($data['hardwareId'], $data['firmwareVersion'], (string) $request->ip(), (int) ($data['channelCount'] ?? 1));
+        return $this->registry->register($data['hardwareId'], $data['firmwareVersion'], (string) $request->ip(), (int) ($data['channelCount'] ?? 1), DeviceKind::from($data['kind'] ?? 'LIGHT'));
     }
 
     public function pairingStatus(Request $request): array
@@ -101,8 +103,15 @@ final class DeviceApiController extends Controller
         ]);
     }
 
+    /** The lamp endpoints (poll/ack/state) are for relay controllers only; the bill acceptor has /cash/*. */
     private function device(Request $request): Device
     {
-        return $request->attributes->get('device');
+        /** @var Device $device */
+        $device = $request->attributes->get('device');
+        if ($device->isCash()) {
+            throw ApiException::of(ErrorCode::DEVICE_KIND_MISMATCH);
+        }
+
+        return $device;
     }
 }

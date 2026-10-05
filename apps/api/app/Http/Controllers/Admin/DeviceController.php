@@ -62,6 +62,9 @@ final class DeviceController extends Controller
     public function ping(Request $request, Device $device, DeviceCommandBus $bus): JsonResponse
     {
         $this->assertPaired($request, $device);
+        if ($device->isCash()) {
+            throw ApiException::of(ErrorCode::DEVICE_KIND_MISMATCH); // the bill acceptor takes no lamp commands
+        }
         $command = $bus->queue($device, CommandType::PING, [], null, 60);
 
         return response()->json(['commandId' => $command->public_id], 202);

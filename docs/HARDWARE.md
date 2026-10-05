@@ -80,3 +80,10 @@ Channel N must drive the contactor of the table that the admin wires to channel 
 
 ## 6. Label for each controller
 Write on the box: **device code** (`ESP32-XXXXXX`), **setup Wi-Fi name** (`BILLIARD-XXXX`) and its **password** (shown once on the computer during the first flash, see ESP32_FLASHING.md), branch name, and a channel → table list (e.g. `1 → 1-stol, 2 → 2-stol, …`).
+
+## 7. Bill acceptor box (optional, one per branch)
+TOP TB77 (UZS firmware, **PULSE** mode, cable CU-961-1) + ESP32 DevKit + 12 V 3 A supply (TB77) + LM2596 12→5 V (ESP32) + lockable steel box, next to the tablet. Wi-Fi like the lamp controller (Ethernet not required).
+- **Never wire TB77 signals straight to the ESP32**: the pulse output and the inhibit input are 12 V-side. Use an optocoupler (PC817) for the pulse signal (TB77 → ESP32 input with pull-up to 3.3 V) and a second optocoupler/transistor for inhibit (ESP32 → TB77). Prefer non-strapping GPIOs (e.g. 32/33) for these lines.
+- Pulse settings: 1 000 = 1, 2 000 = 2, 5 000 = 3, 10 000 = 4, 20 000 = 5, 50 000 = 6, 100 000 = 7, 200 000 = 8 pulses.
+- Inhibit must be **closed** at power-up and whenever the server is unreachable (DEVICE_PROTOCOL.md §6c). Bench test every bill value with the box's serial log before the hall test.
+- The cash box firmware is a separate build (next step); the lamp controller firmware is unchanged.

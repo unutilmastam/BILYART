@@ -17,13 +17,14 @@ final class BranchRequest extends FormRequest
             'timezone' => ['sometimes', 'timezone:all'],
             'reportTime' => ['sometimes', 'date_format:H:i'],
             'isActive' => ['sometimes', 'boolean'],
+            'paymentMode' => ['sometimes', 'in:CASHIER,BILL_ACCEPTOR'],
         ];
     }
 
     /** @return array<string, mixed> column => value */
     public function columns(): array
     {
-        $map = ['name' => 'name', 'address' => 'address', 'phone' => 'phone', 'timezone' => 'timezone', 'isActive' => 'is_active'];
+        $map = ['name' => 'name', 'address' => 'address', 'phone' => 'phone', 'timezone' => 'timezone', 'isActive' => 'is_active', 'paymentMode' => 'payment_mode'];
         $out = [];
         foreach ($map as $in => $col) {
             if ($this->has($in)) {

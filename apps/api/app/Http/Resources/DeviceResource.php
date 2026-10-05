@@ -14,6 +14,7 @@ final class DeviceResource extends JsonResource
         return [
             'id' => $this->public_id,
             'code' => $this->device_code,
+            'kind' => $this->kind->value,
             'status' => $this->status->value,
             'online' => $this->isOnline(),
             'lastSeenAt' => $this->last_seen_at?->toIso8601ZuluString(),
@@ -23,6 +24,9 @@ final class DeviceResource extends JsonResource
             'branch' => $this->whenLoaded('branch', fn () => $this->branch ? ['id' => $this->branch->public_id, 'name' => $this->branch->name] : null),
             // One row per relay channel: which table it drives and the lamp state the device last reported.
             'channels' => $this->whenLoaded('tables', function () {
+                if ($this->isCash()) {
+                    return []; // the bill acceptor drives no lamps
+                }
                 $reported = collect($this->last_state['channels'] ?? [])->keyBy('channel');
                 $byChannel = $this->tables->keyBy('device_channel');
 
